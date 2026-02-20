@@ -92,11 +92,12 @@ Full endpoint reference: **[API Docs](docs/api-reference.md)**
 
 Built-in browser UI at `http://localhost:8000` when running the API server.
 
-- **Dashboard** — Scan stats, recent activity, risk distribution charts
-- **Scanner** — Submit SKILL.md content directly in the browser
-- **Scan History** — Searchable list with verdicts and risk scores
-- **Signatures** — Browse and manage threat signatures
-- **Campaigns** — Active threats, IOCs, and attribution
+![Dashboard](docs/images/dashboard.png)
+
+| | |
+|---|---|
+| ![Scan Detail](docs/images/scan-detail.png) | ![Campaigns](docs/images/campaigns.png) |
+| ![Signatures](docs/images/signatures.png) | ![Scan History](docs/images/scans.png) |
 
 React 19 &middot; TypeScript &middot; Vite &middot; Tailwind CSS 4 &middot; Recharts
 
