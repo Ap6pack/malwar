@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "malwar.fullname" . }}-test-connection"
+  labels:
+    {{- include "malwar.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "malwar.fullname" . }}:{{ .Values.service.port }}/api/v1/health']
+  restartPolicy: Never

@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+apiVersion: v2
+name: malwar
+description: Malwar — Agentic Skills Malware Detection Engine
+type: application
+version: 0.2.0
+appVersion: "0.2.0"
+home: https://github.com/Ap6pack/malwar
+sources:
+  - https://github.com/Ap6pack/malwar
+maintainers:
+  - name: Veritas Aequitas Holdings LLC
+keywords:
+  - malware-detection
+  - security
+  - fastapi
+  - agentic-skills

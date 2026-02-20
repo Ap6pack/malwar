@@ -13,7 +13,17 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware, UsageLoggingMiddleware
-from malwar.api.routes import analytics, campaigns, export, feed, health, reports, scan, signatures
+from malwar.api.routes import (
+    analytics,
+    campaigns,
+    export,
+    feed,
+    health,
+    ingest,
+    reports,
+    scan,
+    signatures,
+)
 
 _WEB_DIST = Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist"
 
@@ -56,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(feed.router, prefix="/api/v1", tags=["feed"])
     app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
     app.include_router(export.router, prefix="/api/v1", tags=["export"])
+    app.include_router(ingest.router, prefix="/api/v1", tags=["ingest"])
     app.add_middleware(UsageLoggingMiddleware)
     app.add_middleware(RequestMiddleware)
     app.add_middleware(RateLimitMiddleware)

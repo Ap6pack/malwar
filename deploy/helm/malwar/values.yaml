@@ -1,0 +1,101 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+# Default values for malwar Helm chart.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/ap6pack/malwar
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: malwar.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: malwar-tls
+  #    hosts:
+  #      - malwar.example.com
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+  annotations: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# -- Malwar application configuration
+malwar:
+  # API authentication keys (list of strings)
+  apiKeys: []
+  # Logging level: DEBUG, INFO, WARNING, ERROR
+  logLevel: "INFO"
+  # Auto-run database migrations on startup
+  autoMigrate: true
+  # Anthropic API key for LLM analysis layer (optional)
+  anthropicApiKey: ""
+  # Webhook notification URLs (list of strings)
+  webhookUrls: []
+  # Webhook signing secret
+  webhookSecret: ""
+  # Database path inside the container
+  dbPath: "/data/malwar.db"

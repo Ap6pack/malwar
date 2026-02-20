@@ -1,0 +1,38 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named: {{ .Release.Name }}
+
+To access the Malwar API:
+
+{{- if .Values.ingress.enabled }}
+
+  The application is available at:
+  {{- range .Values.ingress.hosts }}
+    http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+  {{- end }}
+
+{{- else if contains "NodePort" .Values.service.type }}
+
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "malwar.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "Malwar API: http://$NODE_IP:$NODE_PORT"
+
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+  Watch the status with:
+    kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "malwar.fullname" . }}
+
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "malwar.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo "Malwar API: http://$SERVICE_IP:{{ .Values.service.port }}"
+
+{{- else if contains "ClusterIP" .Values.service.type }}
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "malwar.fullname" . }} 8000:{{ .Values.service.port }}
+  echo "Malwar API: http://127.0.0.1:8000"
+
+{{- end }}
+
+Health check:   curl http://127.0.0.1:8000/api/v1/health
+Readiness:      curl http://127.0.0.1:8000/api/v1/ready
+API docs:       http://127.0.0.1:8000/api/docs

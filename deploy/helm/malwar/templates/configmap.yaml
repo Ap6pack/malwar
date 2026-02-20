@@ -1,0 +1,11 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "malwar.fullname" . }}
+  labels:
+    {{- include "malwar.labels" . | nindent 4 }}
+data:
+  MALWAR_LOG_LEVEL: {{ .Values.malwar.logLevel | quote }}
+  MALWAR_AUTO_MIGRATE: {{ .Values.malwar.autoMigrate | quote }}
+  MALWAR_DB_PATH: {{ .Values.malwar.dbPath | quote }}

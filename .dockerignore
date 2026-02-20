@@ -1,11 +1,19 @@
-node_modules
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 .git
 __pycache__
-*.db
+.venv
+node_modules
+web/
+tests/
+docs/
+.github/
+*.pyc
 .env
+.env.*
 .mypy_cache
 .ruff_cache
 .pytest_cache
-tests/
-docs/
 htmlcov/
+*.db
+deploy/
+.claude/
