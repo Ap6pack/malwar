@@ -9,12 +9,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from malwar.api.auth import require_api_key
-from malwar.core.config import get_settings
+from malwar.core.config import Settings, get_settings
 from malwar.detectors.llm_analyzer.detector import LlmAnalyzerDetector
 from malwar.detectors.rule_engine.detector import RuleEngineDetector
 from malwar.detectors.threat_intel.detector import ThreatIntelDetector
 from malwar.detectors.url_crawler.detector import UrlCrawlerDetector
 from malwar.models.scan import ScanResult
+from malwar.notifications.webhook import WebhookNotifier
 from malwar.parsers.skill_parser import parse_skill_content
 from malwar.scanner.pipeline import ScanPipeline
 
@@ -130,6 +131,14 @@ async def _persist_result(result: ScanResult) -> None:
         logger.exception("Failed to persist scan %s", result.scan_id)
 
 
+async def _send_webhook(result: ScanResult, settings: Settings) -> None:
+    """Fire webhook notifications for malicious/suspicious results."""
+    if not settings.webhook_urls:
+        return
+    notifier = WebhookNotifier(urls=settings.webhook_urls)
+    await notifier.notify(result)
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -160,6 +169,7 @@ async def scan_skill(
     result = await pipeline.scan(skill, layers=layers)
 
     await _persist_result(result)
+    await _send_webhook(result, settings)
 
     return _result_to_response(result)
 
@@ -196,6 +206,7 @@ async def scan_batch(
 
         result = await pipeline.scan(skill, layers=layers)
         await _persist_result(result)
+        await _send_webhook(result, settings)
         results.append(_result_to_response(result))
 
     return results

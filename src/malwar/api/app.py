@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from malwar.api.middleware import RequestMiddleware
+from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware
 from malwar.api.routes import campaigns, health, reports, scan, signatures
 
 _WEB_DIST = Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist"
@@ -50,6 +50,7 @@ def create_app() -> FastAPI:
     app.include_router(signatures.router, prefix="/api/v1", tags=["signatures"])
     app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
     app.add_middleware(RequestMiddleware)
+    app.add_middleware(RateLimitMiddleware)
 
     # Serve frontend in production (when web/dist exists)
     if _WEB_DIST.is_dir():

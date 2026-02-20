@@ -413,3 +413,46 @@ class TestAuth:
         """Health endpoint should work without auth."""
         resp = await auth_client.get("/api/v1/health")
         assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# 8. Rate limiting
+# ---------------------------------------------------------------------------
+class TestRateLimit:
+    """Rate-limit middleware tests."""
+
+    @pytest.fixture
+    def rl_app(self, tmp_path, monkeypatch):
+        """App with rate limit set to 2 requests per minute."""
+        db_path = tmp_path / "test_rl.db"
+        monkeypatch.setenv("MALWAR_DB_PATH", str(db_path))
+        monkeypatch.setenv("MALWAR_RATE_LIMIT_RPM", "2")
+        # Clear any leftover rate-limit state from other tests
+        from malwar.api.middleware import _request_log
+
+        _request_log.clear()
+        return create_app()
+
+    @pytest.fixture
+    async def rl_client(self, rl_app, tmp_path):
+        db_path = tmp_path / "test_rl.db"
+        await init_db(db_path)
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=rl_app), base_url="http://test"
+            ) as ac:
+                yield ac
+        finally:
+            await close_db()
+
+    async def test_rate_limit_returns_429(self, rl_client) -> None:
+        """Third request within the window should be rejected with 429."""
+        resp1 = await rl_client.get("/api/v1/scans")
+        assert resp1.status_code == 200
+
+        resp2 = await rl_client.get("/api/v1/scans")
+        assert resp2.status_code == 200
+
+        resp3 = await rl_client.get("/api/v1/scans")
+        assert resp3.status_code == 429
+        assert "Retry-After" in resp3.headers

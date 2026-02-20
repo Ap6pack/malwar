@@ -18,3 +18,13 @@ def benign_dir() -> Path:
 @pytest.fixture
 def malicious_dir() -> Path:
     return MALICIOUS_DIR
+
+
+@pytest.fixture(autouse=True)
+def _clear_rate_limit_state():
+    """Reset the in-memory rate-limit state between tests."""
+    from malwar.api.middleware import _request_log
+
+    _request_log.clear()
+    yield
+    _request_log.clear()

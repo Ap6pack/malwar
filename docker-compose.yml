@@ -1,0 +1,14 @@
+services:
+  malwar:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - malwar-data:/app/data
+    environment:
+      - MALWAR_API_KEYS=${MALWAR_API_KEYS}
+      - MALWAR_ANTHROPIC_API_KEY=${MALWAR_ANTHROPIC_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  malwar-data:

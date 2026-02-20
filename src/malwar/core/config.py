@@ -30,12 +30,25 @@ class Settings(BaseSettings):
             return [k.strip() for k in v.split(",") if k.strip()]
         return v if isinstance(v, list) else []
 
+    # Webhook notifications
+    webhook_urls: list[str] = []
+
+    @field_validator("webhook_urls", mode="before")
+    @classmethod
+    def _parse_webhook_urls(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [u.strip() for u in v.split(",") if u.strip()]
+        return v if isinstance(v, list) else []
+
     # LLM (Anthropic)
     anthropic_api_key: str = ""
     llm_model: str = "claude-sonnet-4-20250514"
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
     llm_skip_below_risk: int = 15
+
+    # Rate limiting
+    rate_limit_rpm: int = 60
 
     # URL crawler
     crawler_max_urls: int = 10
