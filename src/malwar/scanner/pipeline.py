@@ -83,9 +83,11 @@ class ScanPipeline:
                 continue
 
             # Skip LLM layer if risk is below threshold (cost control)
+            # But never skip if the user explicitly requested this layer
             if (
                 detector.layer_name == "llm_analyzer"
                 and context.current_risk_score < self._settings.llm_skip_below_risk
+                and allowed_layers is None
             ):
                 logger.info(
                     "Skipping LLM analysis: risk score %d < threshold %d",

@@ -53,7 +53,7 @@ class Settings(BaseSettings):
 
     # LLM (Anthropic)
     anthropic_api_key: str = ""
-    llm_model: str = "claude-sonnet-4-20250514"
+    llm_model: str = "claude-sonnet-4-6"
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
     llm_skip_below_risk: int = 15
