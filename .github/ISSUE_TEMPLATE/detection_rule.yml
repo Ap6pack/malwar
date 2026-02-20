@@ -1,0 +1,55 @@
+name: Detection Rule Request
+description: Suggest a new detection rule
+labels: ["detection-rule", "enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What attack pattern should be detected?
+      placeholder: Describe the threat this rule would catch
+    validations:
+      required: true
+  - type: dropdown
+    id: attack_type
+    attributes:
+      label: Attack Type
+      options:
+        - Obfuscation
+        - Prompt Injection
+        - Social Engineering
+        - Data Exfiltration
+        - Credential Theft
+        - Malware Delivery
+        - Supply Chain
+        - Persistence
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example SKILL.md Content
+      description: Provide a sample that demonstrates the attack pattern
+      render: markdown
+    validations:
+      required: true
+  - type: dropdown
+    id: expected_verdict
+    attributes:
+      label: Expected Verdict
+      options:
+        - MALICIOUS
+        - SUSPICIOUS
+        - CAUTION
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low

@@ -1,0 +1,26 @@
+name: Feature Request
+description: Suggest a new feature for Malwar
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What feature would you like?
+      placeholder: A clear description of the feature
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case
+      description: Why do you need this?
+      placeholder: Describe the problem this would solve
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How would you implement this?
+      placeholder: Optional — your ideas on how to solve it

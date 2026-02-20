@@ -6,10 +6,12 @@
 
 **Static analysis engine purpose-built for detecting malware in agentic AI skill files.**
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![Python](https://img.shields.io/badge/python-3.13+-3776AB?logo=python&logoColor=white)
-![License](https://img.shields.io/badge/license-proprietary-red)
-![CI](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml/badge.svg)
+[![PyPI version](https://img.shields.io/pypi/v/malwar)](https://pypi.org/project/malwar/)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fap6pack%2Fmalwar-blue)](https://ghcr.io/ap6pack/malwar)
+[![Docs](https://img.shields.io/badge/docs-ap6pack.github.io%2Fmalwar-blue)](https://ap6pack.github.io/malwar)
+[![License](https://img.shields.io/badge/license-BSL--1.1-blue)](LICENSE)
+[![CI](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml/badge.svg)](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.13+-3776AB?logo=python&logoColor=white)](https://python.org)
 
 ![Detection Rules](https://img.shields.io/badge/detection_rules-19-orange)
 ![Pipeline Layers](https://img.shields.io/badge/pipeline_layers-4-green)
@@ -43,6 +45,13 @@ SKILL.md → Rule Engine → URL Crawler → LLM Analyzer → Threat Intel → V
 Full pipeline details: **[Architecture](docs/architecture.md)**
 
 ## Quick Start
+
+```bash
+pip install malwar
+malwar db init
+```
+
+For development:
 
 ```bash
 git clone https://github.com/Ap6pack/malwar.git && cd malwar
@@ -149,4 +158,4 @@ Full dev guide: **[Development](docs/development.md)**
 
 ---
 
-**Proprietary** — Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+**BSL-1.1** — Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.

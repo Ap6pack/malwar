@@ -3,14 +3,14 @@ name = "malwar"
 version = "0.2.0"
 description = "Malware detection engine for agentic skills (SKILL.md)"
 requires-python = ">=3.13"
-license = {text = "Proprietary"}
+license = {text = "BSL-1.1"}
 authors = [{name = "Veritas Aequitas Holdings LLC"}]
 readme = "README.md"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
-    "License :: Other/Proprietary License",
+    "License :: OSI Approved :: Business Source License 1.1",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
@@ -53,7 +53,10 @@ malwar = "malwar.cli.app:app"
 
 [project.urls]
 Homepage = "https://github.com/Ap6pack/malwar"
+Documentation = "https://ap6pack.github.io/malwar"
 Repository = "https://github.com/Ap6pack/malwar"
+Issues = "https://github.com/Ap6pack/malwar/issues"
+Changelog = "https://github.com/Ap6pack/malwar/releases"
 
 [build-system]
 requires = ["hatchling"]
