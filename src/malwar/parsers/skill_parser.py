@@ -14,6 +14,11 @@ from malwar.models.skill import CodeBlock, MarkdownSection, SkillContent, SkillM
 from malwar.parsers.markdown_parser import extract_code_blocks, extract_sections, extract_urls
 
 
+def _str_or_none(val: object) -> str | None:
+    """Coerce a frontmatter value to str or None."""
+    return str(val) if val is not None else None
+
+
 def _build_metadata(fm_data: dict[str, object]) -> SkillMetadata:
     """Build a SkillMetadata from frontmatter dict, tolerating missing keys."""
     tags_raw = fm_data.get("tags", [])
@@ -29,14 +34,14 @@ def _build_metadata(fm_data: dict[str, object]) -> SkillMetadata:
         tools_raw = []
 
     return SkillMetadata(
-        name=fm_data.get("name"),
-        description=fm_data.get("description"),
+        name=_str_or_none(fm_data.get("name")),
+        description=_str_or_none(fm_data.get("description")),
         version=str(fm_data["version"]) if "version" in fm_data else None,
-        author=fm_data.get("author"),
-        author_url=fm_data.get("author_url"),
-        source_url=fm_data.get("source_url"),
+        author=_str_or_none(fm_data.get("author")),
+        author_url=_str_or_none(fm_data.get("author_url")),
+        source_url=_str_or_none(fm_data.get("source_url")),
         tags=[str(t) for t in tags_raw],
-        icon=fm_data.get("icon"),
+        icon=_str_or_none(fm_data.get("icon")),
         tools=[str(t) for t in tools_raw],
         raw_frontmatter=fm_data,
     )
