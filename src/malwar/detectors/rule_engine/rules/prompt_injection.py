@@ -71,7 +71,8 @@ class UnicodeSmuggling(BaseRule):
     description = "Detects invisible Unicode characters or homoglyphs used to hide instructions"
 
     SUSPICIOUS_UNICODE = re.compile(
-        r"[\u200b-\u200f\u2028-\u202f\u2060-\u2064\ufeff\u00ad]"
+        r"[\u200b-\u200f\u2028-\u202f\u2060-\u2064\ufeff\u00ad"
+        r"\U000e0000-\U000e007f]"  # Unicode Tag characters (ASCII smuggling)
     )
 
     def check(self, skill: SkillContent) -> list[Finding]:

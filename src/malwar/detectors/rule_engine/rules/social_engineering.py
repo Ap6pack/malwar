@@ -75,6 +75,82 @@ class ClickFixFakePrerequisite(BaseRule):
 
 
 @rule
+class SuspiciousPrerequisiteDownload(BaseRule):
+    rule_id = "MALWAR-SE-003"
+    title = "Suspicious binary download in prerequisites"
+    severity = Severity.CRITICAL
+    category = ThreatCategory.SOCIAL_ENGINEERING
+    description = (
+        "Detects prerequisite sections directing users to download executables "
+        "or archives from untrusted sources, especially with passwords"
+    )
+
+    DOWNLOAD_INDICATORS = [
+        re.compile(r"""\.zip\b""", re.IGNORECASE),
+        re.compile(r"""\.exe\b""", re.IGNORECASE),
+        re.compile(r"""\.dmg\b""", re.IGNORECASE),
+        re.compile(r"""\.pkg\b""", re.IGNORECASE),
+        re.compile(r"""\.msi\b""", re.IGNORECASE),
+        re.compile(r"""\.appimage\b""", re.IGNORECASE),
+    ]
+
+    PASSWORD_INDICATORS = [
+        re.compile(r"""(?:extract|unzip|password|pass)\s*[:=`'"]\s*\w+""", re.IGNORECASE),
+        re.compile(r"""with\s+pass(?:word)?\s+[`'"]\w+""", re.IGNORECASE),
+    ]
+
+    PASTE_SITE_INDICATORS = [
+        re.compile(r"""rentry\.co""", re.IGNORECASE),
+        re.compile(r"""pastebin\.com""", re.IGNORECASE),
+        re.compile(r"""paste\.c-net\.org""", re.IGNORECASE),
+        re.compile(r"""hastebin\.""", re.IGNORECASE),
+        re.compile(r"""ghostbin\.""", re.IGNORECASE),
+    ]
+
+    def check(self, skill: SkillContent) -> list[Finding]:
+        findings = []
+        for section in skill.sections:
+            heading_lower = section.heading.lower()
+            is_prereq = any(kw in heading_lower for kw in [
+                "prerequisite", "setup", "install", "before you", "getting started",
+            ])
+            if not is_prereq:
+                continue
+
+            content = section.content
+            has_download = any(p.search(content) for p in self.DOWNLOAD_INDICATORS)
+            has_password = any(p.search(content) for p in self.PASSWORD_INDICATORS)
+            has_paste = any(p.search(content) for p in self.PASTE_SITE_INDICATORS)
+
+            if has_download and (has_password or has_paste):
+                findings.append(Finding(
+                    id=f"{self.rule_id}-L{section.line_start}",
+                    rule_id=self.rule_id,
+                    title=self.title,
+                    description=(
+                        f"Prerequisites section '{section.heading}' directs download "
+                        f"of archive/binary with {'password' if has_password else 'paste site link'}"
+                    ),
+                    severity=self.severity,
+                    confidence=0.92,
+                    category=self.category,
+                    detector_layer=DetectorLayer.RULE_ENGINE,
+                    location=Location(
+                        line_start=section.line_start,
+                        line_end=section.line_end,
+                        snippet=content[:300],
+                    ),
+                    evidence=[
+                        "Archive/binary download in prerequisite context",
+                        f"Password present: {has_password}",
+                        f"Paste site link: {has_paste}",
+                    ],
+                ))
+                break
+        return findings
+
+
+@rule
 class DeceptiveSkillNaming(BaseRule):
     rule_id = "MALWAR-SE-002"
     title = "Deceptive skill name (potential typosquatting)"

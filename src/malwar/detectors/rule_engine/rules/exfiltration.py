@@ -55,6 +55,57 @@ class AgentMemoryExfiltration(BaseRule):
 
 
 @rule
+class CurlDataExfiltration(BaseRule):
+    rule_id = "MALWAR-EXFIL-003"
+    title = "Data exfiltration via curl POST"
+    severity = Severity.CRITICAL
+    category = ThreatCategory.DATA_EXFILTRATION
+    description = "Detects curl sending local data to external services"
+
+    PATTERNS = [
+        re.compile(
+            r"""curl\s+[^|]*--data\s+.*\$\(""",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"""curl\s+[^|]*-d\s+.*\$\(""",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"""curl\s+[^|]*--data\s+.*\$\{""",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"""curl\s+[^|]*-X\s+POST\s+.*\$\(""",
+            re.IGNORECASE,
+        ),
+    ]
+
+    def check(self, skill: SkillContent) -> list[Finding]:
+        findings = []
+        for line_num, line in enumerate(skill.raw_content.splitlines(), 1):
+            for pattern in self.PATTERNS:
+                if pattern.search(line):
+                    findings.append(Finding(
+                        id=f"{self.rule_id}-L{line_num}",
+                        rule_id=self.rule_id,
+                        title=self.title,
+                        description="Curl command sends local data to external endpoint",
+                        severity=self.severity,
+                        confidence=0.88,
+                        category=self.category,
+                        detector_layer=DetectorLayer.RULE_ENGINE,
+                        location=Location(
+                            line_start=line_num,
+                            snippet=line.strip()[:200],
+                        ),
+                        evidence=["curl POST with command substitution detected"],
+                    ))
+                    break
+        return findings
+
+
+@rule
 class CryptoWalletAccess(BaseRule):
     rule_id = "MALWAR-EXFIL-002"
     title = "Cryptocurrency wallet file access"
