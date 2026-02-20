@@ -81,7 +81,7 @@ export interface Campaign {
   first_seen: string | null
   last_seen: string | null
   attributed_to: string | null
-  iocs: string | null
+  iocs: string[] | string | null
   total_skills_affected: number | null
   status: string
 }

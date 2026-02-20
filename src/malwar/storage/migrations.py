@@ -139,14 +139,16 @@ _INDEXES = [
 # ---------------------------------------------------------------------------
 
 _SEED_CAMPAIGN = """
-INSERT OR IGNORE INTO campaigns (id, name, description, first_seen, last_seen, attributed_to, status)
+INSERT OR IGNORE INTO campaigns (id, name, description, first_seen, last_seen, attributed_to, iocs, total_skills_affected, status)
 VALUES (
     'campaign-clawhavoc-001',
     'ClawHavoc',
-    'Mass poisoning campaign delivering AMOS infostealer via trojanized archives',
+    'Mass poisoning campaign delivering AMOS infostealer via trojanized archives. Attackers published trojanized skills on ClawHub that appear to be legitimate developer tools but contain hidden instructions to download and execute AMOS infostealer payloads. The campaign uses password-protected archives hosted on paste sites and direct IP-based C2 servers to evade detection.',
     '2026-01-15',
     '2026-02-10',
     'zaycv / Ddoy233 / hightower6eu',
+    '["91.92.242.30", "glot.io/snippets/hfd3x9ueu5", "Ddoy233/openclawcli", "download.setup-service.com", "clawdhub1", "Aslaep123", "moonshine-100rze", "hightower6eu"]',
+    824,
     'active'
 );
 """

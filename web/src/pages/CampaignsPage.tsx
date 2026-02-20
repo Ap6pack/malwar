@@ -14,8 +14,9 @@ interface CampaignDetail extends Campaign {
 
 /* ---------- Helpers ---------- */
 
-function parseIocs(iocs: string | null): string[] {
+function parseIocs(iocs: string[] | string | null): string[] {
   if (!iocs) return []
+  if (Array.isArray(iocs)) return iocs.map(String)
   try {
     const parsed = JSON.parse(iocs)
     if (Array.isArray(parsed)) return parsed.map(String)
@@ -24,10 +25,9 @@ function parseIocs(iocs: string | null): string[] {
     }
     return [String(parsed)]
   } catch {
-    // Fall back to comma-separated or newline-separated parsing
     return iocs
       .split(/[,\n]+/)
-      .map((s) => s.trim())
+      .map((s: string) => s.trim())
       .filter(Boolean)
   }
 }
