@@ -427,6 +427,7 @@ class TestRateLimit:
         db_path = tmp_path / "test_rl.db"
         monkeypatch.setenv("MALWAR_DB_PATH", str(db_path))
         monkeypatch.setenv("MALWAR_RATE_LIMIT_RPM", "2")
+        monkeypatch.setenv("MALWAR_RATE_LIMIT_PER_IP", "2")
         # Clear any leftover rate-limit state from other tests
         from malwar.api.middleware import _request_log
 

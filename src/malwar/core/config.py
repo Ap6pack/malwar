@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     # Database
     db_path: Path = Path("malwar.db")
+    auto_migrate: bool = True
 
     # API server
     api_host: str = "127.0.0.1"
@@ -59,6 +60,8 @@ class Settings(BaseSettings):
 
     # Rate limiting
     rate_limit_rpm: int = 60
+    rate_limit_per_key: int = 600   # per minute for authenticated (API key)
+    rate_limit_per_ip: int = 60     # per minute for unauthenticated (IP)
 
     # URL crawler
     crawler_max_urls: int = 10

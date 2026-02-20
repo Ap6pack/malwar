@@ -17,6 +17,7 @@ logger = logging.getLogger("malwar.detectors.threat_intel.matcher")
 # ---------------------------------------------------------------------------
 
 HARDCODED_SIGNATURES: list[dict[str, str]] = [
+    # -- ClawHavoc --
     {
         "id": "sig-clawhavoc-c2-ip",
         "pattern_type": "exact",
@@ -48,6 +49,72 @@ HARDCODED_SIGNATURES: list[dict[str, str]] = [
         "severity": "critical",
         "category": "known_malware",
         "campaign": "ClawHavoc",
+    },
+    # -- SnykToxic --
+    {
+        "id": "sig-snyktoxic-github-repo",
+        "pattern_type": "exact",
+        "pattern_value": "aztr0nutzs/NET_NiNjA.v1.2",
+        "severity": "critical",
+        "category": "known_malware",
+        "campaign": "SnykToxic",
+    },
+    {
+        "id": "sig-snyktoxic-rentry-stager",
+        "pattern_type": "exact",
+        "pattern_value": "rentry.co/openclaw-core",
+        "severity": "critical",
+        "category": "known_malware",
+        "campaign": "SnykToxic",
+    },
+    {
+        "id": "sig-snyktoxic-gas-exfil",
+        "pattern_type": "regex",
+        "pattern_value": "script\\.google\\.com/macros/s/[A-Za-z0-9_-]+/exec",
+        "severity": "critical",
+        "category": "data_exfiltration",
+        "campaign": "SnykToxic",
+    },
+    {
+        "id": "sig-snyktoxic-github-releases",
+        "pattern_type": "exact",
+        "pattern_value": "denboss99/openclaw-core",
+        "severity": "critical",
+        "category": "known_malware",
+        "campaign": "SnykToxic",
+    },
+    # -- ShadowPkg --
+    {
+        "id": "sig-shadowpkg-crossenv",
+        "pattern_type": "exact",
+        "pattern_value": "crossenv",
+        "severity": "high",
+        "category": "known_malware",
+        "campaign": "ShadowPkg",
+    },
+    {
+        "id": "sig-shadowpkg-colourfool",
+        "pattern_type": "exact",
+        "pattern_value": "colourfool",
+        "severity": "high",
+        "category": "known_malware",
+        "campaign": "ShadowPkg",
+    },
+    {
+        "id": "sig-shadowpkg-evil-registry",
+        "pattern_type": "exact",
+        "pattern_value": "evil-registry.example.com",
+        "severity": "critical",
+        "category": "known_malware",
+        "campaign": "ShadowPkg",
+    },
+    {
+        "id": "sig-shadowpkg-evil-mirror",
+        "pattern_type": "exact",
+        "pattern_value": "evil-mirror.example.com",
+        "severity": "critical",
+        "category": "known_malware",
+        "campaign": "ShadowPkg",
     },
 ]
 

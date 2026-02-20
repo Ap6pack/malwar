@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware
-from malwar.api.routes import campaigns, health, reports, scan, signatures
+from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware, UsageLoggingMiddleware
+from malwar.api.routes import analytics, campaigns, feed, health, reports, scan, signatures
 
 _WEB_DIST = Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist"
 
@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     from malwar.storage.database import close_db, init_db
 
     settings = get_settings()
-    await init_db(settings.db_path)
+    await init_db(settings.db_path, auto_migrate=settings.auto_migrate)
     yield
     await close_db()
 
@@ -53,6 +53,9 @@ def create_app() -> FastAPI:
     app.include_router(campaigns.router, prefix="/api/v1", tags=["campaigns"])
     app.include_router(signatures.router, prefix="/api/v1", tags=["signatures"])
     app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
+    app.include_router(feed.router, prefix="/api/v1", tags=["feed"])
+    app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+    app.add_middleware(UsageLoggingMiddleware)
     app.add_middleware(RequestMiddleware)
     app.add_middleware(RateLimitMiddleware)
 

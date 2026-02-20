@@ -115,18 +115,23 @@ class TestDatabaseInit:
     """Tests for database initialization and migrations."""
 
     async def test_init_creates_all_tables(self, db: aiosqlite.Connection):
-        """All six tables must exist after init_db."""
+        """All expected tables must exist after init_db."""
         cursor = await db.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
         )
         rows = await cursor.fetchall()
-        table_names = sorted(row[0] for row in rows)
+        # Filter out SQLite internal tables (e.g. sqlite_sequence from AUTOINCREMENT)
+        table_names = sorted(
+            row[0] for row in rows if not row[0].startswith("sqlite_")
+        )
 
         expected = sorted([
+            "api_usage",
             "campaigns",
             "findings",
             "publishers",
             "scans",
+            "schema_migrations",
             "signatures",
             "url_analysis",
         ])
@@ -149,6 +154,8 @@ class TestDatabaseInit:
             "idx_findings_rule_id",
             "idx_findings_severity",
             "idx_findings_category",
+            "idx_api_usage_key",
+            "idx_api_usage_timestamp",
         }
         assert expected_indexes.issubset(index_names)
 
@@ -200,22 +207,29 @@ class TestSeedData:
             assert dict(row)["severity"] == "critical"
 
     async def test_threat_actor_publishers_seeded(self, db: aiosqlite.Connection):
-        """Six known threat actor publishers should be seeded."""
+        """All known threat actor publishers should be seeded."""
         cursor = await db.execute(
             "SELECT * FROM publishers WHERE is_known_threat_actor = 1"
         )
         rows = await cursor.fetchall()
-        assert len(rows) == 6
+        assert len(rows) == 9
 
         publisher_ids = {dict(r)["id"] for r in rows}
-        assert publisher_ids == {
+        expected = {
+            # ClawHavoc operators
             "zaycv",
             "Ddoy233",
             "hightower6eu",
             "clawdhub1",
             "Aslaep123",
             "moonshine-100rze",
+            # SnykToxic operators
+            "aztr0nutzs",
+            "denboss99",
+            # ShadowPkg operators
+            "ScaffoldPro",
         }
+        assert publisher_ids == expected
 
         for row in rows:
             assert dict(row)["reputation_score"] == 0.0
@@ -227,7 +241,7 @@ class TestSeedData:
         await run_migrations(db)  # second run
         cursor = await db.execute("SELECT COUNT(*) FROM campaigns")
         row = await cursor.fetchone()
-        assert row[0] == 1  # still one campaign
+        assert row[0] == 3  # ClawHavoc, SnykToxic, ShadowPkg
 
 
 # ---------------------------------------------------------------------------

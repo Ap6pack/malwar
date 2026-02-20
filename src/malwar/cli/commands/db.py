@@ -28,6 +28,56 @@ async def _init_db() -> None:
 
 
 @app.command()
+def migrate() -> None:
+    """Apply pending database migrations.
+
+    Shows the current schema version and any pending migrations,
+    then applies them in order.
+    """
+    asyncio.run(_migrate_db())
+
+
+async def _migrate_db() -> None:
+    from malwar.core.config import get_settings
+    from malwar.storage.database import close_db, init_db
+    from malwar.storage.migrations import (
+        get_current_version,
+        get_pending_migrations,
+        run_migrations,
+    )
+
+    settings = get_settings()
+    # Initialize without auto-migrate so we can show status first
+    db = await init_db(settings.db_path, auto_migrate=False)
+
+    try:
+        current = await get_current_version(db)
+        pending = await get_pending_migrations(db)
+
+        typer.echo(f"Database: {settings.db_path}")
+        typer.echo(f"Current schema version: {current}")
+
+        if not pending:
+            typer.echo("No pending migrations.")
+            return
+
+        typer.echo(f"Pending migrations: {len(pending)}")
+        for m in pending:
+            typer.echo(f"  {m.version:03d}: {m.name}")
+
+        typer.echo()
+        applied = await run_migrations(db)
+
+        for m in applied:
+            typer.echo(f"Applied migration {m.version:03d}: {m.name}")
+
+        new_version = await get_current_version(db)
+        typer.echo(f"\nSchema version is now: {new_version}")
+    finally:
+        await close_db()
+
+
+@app.command()
 def stats() -> None:
     """Show database statistics."""
     asyncio.run(_show_stats())

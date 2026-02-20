@@ -13,11 +13,16 @@ from malwar.storage.migrations import run_migrations
 _db: aiosqlite.Connection | None = None
 
 
-async def init_db(db_path: Path | str = "malwar.db") -> aiosqlite.Connection:
-    """Initialize database connection, run migrations, return connection.
+async def init_db(
+    db_path: Path | str = "malwar.db",
+    *,
+    auto_migrate: bool = True,
+) -> aiosqlite.Connection:
+    """Initialize database connection, optionally run migrations, return connection.
 
     Enables WAL mode and foreign keys for performance and integrity.
-    Runs schema migrations on every initialization to ensure tables exist.
+    When *auto_migrate* is True (the default), schema migrations are
+    applied automatically on every initialization.
     """
     global _db
 
@@ -33,7 +38,8 @@ async def init_db(db_path: Path | str = "malwar.db") -> aiosqlite.Connection:
         # Enable foreign key constraint enforcement
         await _db.execute("PRAGMA foreign_keys=ON")
 
-        await run_migrations(_db)
+        if auto_migrate:
+            await run_migrations(_db)
 
         return _db
     except Exception as exc:
