@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# malwar
+# Malwar
 
 **Malware detection engine for agentic AI skill files.**
 
