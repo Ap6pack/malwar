@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import httpx
 import pytest
 import respx
@@ -17,11 +15,9 @@ from malwar.detectors.url_crawler.reputation import (
     KNOWN_MALICIOUS,
     PASTE_SITES,
     SAFE_DOMAINS,
-    DomainReputation,
     check_domain_reputation,
 )
 from malwar.models.skill import CodeBlock, SkillContent, SkillMetadata
-
 
 # ---------------------------------------------------------------------------
 # Helpers

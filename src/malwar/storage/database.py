@@ -19,7 +19,7 @@ async def init_db(db_path: Path | str = "malwar.db") -> aiosqlite.Connection:
     Enables WAL mode and foreign keys for performance and integrity.
     Runs schema migrations on every initialization to ensure tables exist.
     """
-    global _db  # noqa: PLW0603
+    global _db
 
     if _db is not None:
         return _db
@@ -54,7 +54,7 @@ async def get_db() -> aiosqlite.Connection:
 
 async def close_db() -> None:
     """Close the database connection."""
-    global _db  # noqa: PLW0603
+    global _db
 
     if _db is not None:
         await _db.close()

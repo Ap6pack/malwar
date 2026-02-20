@@ -7,7 +7,6 @@ import json
 from typing import Any
 
 from malwar.core.constants import Severity
-from malwar.models.finding import Finding
 from malwar.models.scan import ScanResult
 
 SEVERITY_TO_SARIF_LEVEL = {

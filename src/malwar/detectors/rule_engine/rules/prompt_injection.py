@@ -56,7 +56,7 @@ class DirectPromptInjection(BaseRule):
                         category=self.category,
                         detector_layer=DetectorLayer.RULE_ENGINE,
                         location=Location(line_start=line_num, snippet=line.strip()[:200]),
-                        evidence=[f"Pattern: instruction override"],
+                        evidence=["Pattern: instruction override"],
                     ))
                     break  # One finding per line
         return findings

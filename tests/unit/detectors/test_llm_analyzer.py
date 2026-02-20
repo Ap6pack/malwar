@@ -18,10 +18,9 @@ from malwar.detectors.llm_analyzer.parser import (
     parse_llm_response,
 )
 from malwar.detectors.llm_analyzer.prompts import SYSTEM_PROMPT, build_user_prompt
-from malwar.models.finding import Finding, Location
+from malwar.models.finding import Finding
 from malwar.models.skill import SkillContent, SkillMetadata
 from malwar.scanner.context import ScanContext
-
 
 # ---------------------------------------------------------------------------
 # Helpers

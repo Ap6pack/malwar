@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from malwar.parsers.markdown_parser import extract_code_blocks, extract_sections, extract_urls
 
-
 # ---------------------------------------------------------------------------
 # URL extraction
 # ---------------------------------------------------------------------------

@@ -3,18 +3,18 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from malwar.api.routes import scan, health
+from malwar.api.routes import health, scan
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     from malwar.core.config import get_settings
-    from malwar.storage.database import init_db, close_db
+    from malwar.storage.database import close_db, init_db
 
     settings = get_settings()
     await init_db(settings.db_path)

@@ -18,7 +18,7 @@ def init() -> None:
 
 async def _init_db() -> None:
     from malwar.core.config import get_settings
-    from malwar.storage.database import init_db, close_db
+    from malwar.storage.database import close_db, init_db
 
     settings = get_settings()
     typer.echo(f"Initializing database at {settings.db_path}...")
@@ -35,7 +35,7 @@ def stats() -> None:
 
 async def _show_stats() -> None:
     from malwar.core.config import get_settings
-    from malwar.storage.database import init_db, get_db, close_db
+    from malwar.storage.database import close_db, get_db, init_db
 
     settings = get_settings()
     await init_db(settings.db_path)

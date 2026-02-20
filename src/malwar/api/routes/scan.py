@@ -3,18 +3,17 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from malwar.core.config import get_settings
-from malwar.core.constants import ScanStatus
+from malwar.detectors.llm_analyzer.detector import LlmAnalyzerDetector
+from malwar.detectors.rule_engine.detector import RuleEngineDetector
+from malwar.detectors.threat_intel.detector import ThreatIntelDetector
+from malwar.detectors.url_crawler.detector import UrlCrawlerDetector
 from malwar.models.scan import ScanResult
 from malwar.parsers.skill_parser import parse_skill_content
 from malwar.scanner.pipeline import ScanPipeline
-from malwar.detectors.rule_engine.detector import RuleEngineDetector
-from malwar.detectors.url_crawler.detector import UrlCrawlerDetector
-from malwar.detectors.llm_analyzer.detector import LlmAnalyzerDetector
-from malwar.detectors.threat_intel.detector import ThreatIntelDetector
 
 router = APIRouter()
 
@@ -101,7 +100,7 @@ async def scan_skill(body: ScanRequestBody) -> ScanResponseBody:
 
     pipeline = ScanPipeline(settings=settings)
     pipeline.register_detector(RuleEngineDetector())
-    pipeline.register_detector(UrlCrawlerDetector(settings=settings))
+    pipeline.register_detector(UrlCrawlerDetector())
     pipeline.register_detector(LlmAnalyzerDetector(settings=settings))
     pipeline.register_detector(ThreatIntelDetector())
 

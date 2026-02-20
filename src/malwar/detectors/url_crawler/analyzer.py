@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from malwar.core.constants import DetectorLayer, Severity, ThreatCategory
 from malwar.detectors.url_crawler.fetcher import FetchResult
-from malwar.models.finding import Finding, Location
+from malwar.models.finding import Finding
 
 # Patterns indicating bash / shell scripts in response body
 _SHELL_PATTERNS: list[re.Pattern[str]] = [
@@ -104,7 +104,7 @@ def analyze_fetch_result(result: FetchResult) -> list[Finding]:
     # ------------------------------------------------------------------
     # 1. Suspicious redirect chain (crosses domain boundaries)
     # ------------------------------------------------------------------
-    full_chain = result.redirect_chain + [result.final_url]
+    full_chain = [*result.redirect_chain, result.final_url]
     if len(full_chain) > 1 and _domains_differ(full_chain):
         findings.append(
             Finding(

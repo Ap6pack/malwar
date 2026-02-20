@@ -1,14 +1,15 @@
 # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Integration tests: full pipeline scan against all fixtures."""
 
-import pytest
 from pathlib import Path
 
+import pytest
+
 from malwar.core.config import get_settings
-from malwar.parsers.skill_parser import parse_skill_content
-from malwar.scanner.pipeline import ScanPipeline
 from malwar.detectors.rule_engine.detector import RuleEngineDetector
 from malwar.detectors.threat_intel.detector import ThreatIntelDetector
+from malwar.parsers.skill_parser import parse_skill_content
+from malwar.scanner.pipeline import ScanPipeline
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "skills"
 
@@ -132,8 +133,9 @@ class TestScanResultStructure:
         assert result.finding_count_by_severity
 
     async def test_sarif_output(self):
-        from malwar.cli.formatters.sarif import format_sarif, scan_result_to_sarif
         import json
+
+        from malwar.cli.formatters.sarif import format_sarif
 
         pipeline = _build_pipeline()
         result = await _scan_fixture(pipeline, "malicious", "clawhavoc_amos.md")
@@ -146,8 +148,9 @@ class TestScanResultStructure:
         assert len(sarif["runs"][0]["results"]) > 0
 
     async def test_json_output(self):
-        from malwar.cli.formatters.json_fmt import format_json
         import json
+
+        from malwar.cli.formatters.json_fmt import format_json
 
         pipeline = _build_pipeline()
         result = await _scan_fixture(pipeline, "malicious", "clawhavoc_amos.md")

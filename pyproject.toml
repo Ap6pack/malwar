@@ -53,7 +53,20 @@ select = [
     "E", "W", "F", "I", "N", "UP", "B", "S", "A",
     "C4", "DTZ", "T20", "SIM", "TCH", "RUF", "ASYNC",
 ]
-ignore = ["E501", "S101"]
+ignore = [
+    "E501",     # line too long (handled by formatter)
+    "S101",     # assert usage (fine in tests)
+    "S108",     # hardcoded temp paths (fine in tests)
+    "S110",     # try-except-pass (acceptable in best-effort extraction)
+    "TC001",    # move app imports into TYPE_CHECKING — runtime imports fine for our scale
+    "TC002",    # move third-party imports into TYPE_CHECKING
+    "TC003",    # move stdlib imports into TYPE_CHECKING
+    "RUF012",   # mutable class attrs — compiled regexes on rule classes are intentional
+    "ASYNC240", # pathlib in async — our CLI entrypoint uses asyncio.run, sync Path is fine
+    "B027",     # empty methods on ABC without abstract — intentional optional hooks
+    "N815",     # mixedCase — required by SARIF 2.1.0 JSON schema
+    "UP047",    # generic function type params — Python 3.12+ syntax, keeping TypeVar for compat
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["malwar"]

@@ -3,18 +3,15 @@
 
 from __future__ import annotations
 
-import pytest
-
 from malwar.core.constants import DetectorLayer, Severity, ThreatCategory
 from malwar.detectors.threat_intel.detector import ThreatIntelDetector
 from malwar.detectors.threat_intel.matcher import (
     HARDCODED_SIGNATURES,
     ThreatIntelMatcher,
 )
-from malwar.models.finding import Finding, Location
+from malwar.models.finding import Finding
 from malwar.models.skill import SkillContent, SkillMetadata
 from malwar.scanner.context import ScanContext
-
 
 # ---------------------------------------------------------------------------
 # Helpers

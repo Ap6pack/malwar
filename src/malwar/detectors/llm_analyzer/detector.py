@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 import anthropic
 
@@ -19,9 +18,6 @@ from malwar.detectors.llm_analyzer.prompts import SYSTEM_PROMPT, build_user_prom
 from malwar.models.finding import Finding
 from malwar.scanner.base import BaseDetector
 from malwar.scanner.context import ScanContext
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger("malwar.detectors.llm_analyzer")
 

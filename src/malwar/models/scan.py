@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field, computed_field
 
-from malwar.core.constants import SEVERITY_WEIGHTS, Severity, ScanStatus
+from malwar.core.constants import SEVERITY_WEIGHTS, ScanStatus, Severity
 from malwar.models.finding import Finding
 
 
@@ -29,7 +29,7 @@ class ScanResult(BaseModel):
     scan_id: str
     target: str
     status: ScanStatus = ScanStatus.PENDING
-    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
     duration_ms: int | None = None
     findings: list[Finding] = Field(default_factory=list)

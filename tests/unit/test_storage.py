@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiosqlite
 import pytest
 
-from malwar.core.constants import DetectorLayer, Severity, ScanStatus, ThreatCategory
+from malwar.core.constants import DetectorLayer, ScanStatus, Severity, ThreatCategory
 from malwar.models.finding import Finding, Location
 from malwar.models.scan import ScanResult
 from malwar.storage.database import close_db, init_db
@@ -17,7 +17,6 @@ from malwar.storage.repositories.findings import FindingRepository
 from malwar.storage.repositories.publishers import PublisherRepository
 from malwar.storage.repositories.scans import ScanRepository
 from malwar.storage.repositories.signatures import SignatureRepository
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -73,8 +72,8 @@ def _make_scan_result(
         scan_id=scan_id,
         target=target,
         status=status,
-        started_at=datetime(2026, 2, 20, 12, 0, 0, tzinfo=timezone.utc),
-        completed_at=datetime(2026, 2, 20, 12, 0, 5, tzinfo=timezone.utc),
+        started_at=datetime(2026, 2, 20, 12, 0, 0, tzinfo=UTC),
+        completed_at=datetime(2026, 2, 20, 12, 0, 5, tzinfo=UTC),
         duration_ms=5000,
         skill_name="test-skill",
         skill_author="testauthor",

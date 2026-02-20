@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
@@ -54,4 +54,4 @@ class SkillContent(BaseModel):
     sections: list[MarkdownSection] = Field(default_factory=list)
     file_size_bytes: int = 0
     sha256_hash: str = ""
-    fetched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

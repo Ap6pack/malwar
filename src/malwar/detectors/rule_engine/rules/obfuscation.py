@@ -44,7 +44,7 @@ class Base64EncodedCommand(BaseRule):
                 if match:
                     b64_str = match.group(1) if match.lastindex and match.lastindex >= 1 else ""
                     decoded = self._try_decode(b64_str)
-                    evidence = [f"Pattern: base64-encoded command piped to shell"]
+                    evidence = ["Pattern: base64-encoded command piped to shell"]
                     iocs: list[str] = []
                     if decoded:
                         evidence.append(f"Decoded: {decoded[:200]}")

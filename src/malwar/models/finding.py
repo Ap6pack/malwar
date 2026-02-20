@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
@@ -36,4 +36,4 @@ class Finding(BaseModel):
     ioc_values: list[str] = Field(default_factory=list)
     remediation: str = ""
     metadata: dict[str, object] = Field(default_factory=dict)
-    detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    detected_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -5,20 +5,20 @@ from __future__ import annotations
 
 import logging
 
+import malwar.detectors.rule_engine.rules.credential_exposure
+import malwar.detectors.rule_engine.rules.exfiltration
+import malwar.detectors.rule_engine.rules.known_malware
+
+# Import all rule modules to trigger registration
+import malwar.detectors.rule_engine.rules.obfuscation
+import malwar.detectors.rule_engine.rules.prompt_injection
+import malwar.detectors.rule_engine.rules.social_engineering
+import malwar.detectors.rule_engine.rules.suspicious_commands  # noqa: F401
 from malwar.core.constants import DetectorLayer
 from malwar.detectors.rule_engine.registry import RuleRegistry
 from malwar.models.finding import Finding
 from malwar.scanner.base import BaseDetector
 from malwar.scanner.context import ScanContext
-
-# Import all rule modules to trigger registration
-import malwar.detectors.rule_engine.rules.obfuscation  # noqa: F401
-import malwar.detectors.rule_engine.rules.social_engineering  # noqa: F401
-import malwar.detectors.rule_engine.rules.prompt_injection  # noqa: F401
-import malwar.detectors.rule_engine.rules.known_malware  # noqa: F401
-import malwar.detectors.rule_engine.rules.credential_exposure  # noqa: F401
-import malwar.detectors.rule_engine.rules.suspicious_commands  # noqa: F401
-import malwar.detectors.rule_engine.rules.exfiltration  # noqa: F401
 
 logger = logging.getLogger("malwar.detectors.rule_engine")
 

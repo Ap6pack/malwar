@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from malwar.core.config import Settings, get_settings
 from malwar.core.constants import ScanStatus
@@ -109,7 +109,7 @@ class ScanPipeline:
 
         result.findings = context.findings
         result.status = ScanStatus.COMPLETED
-        result.completed_at = datetime.now(timezone.utc)
+        result.completed_at = datetime.now(UTC)
         result.duration_ms = elapsed_ms
 
         logger.info(

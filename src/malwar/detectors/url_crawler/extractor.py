@@ -8,7 +8,6 @@ from urllib.parse import urldefrag, urlparse
 
 from malwar.models.skill import SkillContent
 
-
 # Markdown link pattern: [text](url)
 _MARKDOWN_LINK_RE = re.compile(r"\[([^\]]*)\]\((\s*https?://[^\s\)]+)\)")
 
@@ -64,10 +63,7 @@ def _find_code_block_ranges(text: str) -> list[tuple[int, int]]:
 
 def _offset_in_code_block(offset: int, ranges: list[tuple[int, int]]) -> bool:
     """Check whether a character offset falls within any code block range."""
-    for start, end in ranges:
-        if start <= offset <= end:
-            return True
-    return False
+    return any(start <= offset <= end for start, end in ranges)
 
 
 def extract_urls(skill: SkillContent) -> list[str]:

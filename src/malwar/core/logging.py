@@ -1,12 +1,11 @@
 # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Structured logging with sensitive data redaction."""
 
-import logging
 import json
+import logging
 import re
 import sys
 from typing import Any
-
 
 REDACT_PATTERNS = [
     re.compile(r"(sk-ant-[a-zA-Z0-9\-]{10})[a-zA-Z0-9\-]*"),
