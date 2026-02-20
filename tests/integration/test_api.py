@@ -9,6 +9,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from malwar.api.app import create_app
+from malwar.storage.database import close_db, init_db
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "skills"
 BENIGN_DIR = FIXTURES_DIR / "benign"
@@ -24,12 +25,17 @@ def app(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-async def client(app):
-    """Provide an async HTTP client bound to the test app."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        yield ac
+async def client(app, tmp_path):
+    """Provide an async HTTP client bound to the test app, with DB initialized."""
+    db_path = tmp_path / "test_malwar.db"
+    await init_db(db_path)
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as ac:
+            yield ac
+    finally:
+        await close_db()
 
 
 # ---------------------------------------------------------------------------
@@ -251,3 +257,159 @@ class TestScanInvalid:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "completed"
+
+
+# ---------------------------------------------------------------------------
+# 5. GET /api/v1/scan/{scan_id} retrieves a persisted scan
+# ---------------------------------------------------------------------------
+class TestGetScan:
+    """Scan retrieval endpoint tests."""
+
+    async def _submit_scan(self, client) -> str:
+        """Helper: submit a scan and return its scan_id."""
+        content = (MALICIOUS_DIR / "prompt_injection_basic.md").read_text()
+        resp = await client.post(
+            "/api/v1/scan",
+            json={
+                "content": content,
+                "file_name": "prompt_injection_basic.md",
+                "layers": ["rule_engine"],
+                "use_llm": False,
+            },
+        )
+        assert resp.status_code == 200
+        return resp.json()["scan_id"]
+
+    async def test_get_scan_by_id(self, client) -> None:
+        scan_id = await self._submit_scan(client)
+        resp = await client.get(f"/api/v1/scan/{scan_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["scan_id"] == scan_id
+        assert data["verdict"] == "MALICIOUS"
+        assert data["finding_count"] > 0
+
+    async def test_get_scan_findings_hydrated(self, client) -> None:
+        scan_id = await self._submit_scan(client)
+        resp = await client.get(f"/api/v1/scan/{scan_id}")
+        data = resp.json()
+        assert len(data["findings"]) == data["finding_count"]
+        for f in data["findings"]:
+            assert "rule_id" in f
+            assert "severity" in f
+            assert "detector_layer" in f
+
+    async def test_get_scan_not_found(self, client) -> None:
+        resp = await client.get("/api/v1/scan/does-not-exist")
+        assert resp.status_code == 404
+
+    async def test_get_scan_sarif(self, client) -> None:
+        scan_id = await self._submit_scan(client)
+        resp = await client.get(f"/api/v1/scan/{scan_id}/sarif")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["$schema"] == "https://json.schemastore.org/sarif-2.1.0.json"
+        assert data["version"] == "2.1.0"
+        assert len(data["runs"]) == 1
+        assert len(data["runs"][0]["results"]) > 0
+
+
+# ---------------------------------------------------------------------------
+# 6. GET /api/v1/scans lists recent scans
+# ---------------------------------------------------------------------------
+class TestListScans:
+    """Scan list endpoint tests."""
+
+    async def test_list_scans_empty(self, client) -> None:
+        resp = await client.get("/api/v1/scans")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    async def test_list_scans_after_submission(self, client) -> None:
+        content = (BENIGN_DIR / "hello_world.md").read_text()
+        submit = await client.post(
+            "/api/v1/scan",
+            json={
+                "content": content,
+                "file_name": "hello_world.md",
+                "layers": ["rule_engine"],
+                "use_llm": False,
+            },
+        )
+        scan_id = submit.json()["scan_id"]
+
+        resp = await client.get("/api/v1/scans")
+        assert resp.status_code == 200
+        scans = resp.json()
+        assert len(scans) >= 1
+        assert any(s["scan_id"] == scan_id for s in scans)
+
+    async def test_list_scans_limit(self, client) -> None:
+        # Submit 3 scans
+        content = (BENIGN_DIR / "hello_world.md").read_text()
+        for _ in range(3):
+            await client.post(
+                "/api/v1/scan",
+                json={
+                    "content": content,
+                    "layers": ["rule_engine"],
+                    "use_llm": False,
+                },
+            )
+        resp = await client.get("/api/v1/scans?limit=2")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2
+
+
+# ---------------------------------------------------------------------------
+# 7. API key authentication
+# ---------------------------------------------------------------------------
+class TestAuth:
+    """API key authentication tests."""
+
+    @pytest.fixture
+    def auth_app(self, tmp_path, monkeypatch):
+        """App with API key auth enabled."""
+        db_path = tmp_path / "test_auth.db"
+        monkeypatch.setenv("MALWAR_DB_PATH", str(db_path))
+        monkeypatch.setenv("MALWAR_API_KEYS", '["valid-key-1","valid-key-2"]')
+        return create_app()
+
+    @pytest.fixture
+    async def auth_client(self, auth_app, tmp_path):
+        db_path = tmp_path / "test_auth.db"
+        await init_db(db_path)
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=auth_app), base_url="http://test"
+            ) as ac:
+                yield ac
+        finally:
+            await close_db()
+
+    async def test_no_key_returns_401(self, auth_client) -> None:
+        resp = await auth_client.get("/api/v1/scans")
+        assert resp.status_code == 401
+
+    async def test_wrong_key_returns_403(self, auth_client) -> None:
+        resp = await auth_client.get(
+            "/api/v1/scans", headers={"X-API-Key": "wrong"}
+        )
+        assert resp.status_code == 403
+
+    async def test_valid_key_returns_200(self, auth_client) -> None:
+        resp = await auth_client.get(
+            "/api/v1/scans", headers={"X-API-Key": "valid-key-1"}
+        )
+        assert resp.status_code == 200
+
+    async def test_second_valid_key_works(self, auth_client) -> None:
+        resp = await auth_client.get(
+            "/api/v1/scans", headers={"X-API-Key": "valid-key-2"}
+        )
+        assert resp.status_code == 200
+
+    async def test_health_requires_no_auth(self, auth_client) -> None:
+        """Health endpoint should work without auth."""
+        resp = await auth_client.get("/api/v1/health")
+        assert resp.status_code == 200
