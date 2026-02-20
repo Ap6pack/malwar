@@ -9,10 +9,12 @@ from typing import Annotated
 
 import typer
 
+from malwar.ingestion.importer import ImportResult
+
 app = typer.Typer()
 
 
-def _print_result(result: object) -> None:
+def _print_result(result: ImportResult) -> None:
     """Print an ImportResult summary to the console."""
     typer.echo("Import complete:")
     typer.echo(f"  Campaigns added:    {result.campaigns_added}")

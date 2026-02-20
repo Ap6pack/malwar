@@ -50,7 +50,7 @@ class AnalyticsResponse(BaseModel):
 
 async def _table_exists(db: object, table_name: str) -> bool:
     """Check whether *table_name* exists in the database."""
-    cursor = await db.execute(  # type: ignore[union-attr]
+    cursor = await db.execute(  # type: ignore[attr-defined]
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
         (table_name,),
     )

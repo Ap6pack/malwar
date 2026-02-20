@@ -383,8 +383,8 @@ def _parse_stix_bundle(text: str) -> list[CampaignData]:
             obj for obj in objects if obj.get("type") == "indicator"
         ]
         if standalone_indicators:
-            iocs: list[IOCData] = []
-            sigs: list[SignatureData] = []
+            standalone_iocs: list[IOCData] = []
+            standalone_sigs: list[SignatureData] = []
             for indicator in standalone_indicators:
                 pattern = indicator.get("pattern", "")
                 extracted = _extract_ioc_from_pattern(pattern)
@@ -396,8 +396,8 @@ def _parse_stix_bundle(text: str) -> list[CampaignData]:
                     if label.startswith("severity:"):
                         severity = label.split(":")[1]
                         break
-                iocs.append(IOCData(type=ioc_type, value=value))
-                sigs.append(
+                standalone_iocs.append(IOCData(type=ioc_type, value=value))
+                standalone_sigs.append(
                     SignatureData(
                         pattern_type="exact",
                         pattern_value=value,
@@ -405,12 +405,12 @@ def _parse_stix_bundle(text: str) -> list[CampaignData]:
                         severity=severity,
                     )
                 )
-            if iocs:
+            if standalone_iocs:
                 results.append(
                     CampaignData(
                         name="Imported STIX Indicators",
-                        iocs=iocs,
-                        signatures=sigs,
+                        iocs=standalone_iocs,
+                        signatures=standalone_sigs,
                     )
                 )
 
