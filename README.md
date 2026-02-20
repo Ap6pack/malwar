@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# malwar
+# Malwar
 
 **Static analysis engine purpose-built for detecting malware in agentic AI skill files.**
 
