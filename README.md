@@ -24,7 +24,7 @@
 
 ## Why
 
-**20% of ClawHub's 10,700+ skills are malicious.** The [ClawHavoc campaign](docs/threat-campaigns.md) alone trojanized 824+ skills to deliver the AMOS infostealer. These attacks aren't binaries — they're natural language instructions hidden in Markdown files. VirusTotal sees nothing. Code scanners see nothing. malwar was built to catch them.
+**20% of ClawHub's 10,700+ skills are malicious.** The [ClawHavoc campaign](docs/threat-campaigns.md) alone trojanized 824+ skills to deliver the AMOS infostealer. These attacks aren't binaries — they're natural language instructions hidden in Markdown files. VirusTotal sees nothing. Code scanners see nothing. Malwar was built to catch them.
 
 ## How It Works
 
