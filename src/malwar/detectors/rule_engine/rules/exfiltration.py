@@ -118,7 +118,7 @@ class CryptoWalletAccess(BaseRule):
         re.compile(r"""\.bitcoin/wallet""", re.IGNORECASE),
         re.compile(r"""\.ethereum/keystore""", re.IGNORECASE),
         re.compile(r"""Exodus/exodus\.wallet""", re.IGNORECASE),
-        re.compile(r"""Coinbase/""", re.IGNORECASE),
+        re.compile(r"""(?:Application\s+Support|Library|AppData)[/\\].*Coinbase""", re.IGNORECASE),
         re.compile(
             r"""(?:find|ls|cat|cp|tar)\s+.*(?:MetaMask|Phantom|Solflare|Brave\s*Wallet)""",
             re.IGNORECASE,

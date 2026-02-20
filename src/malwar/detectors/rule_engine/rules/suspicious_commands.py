@@ -23,7 +23,7 @@ class PipedExecution(BaseRule):
     PATTERNS = [
         re.compile(r"""curl\s+[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh""", re.IGNORECASE),
         re.compile(r"""wget\s+[^\n|]*-O\s*-?\s*\|\s*(?:sudo\s+)?(?:ba)?sh""", re.IGNORECASE),
-        re.compile(r"""\$\(\s*curl\s+-[fsS]*L?\s+""", re.IGNORECASE),
+        re.compile(r"""(?:bash|sh|eval)\s+.*\$\(\s*curl\s+""", re.IGNORECASE),
     ]
 
     def check(self, skill: SkillContent) -> list[Finding]:
