@@ -1,0 +1,115 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+#
+# Composite GitHub Action that scans SKILL.md files for malware using Malwar.
+
+name: "Malwar Skill Scanner"
+description: "Scan SKILL.md files in pull requests for malware, prompt injection, and other threats."
+branding:
+  icon: "shield"
+  color: "red"
+
+inputs:
+  path:
+    description: "Glob pattern for SKILL.md files to scan"
+    required: false
+    default: "**/SKILL.md"
+  fail-on:
+    description: "Verdict threshold that causes the action to fail (MALICIOUS, SUSPICIOUS, CAUTION)"
+    required: false
+    default: "SUSPICIOUS"
+  format:
+    description: "Output format: text, json, or sarif"
+    required: false
+    default: "text"
+
+outputs:
+  verdict:
+    description: "Worst verdict across all scanned files"
+    value: ${{ steps.scan.outputs.verdict }}
+  risk_score:
+    description: "Highest risk score across all scanned files"
+    value: ${{ steps.scan.outputs.risk_score }}
+  finding_count:
+    description: "Total number of findings across all scanned files"
+    value: ${{ steps.scan.outputs.finding_count }}
+  sarif_path:
+    description: "Path to SARIF output file (when format is sarif)"
+    value: ${{ steps.scan.outputs.sarif_path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+
+    - name: Install Malwar
+      shell: bash
+      run: pip install malwar
+
+    - name: Run Malwar scan
+      id: scan
+      shell: bash
+      run: |
+        python "${{ github.action_path }}/scan.py" \
+          --path "${{ inputs.path }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          --format "${{ inputs.format }}"
+
+    - name: Post PR comment
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const verdict = '${{ steps.scan.outputs.verdict }}';
+          const riskScore = '${{ steps.scan.outputs.risk_score }}';
+          const findingCount = '${{ steps.scan.outputs.finding_count }}';
+
+          if (!verdict) return;
+
+          const icons = {
+            'CLEAN': ':white_check_mark:',
+            'CAUTION': ':warning:',
+            'SUSPICIOUS': ':orange_circle:',
+            'MALICIOUS': ':red_circle:'
+          };
+          const icon = icons[verdict] || ':question:';
+
+          const body = [
+            `## ${icon} Malwar Scan Results`,
+            '',
+            `| Metric | Value |`,
+            `|--------|-------|`,
+            `| **Verdict** | ${verdict} |`,
+            `| **Risk Score** | ${riskScore}/100 |`,
+            `| **Findings** | ${findingCount} |`,
+            '',
+            '*Scanned by [Malwar](https://github.com/Ap6pack/malwar) — malware detection for agentic AI skills.*'
+          ].join('\n');
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existing = comments.find(c =>
+            c.user.type === 'Bot' && c.body.includes('Malwar Scan Results')
+          );
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+          }

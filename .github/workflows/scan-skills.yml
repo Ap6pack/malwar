@@ -1,0 +1,40 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+#
+# Example workflow that scans SKILL.md files in pull requests using Malwar.
+# Uploads SARIF results to the GitHub Security tab for code scanning alerts.
+
+name: Scan SKILL.md Files
+
+on:
+  pull_request:
+    paths:
+      - "**.md"
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  scan-skills:
+    name: Malwar Skill Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan SKILL.md files
+        id: malwar
+        uses: ./.github/actions/scan-skills
+        with:
+          path: "**/SKILL.md"
+          fail-on: "SUSPICIOUS"
+          format: "sarif"
+
+      - name: Upload SARIF to GitHub Security
+        if: always() && steps.malwar.outputs.sarif_path != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.malwar.outputs.sarif_path }}
+          category: "malwar"

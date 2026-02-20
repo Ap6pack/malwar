@@ -11,7 +11,7 @@ from typing import Annotated
 
 import typer
 
-from malwar.cli.commands import db
+from malwar.cli.commands import db, export
 
 app = typer.Typer(
     name="malwar",
@@ -20,6 +20,7 @@ app = typer.Typer(
 )
 
 app.add_typer(db.app, name="db", help="Database management")
+app.add_typer(export.app, name="export", help="Export threat intelligence (STIX/TAXII)")
 
 
 class OutputFormat(StrEnum):

@@ -1,7 +1,5 @@
 # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-"""malwar - Malware detection engine for agentic skills."""
-
-__version__ = "0.1.0"
+"""Malwar integrations with external frameworks (LangChain, etc.)."""
 
 from malwar.integrations.exceptions import MalwarBlockedError
 from malwar.integrations.langchain import (
@@ -9,17 +7,10 @@ from malwar.integrations.langchain import (
     MalwarGuard,
     MalwarScanTool,
 )
-from malwar.sdk import scan, scan_batch, scan_file, scan_file_sync, scan_sync
 
 __all__ = [
     "MalwarBlockedError",
     "MalwarCallbackHandler",
     "MalwarGuard",
     "MalwarScanTool",
-    "__version__",
-    "scan",
-    "scan_batch",
-    "scan_file",
-    "scan_file_sync",
-    "scan_sync",
 ]
