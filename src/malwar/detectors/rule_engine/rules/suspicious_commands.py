@@ -120,3 +120,61 @@ class PasswordProtectedArchive(BaseRule):
                     ))
                     break
         return findings
+
+
+@rule
+class DownloadAndExecute(BaseRule):
+    rule_id = "MALWAR-CMD-004"
+    title = "Download-and-execute pattern"
+    severity = Severity.HIGH
+    category = ThreatCategory.SUSPICIOUS_COMMAND
+    description = "Detects downloading a script/binary then executing it in subsequent steps"
+
+    DOWNLOAD_PATTERNS = [
+        re.compile(
+            r"""(?:wget|curl\s+-[^\n]*-o)\s+\S*?(?:\.py|\.sh|\.ps1|\.exe|\.bin|helper)\b""",
+            re.IGNORECASE,
+        ),
+    ]
+    EXECUTE_PATTERNS = [
+        re.compile(
+            r"""(?:python3?|bash|sh|chmod\s+\+x)\s+\S*?(?:\.py|\.sh|helper)\b""",
+            re.IGNORECASE,
+        ),
+    ]
+
+    def check(self, skill: SkillContent) -> list[Finding]:
+        findings = []
+        has_download = False
+        download_line = 0
+
+        for line_num, line in enumerate(skill.raw_content.splitlines(), 1):
+            for pattern in self.DOWNLOAD_PATTERNS:
+                if pattern.search(line):
+                    has_download = True
+                    download_line = line_num
+                    break
+
+        if has_download:
+            for line_num, line in enumerate(skill.raw_content.splitlines(), 1):
+                if line_num <= download_line:
+                    continue
+                for pattern in self.EXECUTE_PATTERNS:
+                    if pattern.search(line):
+                        findings.append(Finding(
+                            id=f"{self.rule_id}-L{download_line}",
+                            rule_id=self.rule_id,
+                            title=self.title,
+                            description="Downloads a script then executes it in a later step",
+                            severity=self.severity,
+                            confidence=0.78,
+                            category=self.category,
+                            detector_layer=DetectorLayer.RULE_ENGINE,
+                            location=Location(
+                                line_start=download_line,
+                                snippet=f"Download at L{download_line}, execute at L{line_num}",
+                            ),
+                            evidence=["Multi-step download-and-execute pattern detected"],
+                        ))
+                        return findings
+        return findings

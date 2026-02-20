@@ -82,34 +82,36 @@ class DeceptiveSkillNaming(BaseRule):
     category = ThreatCategory.TYPOSQUATTING
     description = "Detects skill names with common misspellings of popular skill names"
 
+    # (misspelling_regex, correct_word) — matches known typosquat patterns
     TYPO_PATTERNS = [
-        (re.compile(r"trad(?:ie|ei)ng", re.IGNORECASE), "trading"),
-        (re.compile(r"crypt[oa][\s-]?(?:curren|wall)", re.IGNORECASE), None),
-        (re.compile(r"wall[ae]t[\s-]?(?:manag|connect|recover)", re.IGNORECASE), None),
-        (re.compile(r"youtu[pb]e", re.IGNORECASE), "youtube"),
-        (re.compile(r"telegr[ae]m", re.IGNORECASE), "telegram"),
+        (re.compile(r"traid", re.IGNORECASE), "trading"),
+        (re.compile(r"cripto|ctypto|crytpo", re.IGNORECASE), "crypto"),
+        (re.compile(r"walelt|walet[^t]", re.IGNORECASE), "wallet"),
+        (re.compile(r"yourtube|yotube|youtub[^e]", re.IGNORECASE), "youtube"),
+        (re.compile(r"telegramm|telgram|telegrm", re.IGNORECASE), "telegram"),
     ]
 
     def check(self, skill: SkillContent) -> list[Finding]:
         findings = []
         name = skill.metadata.name or ""
-        for pattern, _ in self.TYPO_PATTERNS:
+        for pattern, correct in self.TYPO_PATTERNS:
             match = pattern.search(name)
-            if match and match.group(0).lower() != (name.lower()):
-                # Only flag if the matched text contains the actual typo
+            if match:
                 matched_text = match.group(0)
-                if "ie" in matched_text.lower() or "ei" in matched_text.lower():
-                    findings.append(Finding(
-                        id=f"{self.rule_id}-{name[:30]}",
-                        rule_id=self.rule_id,
-                        title=self.title,
-                        description=f"Skill name '{name}' contains potential typosquatting",
-                        severity=self.severity,
-                        confidence=0.60,
-                        category=self.category,
-                        detector_layer=DetectorLayer.RULE_ENGINE,
-                        location=Location(line_start=1, snippet=f"name: {name}"),
-                        evidence=[f"Suspicious pattern in name: '{matched_text}'"],
-                    ))
-                    break
+                findings.append(Finding(
+                    id=f"{self.rule_id}-{name[:30]}",
+                    rule_id=self.rule_id,
+                    title=self.title,
+                    description=(
+                        f"Skill name '{name}' contains misspelling "
+                        f"'{matched_text}' (likely intended: '{correct}')"
+                    ),
+                    severity=self.severity,
+                    confidence=0.70,
+                    category=self.category,
+                    detector_layer=DetectorLayer.RULE_ENGINE,
+                    location=Location(line_start=1, snippet=f"name: {name}"),
+                    evidence=[f"Typo: '{matched_text}' in name, expected '{correct}'"],
+                ))
+                break
         return findings
