@@ -4,7 +4,7 @@
 
 ## Overview
 
-malwar tracks coordinated malware campaigns that target the agentic skill ecosystem. A campaign represents an organized effort by threat actors to distribute malicious skills through platforms like ClawHub. Campaign tracking enables attribution, IOC sharing, and proactive detection of new variants.
+Malwar tracks coordinated malware campaigns that target the agentic skill ecosystem. A campaign represents an organized effort by threat actors to distribute malicious skills through platforms like ClawHub. Campaign tracking enables attribution, IOC sharing, and proactive detection of new variants.
 
 ## Campaign Data Model
 
