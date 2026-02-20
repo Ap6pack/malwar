@@ -224,26 +224,27 @@ async def get_scan(
     if finding_rows:
         import json
 
+        from malwar.core.constants import DetectorLayer, Severity, ThreatCategory
         from malwar.models.finding import Finding, Location
 
         result.findings = [
             Finding(
-                id=row["id"],
-                rule_id=row["rule_id"],
-                title=row["title"],
-                description=row["description"],
-                severity=row["severity"],
-                confidence=row["confidence"],
-                category=row["category"],
-                detector_layer=row["detector_layer"],
+                id=str(row["id"]),
+                rule_id=str(row["rule_id"]),
+                title=str(row["title"]),
+                description=str(row["description"]),
+                severity=Severity(str(row["severity"])),
+                confidence=float(row["confidence"]),
+                category=ThreatCategory(str(row["category"])),
+                detector_layer=DetectorLayer(str(row["detector_layer"])),
                 location=Location(
-                    line_start=row["line_start"],
-                    line_end=row.get("line_end"),
-                    snippet=row.get("snippet"),
+                    line_start=int(row["line_start"]),
+                    line_end=int(row["line_end"]) if row.get("line_end") else None,
+                    snippet=str(row["snippet"]) if row.get("snippet") else "",
                 ) if row.get("line_start") else None,
                 evidence=json.loads(row.get("evidence") or "[]"),
                 ioc_values=json.loads(row.get("ioc_values") or "[]"),
-                remediation=row.get("remediation"),
+                remediation=str(row["remediation"]) if row.get("remediation") else "",
             )
             for row in finding_rows
         ]
@@ -263,13 +264,14 @@ async def get_scan_sarif(
 
     # Reconstruct a minimal ScanResult for the SARIF formatter
     from malwar.cli.formatters.sarif import format_sarif
+    from malwar.core.constants import DetectorLayer, ScanStatus, Severity, ThreatCategory
     from malwar.models.finding import Finding, Location
     from malwar.models.scan import ScanResult as ScanResultModel
 
     result = ScanResultModel(
         scan_id=response.scan_id,
         target="",
-        status=response.status,
+        status=ScanStatus(response.status),
         skill_sha256="",
         findings=[
             Finding(
@@ -277,10 +279,10 @@ async def get_scan_sarif(
                 rule_id=f.rule_id,
                 title=f.title,
                 description=f.description,
-                severity=f.severity,
+                severity=Severity(f.severity),
                 confidence=f.confidence,
-                category=f.category,
-                detector_layer=f.detector_layer,
+                category=ThreatCategory(f.category),
+                detector_layer=DetectorLayer(f.detector_layer),
                 evidence=f.evidence,
                 location=Location(line_start=f.line_start) if f.line_start else None,
             )
@@ -288,7 +290,8 @@ async def get_scan_sarif(
         ],
     )
 
-    return json.loads(format_sarif(result))
+    sarif_output: dict[str, object] = json.loads(format_sarif(result))
+    return sarif_output
 
 
 @router.get("/scans", response_model=list[ScanListItem])
