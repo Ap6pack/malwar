@@ -690,3 +690,89 @@ curl -X POST http://localhost:8000/api/v1/signatures \
 curl "http://localhost:8000/api/v1/reports?verdict=MALICIOUS&min_risk_score=75" \
   -H "X-API-Key: your-key"
 ```
+
+---
+
+## Webhooks
+
+Malwar can send webhook notifications when a scan completes with a verdict that matches the configured verdicts list. Webhooks are fired asynchronously and do not block the scan response.
+
+### Configuration
+
+Configure webhooks using environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `MALWAR_WEBHOOK_URL` | `""` | URL to POST webhook payloads to |
+| `MALWAR_WEBHOOK_SECRET` | `""` | HMAC secret for signing payloads |
+| `MALWAR_WEBHOOK_VERDICTS` | `"MALICIOUS,SUSPICIOUS"` | Comma-separated list of verdicts that trigger webhooks |
+| `MALWAR_WEBHOOK_URLS` | `[]` | Legacy: comma-separated list of multiple webhook URLs |
+
+### Payload Schema
+
+When a scan completes with a matching verdict, a JSON payload is POSTed to the configured webhook URL:
+
+```json
+{
+  "event": "scan.completed",
+  "scan_id": "a1b2c3d4e5f6",
+  "verdict": "MALICIOUS",
+  "risk_score": 95,
+  "finding_count": 4,
+  "skill_name": "Malicious Tool",
+  "timestamp": "2026-02-20T10:30:00.123456+00:00",
+  "top_findings": [
+    {
+      "rule_id": "MALWAR-CMD-001",
+      "title": "Remote script piped to shell",
+      "severity": "critical",
+      "confidence": 0.92,
+      "category": "suspicious_command"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `event` | string | Always `"scan.completed"` |
+| `scan_id` | string | Unique identifier for the scan |
+| `verdict` | string | Scan verdict: `MALICIOUS`, `SUSPICIOUS`, `CAUTION`, or `CLEAN` |
+| `risk_score` | integer | Risk score from 0-100 |
+| `finding_count` | integer | Total number of findings |
+| `skill_name` | string \| null | Name of the scanned skill (from frontmatter) |
+| `timestamp` | string | ISO 8601 timestamp of when the webhook was sent |
+| `top_findings` | array | Up to 5 most relevant findings (summary only) |
+
+### HMAC Signing
+
+When `MALWAR_WEBHOOK_SECRET` is configured, each webhook request includes an `X-Malwar-Signature` header containing an HMAC-SHA256 hex digest of the JSON payload. To verify the signature:
+
+1. Serialize the received JSON payload with compact separators (`,` and `:`) and sorted keys
+2. Compute `HMAC-SHA256(secret, serialized_payload)`
+3. Compare with the value in the `X-Malwar-Signature` header
+
+Example verification in Python:
+
+```python
+import hashlib
+import hmac
+import json
+
+def verify_signature(payload: dict, secret: str, signature: str) -> bool:
+    payload_bytes = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    expected = hmac.new(secret.encode("utf-8"), payload_bytes, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+```
+
+### Retry Logic
+
+Webhook delivery is retried up to 3 times with exponential backoff on failure:
+
+| Attempt | Delay before retry |
+|---|---|
+| 1st retry | 1 second |
+| 2nd retry | 2 seconds |
+| 3rd retry | 4 seconds |
+
+After all retries are exhausted, the failure is logged but does not affect the scan result. The scan API response is returned immediately; webhook delivery happens asynchronously in the background.

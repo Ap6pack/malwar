@@ -32,12 +32,22 @@ class Settings(BaseSettings):
 
     # Webhook notifications
     webhook_urls: list[str] = []
+    webhook_url: str = ""
+    webhook_secret: str = ""
+    webhook_verdicts: list[str] = ["MALICIOUS", "SUSPICIOUS"]
 
     @field_validator("webhook_urls", mode="before")
     @classmethod
     def _parse_webhook_urls(cls, v: object) -> list[str]:
         if isinstance(v, str):
             return [u.strip() for u in v.split(",") if u.strip()]
+        return v if isinstance(v, list) else []
+
+    @field_validator("webhook_verdicts", mode="before")
+    @classmethod
+    def _parse_webhook_verdicts(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
         return v if isinstance(v, list) else []
 
     # LLM (Anthropic)

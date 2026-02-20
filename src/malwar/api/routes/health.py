@@ -4,23 +4,35 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter()
 
 
-@router.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok", "service": "malwar", "version": "0.1.0"}
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+    version: str
 
 
-@router.get("/ready")
-async def ready() -> dict[str, str]:
+class ReadyResponse(BaseModel):
+    status: str
+    database: str
+
+
+@router.get("/health", response_model=HealthResponse)
+async def health() -> HealthResponse:
+    return HealthResponse(status="ok", service="malwar", version="0.1.0")
+
+
+@router.get("/ready", response_model=ReadyResponse)
+async def ready() -> ReadyResponse:
     from malwar.storage.database import get_db
 
     try:
         db = await get_db()
         cursor = await db.execute("SELECT 1")
         await cursor.fetchone()
-        return {"status": "ready", "database": "connected"}
+        return ReadyResponse(status="ready", database="connected")
     except Exception as exc:
-        return {"status": "not_ready", "database": str(exc)}
+        return ReadyResponse(status="not_ready", database=str(exc))

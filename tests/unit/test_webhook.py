@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import logging
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -93,11 +94,13 @@ class TestWebhookNotifier:
         import json
 
         body = json.loads(payload)
+        assert body["event"] == "scan.completed"
         assert body["scan_id"] == "scan-webhook-test-001"
         assert body["verdict"] == "MALICIOUS"
         assert body["risk_score"] >= 75
         assert body["skill_name"] == "evil-skill"
         assert body["finding_count"] == 1
+        assert "timestamp" in body
         assert len(body["top_findings"]) == 1
         assert body["top_findings"][0]["rule_id"] == "rule-test-001"
 
@@ -163,7 +166,10 @@ class TestWebhookNotifier:
         await notifier.notify(result)
 
     @respx.mock
-    async def test_failure_is_logged_not_raised(self, caplog: pytest.LogCaptureFixture) -> None:
+    @patch("malwar.notifications.webhook.asyncio.sleep", new_callable=AsyncMock)
+    async def test_failure_is_logged_not_raised(
+        self, mock_sleep: AsyncMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """HTTP failures should be logged but not propagated as exceptions."""
         url = "https://hooks.example.com/fail"
         respx.post(url).mock(return_value=httpx.Response(500))
@@ -178,8 +184,9 @@ class TestWebhookNotifier:
         assert any("Webhook delivery failed" in record.message for record in caplog.records)
 
     @respx.mock
+    @patch("malwar.notifications.webhook.asyncio.sleep", new_callable=AsyncMock)
     async def test_connection_error_is_logged_not_raised(
-        self, caplog: pytest.LogCaptureFixture
+        self, mock_sleep: AsyncMock, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Connection errors should be logged but not propagated."""
         url = "https://hooks.example.com/timeout"
@@ -194,7 +201,10 @@ class TestWebhookNotifier:
         assert any("Webhook delivery failed" in record.message for record in caplog.records)
 
     @respx.mock
-    async def test_partial_failure_continues_to_remaining_urls(self) -> None:
+    @patch("malwar.notifications.webhook.asyncio.sleep", new_callable=AsyncMock)
+    async def test_partial_failure_continues_to_remaining_urls(
+        self, mock_sleep: AsyncMock
+    ) -> None:
         """If one webhook URL fails, the others should still be attempted."""
         url_fail = "https://hooks.example.com/fail"
         url_ok = "https://hooks.example.com/ok"
@@ -207,3 +217,81 @@ class TestWebhookNotifier:
         await notifier.notify(result)
 
         assert route_ok.called
+
+    @respx.mock
+    async def test_hmac_signature_included_when_secret_set(self) -> None:
+        """When a secret is configured, X-Malwar-Signature header should be present."""
+        url = "https://hooks.example.com/signed"
+        route = respx.post(url).mock(return_value=httpx.Response(200))
+
+        notifier = WebhookNotifier(urls=[url], secret="my-secret-key")  # noqa: S106
+        result = _make_result(verdict_risk=80)
+        await notifier.notify(result)
+
+        assert route.called
+        request = route.calls[0].request
+        assert "X-Malwar-Signature" in request.headers
+        assert len(request.headers["X-Malwar-Signature"]) == 64  # SHA256 hex digest
+
+    @respx.mock
+    async def test_no_signature_when_no_secret(self) -> None:
+        """When no secret is configured, X-Malwar-Signature header should be absent."""
+        url = "https://hooks.example.com/unsigned"
+        route = respx.post(url).mock(return_value=httpx.Response(200))
+
+        notifier = WebhookNotifier(urls=[url])
+        result = _make_result(verdict_risk=80)
+        await notifier.notify(result)
+
+        assert route.called
+        request = route.calls[0].request
+        assert "X-Malwar-Signature" not in request.headers
+
+    @respx.mock
+    async def test_single_url_parameter(self) -> None:
+        """The url keyword parameter should work for a single webhook."""
+        url = "https://hooks.example.com/single"
+        route = respx.post(url).mock(return_value=httpx.Response(200))
+
+        notifier = WebhookNotifier(url=url)
+        result = _make_result(verdict_risk=80)
+        await notifier.notify(result)
+
+        assert route.called
+
+    @respx.mock
+    async def test_custom_verdicts_filter(self) -> None:
+        """Custom verdicts list should control which verdicts trigger webhooks."""
+        url = "https://hooks.example.com/custom"
+        route = respx.post(url).mock(return_value=httpx.Response(200))
+
+        # Only trigger on MALICIOUS, not SUSPICIOUS
+        notifier = WebhookNotifier(urls=[url], verdicts=["MALICIOUS"])
+        result = _make_result(verdict_risk=50)  # SUSPICIOUS verdict
+        await notifier.notify(result)
+
+        assert not route.called
+
+    @respx.mock
+    @patch("malwar.notifications.webhook.asyncio.sleep", new_callable=AsyncMock)
+    async def test_retry_on_failure_then_succeed(self, mock_sleep: AsyncMock) -> None:
+        """Webhook should retry on failure and succeed on subsequent attempt."""
+        url = "https://hooks.example.com/retry"
+
+        call_count = 0
+
+        def side_effect(request):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return httpx.Response(503)
+            return httpx.Response(200)
+
+        respx.post(url).mock(side_effect=side_effect)
+
+        notifier = WebhookNotifier(urls=[url])
+        result = _make_result(verdict_risk=80)
+        await notifier.notify(result)
+
+        assert call_count == 2
+        mock_sleep.assert_called_once_with(1)  # First backoff: 1s

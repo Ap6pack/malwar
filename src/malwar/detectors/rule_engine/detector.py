@@ -5,14 +5,20 @@ from __future__ import annotations
 
 import logging
 
+import malwar.detectors.rule_engine.rules.agent_hijacking
 import malwar.detectors.rule_engine.rules.credential_exposure
+import malwar.detectors.rule_engine.rules.env_harvesting
 import malwar.detectors.rule_engine.rules.exfiltration
 import malwar.detectors.rule_engine.rules.known_malware
+import malwar.detectors.rule_engine.rules.multi_step
 
 # Import all rule modules to trigger registration
 import malwar.detectors.rule_engine.rules.obfuscation
+import malwar.detectors.rule_engine.rules.persistence
 import malwar.detectors.rule_engine.rules.prompt_injection
 import malwar.detectors.rule_engine.rules.social_engineering
+import malwar.detectors.rule_engine.rules.steganography
+import malwar.detectors.rule_engine.rules.supply_chain
 import malwar.detectors.rule_engine.rules.suspicious_commands  # noqa: F401
 from malwar.core.constants import DetectorLayer
 from malwar.detectors.rule_engine.registry import RuleRegistry

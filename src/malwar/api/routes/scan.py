@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -133,9 +134,16 @@ async def _persist_result(result: ScanResult) -> None:
 
 async def _send_webhook(result: ScanResult, settings: Settings) -> None:
     """Fire webhook notifications for malicious/suspicious results."""
-    if not settings.webhook_urls:
+    urls = list(settings.webhook_urls)
+    if settings.webhook_url:
+        urls.append(settings.webhook_url)
+    if not urls:
         return
-    notifier = WebhookNotifier(urls=settings.webhook_urls)
+    notifier = WebhookNotifier(
+        urls=urls,
+        secret=settings.webhook_secret,
+        verdicts=settings.webhook_verdicts,
+    )
     await notifier.notify(result)
 
 
@@ -169,7 +177,7 @@ async def scan_skill(
     result = await pipeline.scan(skill, layers=layers)
 
     await _persist_result(result)
-    await _send_webhook(result, settings)
+    asyncio.create_task(_send_webhook(result, settings))  # noqa: RUF006
 
     return _result_to_response(result)
 
@@ -206,7 +214,7 @@ async def scan_batch(
 
         result = await pipeline.scan(skill, layers=layers)
         await _persist_result(result)
-        await _send_webhook(result, settings)
+        asyncio.create_task(_send_webhook(result, settings))  # noqa: RUF006
         results.append(_result_to_response(result))
 
     return results
