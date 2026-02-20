@@ -36,6 +36,10 @@ class ScanRequestBody(BaseModel):
     use_llm: bool = True
 
 
+class BatchScanRequestBody(BaseModel):
+    skills: list[ScanRequestBody]
+
+
 class FindingResponse(BaseModel):
     id: str
     rule_id: str
@@ -158,6 +162,43 @@ async def scan_skill(
     await _persist_result(result)
 
     return _result_to_response(result)
+
+
+@router.post("/scan/batch", response_model=list[ScanResponseBody])
+async def scan_batch(
+    body: BatchScanRequestBody,
+    _api_key: str = Depends(require_api_key),
+) -> list[ScanResponseBody]:
+    """Submit a batch of SKILL.md files for scanning."""
+    settings = get_settings()
+    results: list[ScanResponseBody] = []
+
+    for skill_request in body.skills:
+        try:
+            skill = parse_skill_content(
+                skill_request.content, file_path=skill_request.file_name
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Parse error for {skill_request.file_name}: {exc}",
+            ) from exc
+
+        layers = list(skill_request.layers)
+        if not skill_request.use_llm and "llm_analyzer" in layers:
+            layers.remove("llm_analyzer")
+
+        pipeline = ScanPipeline(settings=settings)
+        pipeline.register_detector(RuleEngineDetector())
+        pipeline.register_detector(UrlCrawlerDetector())
+        pipeline.register_detector(LlmAnalyzerDetector(settings=settings))
+        pipeline.register_detector(ThreatIntelDetector())
+
+        result = await pipeline.scan(skill, layers=layers)
+        await _persist_result(result)
+        results.append(_result_to_response(result))
+
+    return results
 
 
 @router.get("/scan/{scan_id}", response_model=ScanResponseBody)

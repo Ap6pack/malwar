@@ -14,6 +14,43 @@ class SignatureRepository:
     def __init__(self, db: aiosqlite.Connection) -> None:
         self._db = db
 
+    async def get_by_id(self, sig_id: str) -> dict[str, Any] | None:
+        """Return a single signature by ID, or None if not found."""
+        cursor = await self._db.execute(
+            "SELECT * FROM signatures WHERE id = ?", (sig_id,)
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def get_all(
+        self,
+        *,
+        pattern_type: str | None = None,
+        ioc_type: str | None = None,
+        campaign_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return all signatures with optional filters."""
+        clauses: list[str] = []
+        params: list[Any] = []
+
+        if pattern_type is not None:
+            clauses.append("pattern_type = ?")
+            params.append(pattern_type)
+        if ioc_type is not None:
+            clauses.append("ioc_type = ?")
+            params.append(ioc_type)
+        if campaign_id is not None:
+            clauses.append("campaign_id = ?")
+            params.append(campaign_id)
+
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        cursor = await self._db.execute(
+            f"SELECT * FROM signatures{where} ORDER BY severity, name",  # noqa: S608
+            params,
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
     async def get_all_enabled(self) -> list[dict[str, Any]]:
         """Return all enabled signatures."""
         cursor = await self._db.execute(
@@ -86,3 +123,11 @@ class SignatureRepository:
             params,
         )
         await self._db.commit()
+
+    async def delete(self, sig_id: str) -> bool:
+        """Delete a signature by ID. Return True if a row was deleted."""
+        cursor = await self._db.execute(
+            "DELETE FROM signatures WHERE id = ?", (sig_id,)
+        )
+        await self._db.commit()
+        return cursor.rowcount > 0

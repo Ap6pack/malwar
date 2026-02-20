@@ -166,6 +166,138 @@ def serve(
 
 
 @app.command()
+def signature_list() -> None:
+    """List threat signatures from the database."""
+    asyncio.run(_async_signature_list())
+
+
+async def _async_signature_list() -> None:
+    from rich.console import Console
+    from rich.table import Table
+
+    from malwar.core.config import get_settings
+    from malwar.storage.database import close_db, init_db
+    from malwar.storage.repositories.signatures import SignatureRepository
+
+    settings = get_settings()
+    db = await init_db(settings.db_path)
+
+    try:
+        repo = SignatureRepository(db)
+        rows = await repo.get_all()
+
+        console = Console()
+        table = Table(title="Threat Signatures")
+        table.add_column("ID", style="cyan", no_wrap=True)
+        table.add_column("Name", style="bold")
+        table.add_column("Severity", style="red")
+        table.add_column("Pattern Type")
+        table.add_column("IOC Type")
+        table.add_column("Source")
+        table.add_column("Enabled")
+
+        for row in rows:
+            table.add_row(
+                row["id"],
+                row["name"],
+                row["severity"],
+                row["pattern_type"],
+                row.get("ioc_type") or "-",
+                row.get("source", "manual"),
+                "yes" if row.get("enabled") else "no",
+            )
+
+        console.print(table)
+    finally:
+        await close_db()
+
+
+@app.command()
+def signature_add(
+    pattern_type: Annotated[
+        str, typer.Argument(help="Pattern type: regex | exact | fuzzy | ioc")
+    ],
+    pattern_value: Annotated[str, typer.Argument(help="Pattern value to match")],
+    name: Annotated[
+        str, typer.Option("--name", "-n", help="Signature name")
+    ] = "",
+    severity: Annotated[
+        str, typer.Option("--severity", "-s", help="Severity: critical|high|medium|low|info")
+    ] = "medium",
+    category: Annotated[
+        str, typer.Option("--category", "-c", help="Threat category")
+    ] = "known_malware",
+    ioc_type: Annotated[
+        str | None,
+        typer.Option("--ioc-type", help="IOC type: ip|domain|url|hash|email"),
+    ] = None,
+    campaign_id: Annotated[
+        str | None,
+        typer.Option("--campaign-id", help="Linked campaign ID"),
+    ] = None,
+    source: Annotated[
+        str, typer.Option("--source", help="Signature source")
+    ] = "manual",
+    description: Annotated[
+        str, typer.Option("--description", "-d", help="Signature description")
+    ] = "",
+) -> None:
+    """Add a new threat signature to the database."""
+    asyncio.run(
+        _async_signature_add(
+            pattern_type, pattern_value, name, severity, category,
+            ioc_type, campaign_id, source, description,
+        )
+    )
+
+
+async def _async_signature_add(
+    pattern_type: str,
+    pattern_value: str,
+    name: str,
+    severity: str,
+    category: str,
+    ioc_type: str | None,
+    campaign_id: str | None,
+    source: str,
+    description: str,
+) -> None:
+    import uuid
+
+    from malwar.core.config import get_settings
+    from malwar.storage.database import close_db, init_db
+    from malwar.storage.repositories.signatures import SignatureRepository
+
+    settings = get_settings()
+    db = await init_db(settings.db_path)
+
+    try:
+        repo = SignatureRepository(db)
+
+        sig_id = f"sig-{uuid.uuid4().hex[:12]}"
+        sig_name = name or f"{pattern_type}-{pattern_value[:30]}"
+        sig_desc = description or f"Signature for {pattern_type} pattern: {pattern_value}"
+
+        await repo.create({
+            "id": sig_id,
+            "name": sig_name,
+            "description": sig_desc,
+            "severity": severity,
+            "category": category,
+            "pattern_type": pattern_type,
+            "pattern_value": pattern_value,
+            "ioc_type": ioc_type,
+            "campaign_id": campaign_id,
+            "source": source,
+            "enabled": True,
+        })
+
+        typer.echo(f"Created signature {sig_id}: {sig_name}")
+    finally:
+        await close_db()
+
+
+@app.command()
 def version() -> None:
     """Show version information."""
     from malwar import __version__
