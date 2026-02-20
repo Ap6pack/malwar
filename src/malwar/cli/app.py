@@ -11,7 +11,8 @@ from typing import Annotated
 
 import typer
 
-from malwar.cli.commands import db, export, ingest
+from malwar.cli.commands import db, export, ingest, test_rules
+from malwar.cli.commands.diff import diff_command
 
 app = typer.Typer(
     name="malwar",
@@ -22,6 +23,9 @@ app = typer.Typer(
 app.add_typer(db.app, name="db", help="Database management")
 app.add_typer(export.app, name="export", help="Export threat intelligence (STIX/TAXII)")
 app.add_typer(ingest.app, name="ingest", help="Import threat intelligence from external sources")
+
+app.command(name="diff")(diff_command)
+app.add_typer(test_rules.app, name="test-rules", help="Run rule test suite")
 
 
 class OutputFormat(StrEnum):

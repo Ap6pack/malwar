@@ -1,0 +1,163 @@
+version: "1"
+description: "Rule testing manifest — validates all detection rules against known fixtures"
+base_dir: ".."
+
+test_cases:
+  # ===================================================================
+  # Benign fixtures — should all be CLEAN with no rules firing
+  # ===================================================================
+
+  - fixture: tests/fixtures/skills/benign/code_formatter.md
+    expected_verdict: CLEAN
+    description: "Benign code formatter skill"
+
+  - fixture: tests/fixtures/skills/benign/git_helper.md
+    expected_verdict: CLEAN
+    description: "Benign git helper skill"
+
+  - fixture: tests/fixtures/skills/benign/hello_world.md
+    expected_verdict: CLEAN
+    description: "Benign hello world skill"
+
+  - fixture: tests/fixtures/skills/benign/legitimate_with_urls.md
+    expected_verdict: CLEAN
+    description: "Benign skill with legitimate URLs"
+
+  - fixture: tests/fixtures/skills/benign/web_search.md
+    expected_verdict: CLEAN
+    description: "Benign web search skill"
+
+  # ===================================================================
+  # Malicious fixtures — should all be detected
+  # ===================================================================
+
+  - fixture: tests/fixtures/skills/malicious/agent_hijacking.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-HIJACK-001
+    description: "Agent identity hijacking via prompt injection"
+
+  - fixture: tests/fixtures/skills/malicious/base64_reverse_shell.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-OBF-001
+      - MALWAR-OBF-003
+    description: "Base64-encoded reverse shell with direct IP"
+
+  - fixture: tests/fixtures/skills/malicious/clawhavoc_amos.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-MAL-001
+      - MALWAR-OBF-001
+    description: "ClawHavoc campaign AMOS stealer variant"
+
+  - fixture: tests/fixtures/skills/malicious/clickfix_fake_prereq.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-CMD-001
+    description: "ClickFix-style fake prerequisite with piped shell"
+
+  - fixture: tests/fixtures/skills/malicious/credential_harvester.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-CRED-002
+      - MALWAR-ENV-001
+    description: "Credential harvesting with env var exfiltration"
+
+  - fixture: tests/fixtures/skills/malicious/env_harvesting.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-ENV-001
+    description: "Environment variable harvesting"
+
+  - fixture: tests/fixtures/skills/malicious/exfil_soul_md.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-ENV-001
+      - MALWAR-EXFIL-001
+      - MALWAR-PERSIST-002
+    description: "Agent memory exfiltration with file system modification"
+
+  - fixture: tests/fixtures/skills/malicious/filesystem_modification.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-PERSIST-002
+    description: "Unauthorized file system modification"
+
+  - fixture: tests/fixtures/skills/malicious/multi_stage_dropper.md
+    expected_verdict: SUSPICIOUS
+    expected_rules:
+      - MALWAR-CMD-004
+    description: "Multi-stage dropper with download-and-execute pattern"
+
+  - fixture: tests/fixtures/skills/malicious/multi_step_manipulation.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-MULTI-001
+    description: "Multi-step social engineering manipulation"
+
+  - fixture: tests/fixtures/skills/malicious/obfuscated_curl.md
+    expected_verdict: SUSPICIOUS
+    expected_rules:
+      - MALWAR-OBF-003
+    description: "Obfuscated curl command with direct IP address"
+
+  - fixture: tests/fixtures/skills/malicious/persistence_mechanism.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-PERSIST-001
+      - MALWAR-PERSIST-002
+      - MALWAR-CMD-001
+    description: "Persistence mechanism with crontab and shell pipe"
+
+  - fixture: tests/fixtures/skills/malicious/prompt_injection_basic.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-PI-001
+      - MALWAR-CMD-001
+    description: "Basic prompt injection with piped shell command"
+
+  - fixture: tests/fixtures/skills/malicious/prompt_injection_unicode.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-PI-002
+      - MALWAR-PI-003
+      - MALWAR-STEG-001
+      - MALWAR-CMD-001
+    description: "Unicode smuggling prompt injection with hidden instructions"
+
+  - fixture: tests/fixtures/skills/malicious/shadowpkg_typosquat.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-SUPPLY-001
+    description: "ShadowPkg typosquatting supply chain attack"
+
+  - fixture: tests/fixtures/skills/malicious/snyktoxic_vercel_exfil.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-EXFIL-001
+      - MALWAR-SE-003
+      - MALWAR-CMD-001
+      - MALWAR-CMD-003
+    description: "SnykToxic Vercel exfiltration with password-protected archive"
+
+  - fixture: tests/fixtures/skills/malicious/steganographic.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-PI-002
+      - MALWAR-STEG-001
+    description: "Steganographic hidden content with unicode smuggling"
+
+  - fixture: tests/fixtures/skills/malicious/supply_chain.md
+    expected_verdict: MALICIOUS
+    expected_rules:
+      - MALWAR-SUPPLY-001
+    description: "Supply chain attack via malicious packages"
+
+  - fixture: tests/fixtures/skills/malicious/typosquatted_package.md
+    expected_verdict: SUSPICIOUS
+    expected_rules:
+      - MALWAR-SE-002
+    not_expected_rules:
+      - MALWAR-PI-001
+    description: "Typosquatted package name detection"

@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     crawler_max_response_bytes: int = 1_048_576
     crawler_concurrency: int = 5
 
+    # Custom YAML rules
+    custom_rules_dir: str = ""
+
     # Scanner
     scan_max_file_size: int = 524_288
     scan_default_layers: list[str] = [

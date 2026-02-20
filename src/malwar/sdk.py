@@ -26,6 +26,7 @@ from malwar.detectors.threat_intel.detector import ThreatIntelDetector
 from malwar.detectors.url_crawler.detector import UrlCrawlerDetector
 from malwar.models.scan import ScanResult
 from malwar.parsers.skill_parser import parse_skill_content
+from malwar.scanner.diff import DiffResult
 from malwar.scanner.pipeline import ScanPipeline
 
 logger = logging.getLogger("malwar.sdk")
@@ -261,6 +262,84 @@ def scan_file_sync(
     return asyncio.run(
         scan_file(
             path,
+            file_name=file_name,
+            use_llm=use_llm,
+            use_urls=use_urls,
+            layers=layers,
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# Diff scanning
+# ---------------------------------------------------------------------------
+
+
+async def diff(
+    old_content: str,
+    new_content: str,
+    *,
+    file_name: str = "SKILL.md",
+    use_llm: bool = True,
+    use_urls: bool = True,
+    layers: list[str] | None = None,
+) -> DiffResult:
+    """Compare two versions of a SKILL.md and return a :class:`DiffResult`.
+
+    Both versions are scanned independently using the same pipeline
+    configuration, then findings are compared to identify what changed.
+
+    Parameters
+    ----------
+    old_content:
+        Raw text of the *old* (baseline) SKILL.md version.
+    new_content:
+        Raw text of the *new* (updated) SKILL.md version.
+    file_name:
+        A label used as the ``target`` in both scan results.
+    use_llm:
+        Set ``False`` to skip the LLM analysis layer.
+    use_urls:
+        Set ``False`` to skip URL crawling.
+    layers:
+        Explicit list of layer names to execute.
+
+    Returns
+    -------
+    DiffResult
+        Comparison result with new/removed/unchanged findings and
+        verdict change information.
+    """
+    from malwar.scanner.diff import diff_scan
+
+    return await diff_scan(
+        old_content,
+        new_content,
+        file_name=file_name,
+        use_llm=use_llm,
+        use_urls=use_urls,
+        layers=layers,
+    )
+
+
+def diff_sync(
+    old_content: str,
+    new_content: str,
+    *,
+    file_name: str = "SKILL.md",
+    use_llm: bool = True,
+    use_urls: bool = True,
+    layers: list[str] | None = None,
+) -> DiffResult:
+    """Synchronous wrapper around :func:`diff`.
+
+    Calls ``asyncio.run()`` internally, so it must **not** be called from
+    within an already-running event loop.
+    """
+    return asyncio.run(
+        diff(
+            old_content,
+            new_content,
             file_name=file_name,
             use_llm=use_llm,
             use_urls=use_urls,

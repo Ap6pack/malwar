@@ -1,0 +1,28 @@
+# Custom rule: Block known-malicious or policy-violating domains.
+# Copy this file to your custom_rules_dir and adjust the patterns as needed.
+
+id: CUSTOM-DOMAIN-001
+title: Blocked domain detected
+description: >
+  The skill references a domain that is on the organisation's blocklist.
+  This may indicate data exfiltration, phishing, or policy violations.
+severity: high
+category: malicious_url
+confidence: 0.90
+enabled: true
+match: any
+
+patterns:
+  - pattern: "evil-domain\\.example\\.com"
+    match_type: regex
+    target: urls
+
+  - pattern: "malware-c2.example.net"
+    match_type: contains
+    target: urls
+
+  - pattern: "shady-cdn.example.org"
+    match_type: contains
+    target: content
+
+evidence_template: "Blocked domain matched by pattern '${pattern}' in ${target}"

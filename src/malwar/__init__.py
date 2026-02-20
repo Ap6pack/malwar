@@ -9,7 +9,7 @@ from malwar.integrations.langchain import (
     MalwarGuard,
     MalwarScanTool,
 )
-from malwar.sdk import scan, scan_batch, scan_file, scan_file_sync, scan_sync
+from malwar.sdk import diff, diff_sync, scan, scan_batch, scan_file, scan_file_sync, scan_sync
 
 __all__ = [
     "MalwarBlockedError",
@@ -17,6 +17,8 @@ __all__ = [
     "MalwarGuard",
     "MalwarScanTool",
     "__version__",
+    "diff",
+    "diff_sync",
     "scan",
     "scan_batch",
     "scan_file",

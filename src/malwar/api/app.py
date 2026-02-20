@@ -16,6 +16,7 @@ from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware, UsageL
 from malwar.api.routes import (
     analytics,
     campaigns,
+    diff,
     export,
     feed,
     health,
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(scan.router, prefix="/api/v1", tags=["scan"])
+    app.include_router(diff.router, prefix="/api/v1", tags=["diff"])
     app.include_router(campaigns.router, prefix="/api/v1", tags=["campaigns"])
     app.include_router(signatures.router, prefix="/api/v1", tags=["signatures"])
     app.include_router(reports.router, prefix="/api/v1", tags=["reports"])

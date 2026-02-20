@@ -1,0 +1,28 @@
+# Custom rule: Enforce internal security policies.
+# Flags usage of sudo or curl/wget to raw IP addresses inside code blocks.
+
+id: CUSTOM-POLICY-001
+title: Internal security policy violation
+description: >
+  The skill contains commands that violate internal security policy, such as
+  using sudo or making network requests to raw IP addresses.
+severity: medium
+category: suspicious_command
+confidence: 0.85
+enabled: true
+match: any
+
+patterns:
+  - pattern: "\\bsudo\\b"
+    match_type: regex
+    target: code_blocks
+
+  - pattern: "curl\\s+https?://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+    match_type: regex
+    target: content
+
+  - pattern: "wget\\s+https?://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+    match_type: regex
+    target: content
+
+evidence_template: "Policy violation: '${pattern}' found in ${target}"
