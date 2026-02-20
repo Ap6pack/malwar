@@ -241,6 +241,16 @@ async def run_migrations(db: aiosqlite.Connection) -> None:
         await db.execute(idx_sql)
 
     # Seed data
+    await seed_data(db)
+
+    await db.commit()
+
+
+async def seed_data(db: aiosqlite.Connection) -> None:
+    """Insert seed data (campaigns, signatures, publishers).
+
+    Uses INSERT OR IGNORE so it is safe to run repeatedly.
+    """
     await db.execute(_SEED_CAMPAIGN)
 
     for sig in _SEED_SIGNATURES:
@@ -248,5 +258,3 @@ async def run_migrations(db: aiosqlite.Connection) -> None:
 
     for publisher_id in _SEED_PUBLISHERS:
         await db.execute(_SEED_PUBLISHER_SQL, (publisher_id,))
-
-    await db.commit()

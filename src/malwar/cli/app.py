@@ -297,6 +297,138 @@ async def _async_signature_add(
         await close_db()
 
 
+@app.command(name="report-show")
+def report_show(
+    scan_id: Annotated[
+        str, typer.Argument(help="Scan ID to show report for")
+    ],
+) -> None:
+    """Show a detailed report for a scan."""
+    asyncio.run(_async_report_show(scan_id))
+
+
+async def _async_report_show(scan_id: str) -> None:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    from malwar.core.config import get_settings
+    from malwar.storage.database import close_db, init_db
+    from malwar.storage.repositories.findings import FindingRepository
+    from malwar.storage.repositories.scans import ScanRepository
+
+    settings = get_settings()
+    db = await init_db(settings.db_path)
+
+    try:
+        scan_repo = ScanRepository(db)
+        finding_repo = FindingRepository(db)
+
+        result = await scan_repo.get(scan_id)
+        if result is None:
+            typer.echo(f"Scan {scan_id} not found.", err=True)
+            raise typer.Exit(1)
+
+        finding_rows = await finding_repo.get_by_scan(scan_id)
+
+        console = Console()
+
+        # Verdict color mapping
+        verdict_colors = {
+            "MALICIOUS": "bold red",
+            "SUSPICIOUS": "yellow",
+            "CAUTION": "cyan",
+            "CLEAN": "bold green",
+        }
+        verdict_color = verdict_colors.get(result.verdict, "white")
+
+        # Header panel
+        header_lines = [
+            f"Scan ID:    {result.scan_id}",
+            f"Verdict:    [{verdict_color}]{result.verdict}[/{verdict_color}]",
+            f"Risk Score: {result.risk_score}/100",
+            f"Severity:   {result.overall_severity}",
+            f"Timestamp:  {result.started_at.isoformat()}",
+        ]
+        if result.skill_name:
+            header_lines.insert(1, f"Skill:      {result.skill_name}")
+        if result.duration_ms is not None:
+            header_lines.append(f"Duration:   {result.duration_ms / 1000:.1f}s")
+
+        console.print(Panel("\n".join(header_lines), title="Scan Report"))
+
+        # Severity breakdown
+        severity_counts: dict[str, int] = {}
+        category_counts: dict[str, int] = {}
+        for f in finding_rows:
+            sev = f.get("severity", "unknown")
+            severity_counts[sev] = severity_counts.get(sev, 0) + 1
+            cat = f.get("category", "unknown")
+            category_counts[cat] = category_counts.get(cat, 0) + 1
+
+        summary_table = Table(title="Summary")
+        summary_table.add_column("Severity", style="bold")
+        summary_table.add_column("Count", justify="right")
+        for sev in ["critical", "high", "medium", "low", "info"]:
+            if sev in severity_counts:
+                summary_table.add_row(sev, str(severity_counts[sev]))
+        console.print(summary_table)
+
+        cat_table = Table(title="Categories")
+        cat_table.add_column("Category", style="bold")
+        cat_table.add_column("Count", justify="right")
+        for cat, count in sorted(category_counts.items()):
+            cat_table.add_row(cat, str(count))
+        console.print(cat_table)
+
+        # Findings table
+        if finding_rows:
+            findings_table = Table(title="Findings")
+            findings_table.add_column("Rule ID", style="cyan", no_wrap=True)
+            findings_table.add_column("Title", style="bold")
+            findings_table.add_column("Severity", style="red")
+            findings_table.add_column("Confidence", justify="right")
+            findings_table.add_column("Line", justify="right")
+            findings_table.add_column("Detector")
+
+            for f in finding_rows:
+                findings_table.add_row(
+                    f["rule_id"],
+                    f["title"],
+                    f["severity"],
+                    f"{f['confidence']:.2f}",
+                    str(f.get("line_start") or "-"),
+                    f["detector_layer"],
+                )
+            console.print(findings_table)
+        else:
+            console.print("[bold green]No findings.[/bold green]")
+    finally:
+        await close_db()
+
+
+@app.command(name="db-seed")
+def db_seed() -> None:
+    """Run seed data independently (campaigns, signatures, publishers)."""
+    asyncio.run(_async_db_seed())
+
+
+async def _async_db_seed() -> None:
+    from malwar.core.config import get_settings
+    from malwar.storage.database import close_db, init_db
+    from malwar.storage.migrations import seed_data
+
+    settings = get_settings()
+    db = await init_db(settings.db_path)
+
+    try:
+        await seed_data(db)
+        await db.commit()
+        typer.echo("Seed data inserted successfully.")
+    finally:
+        await close_db()
+
+
 @app.command()
 def version() -> None:
     """Show version information."""

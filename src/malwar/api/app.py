@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from malwar.api.routes import campaigns, health, scan, signatures
+from malwar.api.middleware import RequestMiddleware
+from malwar.api.routes import campaigns, health, reports, scan, signatures
 
 
 @asynccontextmanager
@@ -33,4 +34,6 @@ def create_app() -> FastAPI:
     app.include_router(scan.router, prefix="/api/v1", tags=["scan"])
     app.include_router(campaigns.router, prefix="/api/v1", tags=["campaigns"])
     app.include_router(signatures.router, prefix="/api/v1", tags=["signatures"])
+    app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
+    app.add_middleware(RequestMiddleware)
     return app
