@@ -2,13 +2,21 @@
 
 <div align="center">
 
-# Malwar
+# malwar
 
-**Malware detection engine for agentic AI skill files.**
+**Static analysis engine purpose-built for detecting malware in agentic AI skill files.**
 
-4-layer static analysis pipeline that catches what VirusTotal and code scanners miss.
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Python](https://img.shields.io/badge/python-3.13+-3776AB?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/license-proprietary-red)
+![CI](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml/badge.svg)
 
-`v0.1.0` &nbsp;&middot;&nbsp; Python 3.13+ &nbsp;&middot;&nbsp; 19 Rules &nbsp;&middot;&nbsp; SARIF Output &nbsp;&middot;&nbsp; [Web Dashboard](#web-dashboard)
+![Detection Rules](https://img.shields.io/badge/detection_rules-19-orange)
+![Pipeline Layers](https://img.shields.io/badge/pipeline_layers-4-green)
+![SARIF](https://img.shields.io/badge/output-SARIF_2.1.0-purple)
+![Coverage](https://img.shields.io/badge/coverage-89%25-brightgreen)
+
+[Web Dashboard](#web-dashboard) &nbsp;&middot;&nbsp; [API Docs](docs/api-reference.md) &nbsp;&middot;&nbsp; [Detection Rules](docs/detection-rules.md) &nbsp;&middot;&nbsp; [Deployment](docs/deployment.md)
 
 </div>
 
