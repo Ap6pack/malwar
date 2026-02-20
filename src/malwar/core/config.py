@@ -3,6 +3,7 @@
 
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +22,13 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_workers: int = 1
     api_keys: list[str] = []
+
+    @field_validator("api_keys", mode="before")
+    @classmethod
+    def _parse_api_keys(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [k.strip() for k in v.split(",") if k.strip()]
+        return v if isinstance(v, list) else []
 
     # LLM (Anthropic)
     anthropic_api_key: str = ""
