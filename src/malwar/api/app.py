@@ -17,6 +17,7 @@ from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware, UsageL
 from malwar.api.routes import (
     analytics,
     audit,
+    cache,
     campaigns,
     diff,
     export,
@@ -24,6 +25,7 @@ from malwar.api.routes import (
     health,
     ingest,
     notifications,
+    plugins,
     reports,
     scan,
     schedules,
@@ -94,6 +96,8 @@ def create_app(*, enable_scheduler: bool = True) -> FastAPI:
     app.include_router(schedules.router, prefix="/api/v1", tags=["schedules"])
     app.include_router(audit.router, prefix="/api/v1", tags=["audit"])
     app.include_router(notifications.router, prefix="/api/v1", tags=["notifications"])
+    app.include_router(plugins.router, prefix="/api/v1", tags=["plugins"])
+    app.include_router(cache.router, prefix="/api/v1", tags=["cache"])
     app.include_router(keys_router, prefix="/api/v1", tags=["keys"])
     app.add_middleware(AuditMiddleware)
     app.add_middleware(UsageLoggingMiddleware)

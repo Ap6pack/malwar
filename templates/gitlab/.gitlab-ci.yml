@@ -1,0 +1,86 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+#
+# Malwar GitLab CI Pipeline Template
+# ====================================
+# Scans SKILL.md files for malware, prompt injection, data exfiltration,
+# and other threats targeting agentic AI systems.
+#
+# Usage:
+#   include:
+#     - remote: 'https://raw.githubusercontent.com/Ap6pack/malwar/main/templates/gitlab/.gitlab-ci.yml'
+#
+#   # Override variables as needed:
+#   variables:
+#     MALWAR_SCAN_PATH: "skills/"
+#     MALWAR_FAIL_ON: "SUSPICIOUS"
+
+variables:
+  MALWAR_VERSION: ""           # Pin a specific version, e.g. "0.2.1". Empty = latest.
+  MALWAR_SCAN_PATH: "."       # Directory containing SKILL.md files to scan.
+  MALWAR_FAIL_ON: "MALICIOUS" # Verdict threshold: MALICIOUS, SUSPICIOUS, or CAUTION.
+  MALWAR_OUTPUT_FORMAT: "gitlab-codequality"  # Output format for CI integration.
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+stages:
+  - test
+
+malwar-scan:
+  stage: test
+  image: python:3.13-slim
+  cache:
+    key: malwar-pip
+    paths:
+      - .pip-cache/
+  before_script:
+    - |
+      if [ -n "$MALWAR_VERSION" ]; then
+        pip install --quiet "malwar==${MALWAR_VERSION}"
+      else
+        pip install --quiet malwar
+      fi
+  script:
+    - |
+      echo "Scanning ${MALWAR_SCAN_PATH} for threats..."
+      malwar scan "${MALWAR_SCAN_PATH}" \
+        --ci-mode \
+        --format "${MALWAR_OUTPUT_FORMAT}" \
+        --output gl-code-quality-report.json \
+        || SCAN_EXIT=$?
+
+      # Show summary to pipeline log
+      if [ "${SCAN_EXIT:-0}" -eq 0 ]; then
+        echo "Malwar scan passed: no threats detected."
+      elif [ "${SCAN_EXIT}" -eq 1 ]; then
+        echo "Malwar scan FAILED: malicious content detected."
+      elif [ "${SCAN_EXIT}" -eq 3 ]; then
+        echo "Malwar scan WARNING: suspicious/cautionary findings detected."
+      else
+        echo "Malwar scan encountered an error (exit code ${SCAN_EXIT})."
+      fi
+
+      # Apply fail-on threshold
+      THRESHOLD_MAP_MALICIOUS=1
+      THRESHOLD_MAP_SUSPICIOUS=3
+      THRESHOLD_MAP_CAUTION=3
+
+      case "${MALWAR_FAIL_ON}" in
+        MALICIOUS)
+          [ "${SCAN_EXIT:-0}" -eq "$THRESHOLD_MAP_MALICIOUS" ] && exit 1
+          ;;
+        SUSPICIOUS|CAUTION)
+          [ "${SCAN_EXIT:-0}" -eq "$THRESHOLD_MAP_MALICIOUS" ] && exit 1
+          [ "${SCAN_EXIT:-0}" -eq "$THRESHOLD_MAP_SUSPICIOUS" ] && exit 1
+          ;;
+      esac
+
+      exit 0
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths:
+      - gl-code-quality-report.json
+    when: always
+    expire_in: 30 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

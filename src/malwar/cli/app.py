@@ -12,7 +12,8 @@ from typing import Annotated
 import typer
 
 from malwar.cli.commands import audit as audit_cmd
-from malwar.cli.commands import db, export, ingest, keys, notify, schedule, test_rules
+from malwar.cli.commands import cache as cache_cmd
+from malwar.cli.commands import db, export, ingest, keys, ml, notify, plugin, schedule, test_rules
 from malwar.cli.commands.diff import diff_command
 
 app = typer.Typer(
@@ -31,12 +32,17 @@ app.add_typer(schedule.app, name="schedule", help="Manage scheduled scans")
 app.add_typer(keys.app, name="keys", help="Manage API keys (RBAC)")
 app.add_typer(notify.app, name="notify", help="Manage and test notification channels")
 app.add_typer(audit_cmd.app, name="audit", help="Query audit log events")
+app.add_typer(plugin.app, name="plugin", help="Manage detector plugins")
+app.add_typer(cache_cmd.app, name="cache", help="Manage scan result cache")
+app.add_typer(ml.app, name="ml", help="ML risk scoring model management")
 
 
 class OutputFormat(StrEnum):
     CONSOLE = "console"
     SARIF = "sarif"
     JSON = "json"
+    GITLAB_CODEQUALITY = "gitlab-codequality"
+    AZURE_ANNOTATIONS = "azure-annotations"
 
 
 @app.command()
@@ -62,9 +68,17 @@ def scan(
         str | None,
         typer.Option("--layers", help="Comma-separated layers to run"),
     ] = None,
+    ci_mode: Annotated[
+        bool,
+        typer.Option("--ci-mode", help="Enable CI mode with standardized exit codes"),
+    ] = False,
 ) -> None:
     """Scan a SKILL.md file, directory, or URL for malware."""
-    asyncio.run(_async_scan(target, fmt, output, no_llm, no_urls, layers))
+    exit_code = asyncio.run(
+        _async_scan(target, fmt, output, no_llm, no_urls, layers, ci_mode=ci_mode)
+    )
+    if ci_mode and exit_code is not None:
+        raise typer.Exit(exit_code)
 
 
 async def _async_scan(
@@ -74,7 +88,9 @@ async def _async_scan(
     no_llm: bool,
     no_urls: bool,
     layers_str: str | None,
-) -> None:
+    *,
+    ci_mode: bool = False,
+) -> int | None:
     from malwar.core.config import get_settings
     from malwar.detectors.llm_analyzer.detector import LlmAnalyzerDetector
     from malwar.detectors.rule_engine.detector import RuleEngineDetector
@@ -128,14 +144,40 @@ async def _async_scan(
             import json
             data = [r.model_dump(mode="json") for r in results]
             _write_output(json.dumps(data, indent=2), output)
+        elif fmt == OutputFormat.GITLAB_CODEQUALITY:
+            from malwar.ci.parser import format_gitlab_code_quality
+            _write_output(format_gitlab_code_quality(results), output)
+        elif fmt == OutputFormat.AZURE_ANNOTATIONS:
+            from malwar.ci.parser import format_azure_annotations
+            _write_output(format_azure_annotations(results), output)
+
+        if ci_mode:
+            from malwar.ci.exit_codes import verdict_to_exit_code
+            verdicts = [r.verdict for r in results]
+            if verdicts:
+                worst = max(
+                    verdicts,
+                    key=lambda v: ["CLEAN", "CAUTION", "SUSPICIOUS", "MALICIOUS"].index(v),
+                )
+                return int(verdict_to_exit_code(worst))
+            return 0
 
     elif target_path.is_file():
         result = await pipeline.scan_file(str(target_path), layers=scan_layers)
         _output_result(result, fmt, output)
 
+        if ci_mode:
+            from malwar.ci.exit_codes import verdict_to_exit_code
+            return int(verdict_to_exit_code(result.verdict))
+
     else:
         typer.echo(f"Target not found: {target}", err=True)
+        if ci_mode:
+            from malwar.ci.exit_codes import CIExitCode
+            return int(CIExitCode.SCAN_ERROR)
         raise typer.Exit(1)
+
+    return None
 
 
 def _output_result(result, fmt: OutputFormat, output: Path | None) -> None:
@@ -148,6 +190,12 @@ def _output_result(result, fmt: OutputFormat, output: Path | None) -> None:
     elif fmt == OutputFormat.JSON:
         from malwar.cli.formatters.json_fmt import format_json
         _write_output(format_json(result), output)
+    elif fmt == OutputFormat.GITLAB_CODEQUALITY:
+        from malwar.ci.parser import format_gitlab_code_quality
+        _write_output(format_gitlab_code_quality([result]), output)
+    elif fmt == OutputFormat.AZURE_ANNOTATIONS:
+        from malwar.ci.parser import format_azure_annotations
+        _write_output(format_azure_annotations([result]), output)
 
 
 def _write_output(text: str, output: Path | None) -> None:

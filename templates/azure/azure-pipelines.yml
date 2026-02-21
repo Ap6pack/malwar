@@ -1,0 +1,142 @@
+# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+#
+# Malwar Azure DevOps Pipeline Template
+# ========================================
+# Scans SKILL.md files for malware, prompt injection, data exfiltration,
+# and other threats targeting agentic AI systems.
+#
+# Usage:
+#   Add this file to your repository or reference it as a template:
+#
+#   resources:
+#     repositories:
+#       - repository: malwar
+#         type: github
+#         name: Ap6pack/malwar
+#         ref: main
+#
+#   extends:
+#     template: templates/azure/azure-pipelines.yml@malwar
+
+parameters:
+  - name: scanPath
+    displayName: "Directory to scan"
+    type: string
+    default: "."
+  - name: failOn
+    displayName: "Fail on verdict"
+    type: string
+    default: "MALICIOUS"
+    values:
+      - MALICIOUS
+      - SUSPICIOUS
+      - CAUTION
+  - name: malwarVersion
+    displayName: "Malwar version (empty for latest)"
+    type: string
+    default: ""
+  - name: pythonVersion
+    displayName: "Python version"
+    type: string
+    default: "3.13"
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - "**/*.md"
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - "**/*.md"
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - task: UsePythonVersion@0
+    displayName: "Set up Python ${{ parameters.pythonVersion }}"
+    inputs:
+      versionSpec: "${{ parameters.pythonVersion }}"
+      addToPath: true
+
+  - script: |
+      if [ -n "${{ parameters.malwarVersion }}" ]; then
+        pip install --quiet "malwar==${{ parameters.malwarVersion }}"
+      else
+        pip install --quiet malwar
+      fi
+    displayName: "Install malwar"
+
+  - script: |
+      echo "Scanning ${{ parameters.scanPath }} for threats..."
+      malwar scan "${{ parameters.scanPath }}" \
+        --ci-mode \
+        --format azure-annotations \
+        || SCAN_EXIT=$?
+
+      echo "##vso[task.setvariable variable=malwarExitCode]${SCAN_EXIT:-0}"
+
+      if [ "${SCAN_EXIT:-0}" -eq 0 ]; then
+        echo "Malwar scan passed: no threats detected."
+      elif [ "${SCAN_EXIT:-0}" -eq 1 ]; then
+        echo "Malwar scan FAILED: malicious content detected."
+        echo "##vso[task.logissue type=error]Malwar detected malicious content."
+      elif [ "${SCAN_EXIT:-0}" -eq 3 ]; then
+        echo "Malwar scan WARNING: suspicious/cautionary findings detected."
+        echo "##vso[task.logissue type=warning]Malwar detected suspicious content."
+      else
+        echo "Malwar scan encountered an error (exit code ${SCAN_EXIT})."
+        echo "##vso[task.logissue type=error]Malwar scan failed with error."
+      fi
+    displayName: "Run malwar scan"
+    continueOnError: true
+
+  - script: |
+      echo "Generating SARIF report..."
+      malwar scan "${{ parameters.scanPath }}" \
+        --ci-mode \
+        --format sarif \
+        --output "$(Build.ArtifactStagingDirectory)/malwar-results.sarif" \
+        || true
+    displayName: "Generate SARIF report"
+    continueOnError: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: "Upload SARIF artifact"
+    condition: always()
+    inputs:
+      PathtoPublish: "$(Build.ArtifactStagingDirectory)/malwar-results.sarif"
+      ArtifactName: "malwar-sarif"
+    continueOnError: true
+
+  - script: |
+      SCAN_EXIT=$(malwarExitCode)
+      FAIL_ON="${{ parameters.failOn }}"
+
+      case "${FAIL_ON}" in
+        MALICIOUS)
+          if [ "${SCAN_EXIT}" -eq 1 ]; then
+            echo "##vso[task.complete result=Failed;]Malicious content detected."
+            exit 1
+          fi
+          ;;
+        SUSPICIOUS|CAUTION)
+          if [ "${SCAN_EXIT}" -eq 1 ] || [ "${SCAN_EXIT}" -eq 3 ]; then
+            echo "##vso[task.complete result=Failed;]Threats detected (verdict threshold: ${FAIL_ON})."
+            exit 1
+          fi
+          ;;
+      esac
+
+      echo "Malwar scan passed threshold check."
+    displayName: "Evaluate scan threshold"
+    condition: always()

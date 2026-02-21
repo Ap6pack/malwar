@@ -345,13 +345,13 @@ class TestListScans:
         assert any(s["scan_id"] == scan_id for s in scans)
 
     async def test_list_scans_limit(self, client) -> None:
-        # Submit 3 scans
+        # Submit 3 scans with unique content to avoid cache hits
         content = (BENIGN_DIR / "hello_world.md").read_text()
-        for _ in range(3):
+        for i in range(3):
             await client.post(
                 "/api/v1/scan",
                 json={
-                    "content": content,
+                    "content": f"{content}\n<!-- scan {i} -->",
                     "layers": ["rule_engine"],
                     "use_llm": False,
                 },

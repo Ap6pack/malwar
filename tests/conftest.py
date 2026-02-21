@@ -28,3 +28,13 @@ def _clear_rate_limit_state():
     _request_log.clear()
     yield
     _request_log.clear()
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """Reset the scan cache singleton between tests."""
+    from malwar.cache.manager import reset_cache_manager
+
+    reset_cache_manager()
+    yield
+    reset_cache_manager()

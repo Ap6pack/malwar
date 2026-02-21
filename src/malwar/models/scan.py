@@ -38,6 +38,10 @@ class ScanResult(BaseModel):
     skill_author: str | None = None
     layers_executed: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+    ml_risk_score: float | None = Field(
+        default=None,
+        description="ML model risk probability [0.0, 1.0], None if ML disabled",
+    )
 
     @computed_field  # type: ignore[prop-decorator]
     @property

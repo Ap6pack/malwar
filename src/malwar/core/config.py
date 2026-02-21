@@ -86,6 +86,34 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "json"
 
+    # Plugins
+    plugins_dir: str = ""
+    enabled_plugins: list[str] = []
+    plugin_module_paths: list[str] = []
+
+    @field_validator("enabled_plugins", mode="before")
+    @classmethod
+    def _parse_enabled_plugins(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [p.strip() for p in v.split(",") if p.strip()]
+        return v if isinstance(v, list) else []
+
+    @field_validator("plugin_module_paths", mode="before")
+    @classmethod
+    def _parse_plugin_module_paths(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [p.strip() for p in v.split(",") if p.strip()]
+        return v if isinstance(v, list) else []
+
+    # ML risk scoring
+    ml_enabled: bool = True
+    ml_weight: float = 0.3  # Weight of ML score vs rule score (0.0 to 1.0)
+
+    # Cache
+    cache_backend: str = "memory"  # "memory" or "redis"
+    cache_ttl: int = 3600  # seconds (default 1 hour)
+    redis_url: str = "redis://localhost:6379/0"
+
     # Notification channels
     notification_channels: list[str] = []
     slack_webhook_url: str = ""

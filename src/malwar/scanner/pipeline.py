@@ -30,11 +30,14 @@ class ScanPipeline:
         self,
         detectors: list[BaseDetector] | None = None,
         settings: Settings | None = None,
+        cache_manager: object | None = None,
     ) -> None:
         self._settings = settings or get_settings()
         self._detectors: list[BaseDetector] = []
         if detectors:
             self._detectors = sorted(detectors, key=lambda d: d.order)
+        # Cache manager for scan deduplication (lazy import avoids circular deps)
+        self._cache_manager = cache_manager
 
     def register_detector(self, detector: BaseDetector) -> None:
         self._detectors.append(detector)
@@ -47,6 +50,17 @@ class ScanPipeline:
     async def teardown(self) -> None:
         for detector in self._detectors:
             await detector.teardown()
+
+    def _get_cache_manager(self):
+        """Return the cache manager, lazily importing the singleton if needed."""
+        if self._cache_manager is not None:
+            return self._cache_manager
+        try:
+            from malwar.cache.manager import get_cache_manager
+
+            return get_cache_manager()
+        except Exception:
+            return None
 
     async def scan(
         self,
@@ -63,6 +77,22 @@ class ScanPipeline:
         Returns:
             ScanResult with findings from all executed layers.
         """
+        scan_layers = layers or list(self._settings.scan_default_layers)
+
+        # --- Cache lookup ---
+        cache_mgr = self._get_cache_manager()
+        if cache_mgr is not None:
+            try:
+                cached = await cache_mgr.get_cached_result(
+                    content=skill.raw_content,
+                    layers=scan_layers,
+                )
+                if cached is not None:
+                    logger.info("Returning cached result for %s", skill.file_path)
+                    return cached  # type: ignore[no-any-return]
+            except Exception:
+                logger.debug("Cache lookup failed, proceeding with scan", exc_info=True)
+
         scan_id = uuid.uuid4().hex[:12]
         allowed_layers = set(layers) if layers else None
 
@@ -114,6 +144,30 @@ class ScanPipeline:
         result.completed_at = datetime.now(UTC)
         result.duration_ms = elapsed_ms
 
+        # --- ML risk scoring (after rule engine) ---
+        if self._settings.ml_enabled:
+            try:
+                from malwar.ml.calibrator import RiskCalibrator
+                from malwar.ml.features import FeatureExtractor
+                from malwar.ml.model import RiskScorer
+
+                extractor = FeatureExtractor()
+                features = extractor.extract(skill)
+                scorer = RiskScorer.default()
+                ml_prob = scorer.predict_proba(features)
+                result.ml_risk_score = ml_prob
+
+                calibrator = RiskCalibrator(ml_weight=self._settings.ml_weight)
+                blended = calibrator.calibrate(result.risk_score, ml_prob)
+                logger.info(
+                    "ML scoring: prob=%.4f rule=%d blended=%.1f",
+                    ml_prob,
+                    result.risk_score,
+                    blended,
+                )
+            except Exception as exc:
+                logger.warning("ML scoring failed: %s", exc)
+
         logger.info(
             "Scan %s complete: verdict=%s risk=%d findings=%d duration=%dms",
             scan_id,
@@ -122,6 +176,17 @@ class ScanPipeline:
             len(result.findings),
             elapsed_ms,
         )
+
+        # --- Cache store ---
+        if cache_mgr is not None:
+            try:
+                await cache_mgr.store_result(
+                    content=skill.raw_content,
+                    layers=scan_layers,
+                    result=result,
+                )
+            except Exception:
+                logger.debug("Failed to cache scan result", exc_info=True)
 
         return result
 
