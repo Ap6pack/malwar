@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     # Database
     db_path: Path = Path("malwar.db")
     auto_migrate: bool = True
+    db_backend: str = "sqlite"  # "sqlite" or "postgres"
+    postgres_url: str = ""  # e.g. "postgresql://user:pass@host:5432/malwar"
+    postgres_pool_min: int = 2
+    postgres_pool_max: int = 10
 
     # API server
     api_host: str = "127.0.0.1"

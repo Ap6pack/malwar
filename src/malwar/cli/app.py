@@ -11,6 +11,7 @@ from typing import Annotated
 
 import typer
 
+from malwar.cli.commands import analytics as analytics_cmd
 from malwar.cli.commands import audit as audit_cmd
 from malwar.cli.commands import cache as cache_cmd
 from malwar.cli.commands import db, export, ingest, keys, ml, notify, plugin, schedule, test_rules
@@ -35,6 +36,7 @@ app.add_typer(audit_cmd.app, name="audit", help="Query audit log events")
 app.add_typer(plugin.app, name="plugin", help="Manage detector plugins")
 app.add_typer(cache_cmd.app, name="cache", help="Manage scan result cache")
 app.add_typer(ml.app, name="ml", help="ML risk scoring model management")
+app.add_typer(analytics_cmd.app, name="analytics", help="Dashboard analytics summary")
 
 
 class OutputFormat(StrEnum):
@@ -72,8 +74,25 @@ def scan(
         bool,
         typer.Option("--ci-mode", help="Enable CI mode with standardized exit codes"),
     ] = False,
+    watch: Annotated[
+        bool,
+        typer.Option("--watch", help="Watch directory for changes and auto-scan"),
+    ] = False,
+    poll_interval: Annotated[
+        float,
+        typer.Option("--poll-interval", help="Watch mode poll interval in seconds"),
+    ] = 2.0,
 ) -> None:
     """Scan a SKILL.md file, directory, or URL for malware."""
+    if watch:
+        from malwar.cli.tui.watch import run_watch_mode
+
+        scan_layers: list[str] | None = None
+        if layers:
+            scan_layers = [layer.strip() for layer in layers.split(",")]
+        run_watch_mode(target, layers=scan_layers, poll_interval=poll_interval)
+        return
+
     exit_code = asyncio.run(
         _async_scan(target, fmt, output, no_llm, no_urls, layers, ci_mode=ci_mode)
     )
@@ -494,6 +513,19 @@ async def _async_db_seed() -> None:
         typer.echo("Seed data inserted successfully.")
     finally:
         await close_db()
+
+
+@app.command()
+def tui(
+    directory: Annotated[
+        str | None,
+        typer.Argument(help="Optional directory to start in"),
+    ] = None,
+) -> None:
+    """Launch the interactive TUI mode with Rich dashboard."""
+    from malwar.cli.tui.app import run_tui
+
+    run_tui(directory=directory)
 
 
 @app.command()

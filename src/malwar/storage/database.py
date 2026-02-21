@@ -1,16 +1,28 @@
 # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-"""SQLite connection management using aiosqlite."""
+"""Database connection management with pluggable backend support.
+
+Supports both SQLite (aiosqlite, default) and PostgreSQL (asyncpg).
+The active backend is controlled by the ``MALWAR_DB_BACKEND`` env var.
+"""
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import aiosqlite
 
-from malwar.core.exceptions import StorageError
+from malwar.core.exceptions import ConfigurationError, StorageError
+from malwar.storage.backend import DatabaseBackend
 from malwar.storage.migrations import run_migrations
 
 _db: aiosqlite.Connection | None = None
+_backend: DatabaseBackend | None = None
+
+
+# ---------------------------------------------------------------------------
+# Backend-aware initialisation
+# ---------------------------------------------------------------------------
 
 
 async def init_db(
@@ -48,6 +60,70 @@ async def init_db(
         raise StorageError(msg) from exc
 
 
+async def init_backend(
+    *,
+    backend: str | None = None,
+    db_path: Path | str = "malwar.db",
+    postgres_url: str = "",
+    postgres_pool_min: int = 2,
+    postgres_pool_max: int = 10,
+    auto_migrate: bool = True,
+) -> DatabaseBackend:
+    """Initialise and return the configured :class:`DatabaseBackend`.
+
+    Args:
+        backend: ``"sqlite"`` or ``"postgres"``.  Falls back to the
+            ``MALWAR_DB_BACKEND`` env var (default ``"sqlite"``).
+        db_path: Path for the SQLite database file.
+        postgres_url: PostgreSQL DSN (``postgresql://…``).
+        postgres_pool_min: Minimum pool size for PostgreSQL.
+        postgres_pool_max: Maximum pool size for PostgreSQL.
+        auto_migrate: Run schema migrations on startup.
+
+    Returns:
+        A ready-to-use :class:`DatabaseBackend`.
+    """
+    global _backend
+
+    if _backend is not None:
+        return _backend
+
+    chosen = (backend or os.environ.get("MALWAR_DB_BACKEND", "sqlite")).lower()
+
+    if chosen == "sqlite":
+        conn = await init_db(db_path, auto_migrate=auto_migrate)
+        from malwar.storage.sqlite_backend import SQLiteBackend
+
+        _backend = SQLiteBackend(conn)
+        return _backend
+
+    if chosen == "postgres":
+        url = postgres_url or os.environ.get("MALWAR_POSTGRES_URL", "")
+        if not url:
+            msg = (
+                "PostgreSQL backend selected but no connection URL provided. "
+                "Set MALWAR_POSTGRES_URL or pass postgres_url."
+            )
+            raise ConfigurationError(msg)
+
+        from malwar.storage.postgres import PostgresDatabase
+
+        pg = await PostgresDatabase.create(
+            url, min_size=postgres_pool_min, max_size=postgres_pool_max
+        )
+
+        if auto_migrate:
+            from malwar.storage.pg_migrations import run_pg_migrations
+
+            await run_pg_migrations(pg)
+
+        _backend = pg
+        return _backend
+
+    msg = f"Unknown database backend: {chosen!r}. Expected 'sqlite' or 'postgres'."
+    raise ConfigurationError(msg)
+
+
 async def get_db() -> aiosqlite.Connection:
     """Get the active database connection.
 
@@ -58,9 +134,23 @@ async def get_db() -> aiosqlite.Connection:
     return _db
 
 
+async def get_backend() -> DatabaseBackend:
+    """Get the active :class:`DatabaseBackend`.
+
+    Raises :class:`StorageError` if no backend has been initialised.
+    """
+    if _backend is None:
+        raise StorageError("Database backend not initialized. Call init_backend() first.")
+    return _backend
+
+
 async def close_db() -> None:
     """Close the database connection."""
-    global _db
+    global _db, _backend
+
+    if _backend is not None:
+        await _backend.close()
+        _backend = None
 
     if _db is not None:
         await _db.close()

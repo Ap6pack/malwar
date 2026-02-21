@@ -37,6 +37,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+postgres = [
+    "asyncpg>=0.30.0",
+]
 cache = [
     "redis[hiredis]>=5.0.0",
 ]

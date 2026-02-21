@@ -19,6 +19,7 @@ from malwar.api.routes import (
     audit,
     cache,
     campaigns,
+    dashboard,
     diff,
     export,
     feed,
@@ -91,6 +92,7 @@ def create_app(*, enable_scheduler: bool = True) -> FastAPI:
     app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
     app.include_router(feed.router, prefix="/api/v1", tags=["feed"])
     app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+    app.include_router(dashboard.router, prefix="/api/v1", tags=["dashboard"])
     app.include_router(export.router, prefix="/api/v1", tags=["export"])
     app.include_router(ingest.router, prefix="/api/v1", tags=["ingest"])
     app.include_router(schedules.router, prefix="/api/v1", tags=["schedules"])
