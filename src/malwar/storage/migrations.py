@@ -512,6 +512,121 @@ async def _migration_002_api_usage(db: aiosqlite.Connection) -> None:
     await db.execute(_INDEX_API_USAGE_TIMESTAMP)
 
 
+# =========================================================================
+# Migration 003 -- audit_log table (issue #20)
+# =========================================================================
+
+_CREATE_AUDIT_LOG = """
+CREATE TABLE IF NOT EXISTS audit_log (
+    event_id TEXT PRIMARY KEY,
+    timestamp TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    actor TEXT NOT NULL DEFAULT 'cli',
+    resource_type TEXT NOT NULL DEFAULT '',
+    resource_id TEXT NOT NULL DEFAULT '',
+    action TEXT NOT NULL DEFAULT '',
+    details TEXT NOT NULL DEFAULT '{}',
+    ip_address TEXT NOT NULL DEFAULT ''
+);
+"""
+
+_INDEXES_AUDIT_LOG = [
+    "CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp);",
+    "CREATE INDEX IF NOT EXISTS idx_audit_log_event_type ON audit_log(event_type);",
+    "CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor);",
+    "CREATE INDEX IF NOT EXISTS idx_audit_log_resource ON audit_log(resource_type, resource_id);",
+]
+
+
+@_register(3, "audit_log_table")
+async def _migration_003_audit_log(db: aiosqlite.Connection) -> None:
+    """Create the audit_log table for compliance audit trail."""
+    await db.execute(_CREATE_AUDIT_LOG)
+    for idx_sql in _INDEXES_AUDIT_LOG:
+        await db.execute(idx_sql)
+
+
+# =========================================================================
+# Migration 004 -- api_keys table (issue #32 — RBAC)
+# =========================================================================
+
+_CREATE_API_KEYS = """
+CREATE TABLE IF NOT EXISTS api_keys (
+    id TEXT PRIMARY KEY,
+    key_hash TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'scanner',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_used TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1
+);
+"""
+
+_INDEX_API_KEYS_HASH = (
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);"
+)
+_INDEX_API_KEYS_ROLE = (
+    "CREATE INDEX IF NOT EXISTS idx_api_keys_role ON api_keys(role);"
+)
+
+
+@_register(4, "api_keys_table")
+async def _migration_004_api_keys(db: aiosqlite.Connection) -> None:
+    """Create the api_keys table for role-based access control."""
+    await db.execute(_CREATE_API_KEYS)
+    await db.execute(_INDEX_API_KEYS_HASH)
+    await db.execute(_INDEX_API_KEYS_ROLE)
+
+
+# =========================================================================
+# Migration 005 -- scheduled_jobs + job_runs tables (issue #26)
+# =========================================================================
+
+_CREATE_SCHEDULED_JOBS = """
+CREATE TABLE IF NOT EXISTS scheduled_jobs (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    target_path TEXT NOT NULL,
+    schedule TEXT NOT NULL,
+    layers TEXT NOT NULL DEFAULT 'rule_engine,url_crawler,llm_analyzer,threat_intel',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    last_run TEXT,
+    next_run TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""
+
+_CREATE_JOB_RUNS = """
+CREATE TABLE IF NOT EXISTS job_runs (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL REFERENCES scheduled_jobs(id) ON DELETE CASCADE,
+    scan_id TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    verdict TEXT,
+    risk_score INTEGER,
+    error TEXT,
+    started_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
+);
+"""
+
+_INDEXES_005 = [
+    "CREATE INDEX IF NOT EXISTS idx_scheduled_jobs_enabled ON scheduled_jobs(enabled);",
+    "CREATE INDEX IF NOT EXISTS idx_scheduled_jobs_next_run ON scheduled_jobs(next_run);",
+    "CREATE INDEX IF NOT EXISTS idx_job_runs_job_id ON job_runs(job_id);",
+    "CREATE INDEX IF NOT EXISTS idx_job_runs_started_at ON job_runs(started_at);",
+]
+
+
+@_register(5, "scheduled_scanning_tables")
+async def _migration_005_scheduled_scanning(db: aiosqlite.Connection) -> None:
+    """Create scheduled_jobs and job_runs tables for periodic scanning."""
+    await db.execute(_CREATE_SCHEDULED_JOBS)
+    await db.execute(_CREATE_JOB_RUNS)
+    for idx_sql in _INDEXES_005:
+        await db.execute(idx_sql)
+
+
 # ---------------------------------------------------------------------------
 # Public helper -- seed_data (kept for standalone use by CLI db-seed command)
 # ---------------------------------------------------------------------------

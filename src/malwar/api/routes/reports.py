@@ -9,7 +9,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from malwar.api.auth import require_api_key
+from malwar.api.auth import require_api_key  # noqa: F401 — kept for backward compat
+from malwar.api.rbac import require_scan_read
 
 logger = logging.getLogger("malwar.api.reports")
 
@@ -92,7 +93,7 @@ async def list_reports(
     verdict: str | None = None,
     min_risk_score: int | None = None,
     limit: int = 50,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_read),
 ) -> list[ReportListItem]:
     """List completed scans as reports with optional filtering."""
     from malwar.storage.database import get_db
@@ -142,7 +143,7 @@ async def list_reports(
 @router.get("/reports/{scan_id}", response_model=ReportDetail)
 async def get_report(
     scan_id: str,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_read),
 ) -> ReportDetail:
     """Get a full report for a scan including findings and breakdowns."""
     from malwar.storage.database import get_db

@@ -11,7 +11,8 @@ from typing import Annotated
 
 import typer
 
-from malwar.cli.commands import db, export, ingest, test_rules
+from malwar.cli.commands import audit as audit_cmd
+from malwar.cli.commands import db, export, ingest, keys, notify, schedule, test_rules
 from malwar.cli.commands.diff import diff_command
 
 app = typer.Typer(
@@ -26,6 +27,10 @@ app.add_typer(ingest.app, name="ingest", help="Import threat intelligence from e
 
 app.command(name="diff")(diff_command)
 app.add_typer(test_rules.app, name="test-rules", help="Run rule test suite")
+app.add_typer(schedule.app, name="schedule", help="Manage scheduled scans")
+app.add_typer(keys.app, name="keys", help="Manage API keys (RBAC)")
+app.add_typer(notify.app, name="notify", help="Manage and test notification channels")
+app.add_typer(audit_cmd.app, name="audit", help="Query audit log events")
 
 
 class OutputFormat(StrEnum):
@@ -158,12 +163,20 @@ def serve(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind address"),
     port: int = typer.Option(8000, "--port", "-p", help="Bind port"),
     workers: int = typer.Option(1, "--workers", "-w", help="Worker count"),
+    no_scheduler: Annotated[
+        bool, typer.Option("--no-scheduler", help="Disable the background scheduled scanner")
+    ] = False,
 ) -> None:
     """Start the malwar API server."""
     import uvicorn
 
+    if no_scheduler:
+        # Pass flag via environment; the app factory reads it
+        import os
+        os.environ["MALWAR_NO_SCHEDULER"] = "1"
+
     uvicorn.run(
-        "malwar.api.app:create_app",
+        "malwar.api.app:_create_app_from_env",
         host=host,
         port=port,
         workers=workers,

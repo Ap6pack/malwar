@@ -64,7 +64,7 @@ class TestFreshDatabase:
     async def test_fresh_db_version_is_latest(self, db: aiosqlite.Connection):
         """Current version should be the highest registered migration."""
         version = await get_current_version(db)
-        assert version == 2
+        assert version == 5
 
     async def test_no_pending_after_full_migration(self, db: aiosqlite.Connection):
         """There should be no pending migrations after a full run."""
@@ -109,9 +109,9 @@ class TestVersionTracking:
     async def test_bare_db_has_all_pending(self, bare_db: aiosqlite.Connection):
         """A bare database should list all migrations as pending."""
         pending = await get_pending_migrations(bare_db)
-        assert len(pending) == 2
+        assert len(pending) == 5
         assert pending[0].version == 1
-        assert pending[1].version == 2
+        assert pending[-1].version == 5
 
     async def test_partial_migration_tracking(self, bare_db: aiosqlite.Connection):
         """Manually recording version 1 should leave only version 2 as pending."""
@@ -135,7 +135,7 @@ class TestVersionTracking:
         assert version == 1
 
         pending = await get_pending_migrations(bare_db)
-        assert len(pending) == 1
+        assert len(pending) == 4
         assert pending[0].version == 2
 
     async def test_migration_names_recorded(self, db: aiosqlite.Connection):
@@ -249,7 +249,7 @@ class TestIdempotency:
             assert applied == []
 
         version = await get_current_version(db)
-        assert version == 2
+        assert version == 5
 
         # Ensure seed data was not duplicated
         cursor = await db.execute("SELECT COUNT(*) FROM campaigns")

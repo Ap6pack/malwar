@@ -126,11 +126,15 @@ class TestDatabaseInit:
         )
 
         expected = sorted([
+            "api_keys",
             "api_usage",
+            "audit_log",
             "campaigns",
             "findings",
+            "job_runs",
             "publishers",
             "scans",
+            "scheduled_jobs",
             "schema_migrations",
             "signatures",
             "url_analysis",

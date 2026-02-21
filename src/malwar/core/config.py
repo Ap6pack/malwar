@@ -86,6 +86,33 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "json"
 
+    # Notification channels
+    notification_channels: list[str] = []
+    slack_webhook_url: str = ""
+    teams_webhook_url: str = ""
+    pagerduty_routing_key: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    smtp_from: str = ""
+    smtp_to: list[str] = []
+
+    @field_validator("notification_channels", mode="before")
+    @classmethod
+    def _parse_notification_channels(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [c.strip() for c in v.split(",") if c.strip()]
+        return v if isinstance(v, list) else []
+
+    @field_validator("smtp_to", mode="before")
+    @classmethod
+    def _parse_smtp_to(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [a.strip() for a in v.split(",") if a.strip()]
+        return v if isinstance(v, list) else []
+
 
 def get_settings() -> Settings:
     return Settings()

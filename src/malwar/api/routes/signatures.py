@@ -8,7 +8,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from malwar.api.auth import require_api_key
+from malwar.api.auth import require_api_key  # noqa: F401 — kept for backward compat
+from malwar.api.rbac import require_signature_manage
 
 router = APIRouter()
 
@@ -93,6 +94,25 @@ async def _get_repo():
     return SignatureRepository(db)
 
 
+async def _audit_signature(
+    event_type: str,
+    sig_id: str,
+    *,
+    details: dict | None = None,
+) -> None:
+    """Fire an audit event for a signature change."""
+    try:
+        from malwar.audit.events import AuditEventType
+        from malwar.audit.logger import get_audit_logger
+
+        audit = get_audit_logger()
+        await audit.log_signature_change(
+            AuditEventType(event_type), sig_id, details=details
+        )
+    except Exception:
+        pass  # Graceful degradation
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -103,7 +123,7 @@ async def list_signatures(
     pattern_type: str | None = None,
     ioc_type: str | None = None,
     campaign_id: str | None = None,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_signature_manage),
 ) -> list[SignatureResponse]:
     """List all signatures with optional filters."""
     repo = await _get_repo()
@@ -118,7 +138,7 @@ async def list_signatures(
 @router.get("/signatures/{sig_id}", response_model=SignatureResponse)
 async def get_signature(
     sig_id: str,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_signature_manage),
 ) -> SignatureResponse:
     """Get a single signature by ID."""
     repo = await _get_repo()
@@ -131,7 +151,7 @@ async def get_signature(
 @router.post("/signatures", response_model=SignatureResponse, status_code=201)
 async def create_signature(
     body: SignatureCreateRequest,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_signature_manage),
 ) -> SignatureResponse:
     """Create a new threat signature."""
     repo = await _get_repo()
@@ -153,6 +173,9 @@ async def create_signature(
 
     await repo.create(sig_data)
 
+    # Audit logging
+    await _audit_signature("signature_created", sig_id, details=sig_data)
+
     # Fetch back the created record to include timestamps
     row = await repo.get_by_id(sig_id)
     return _row_to_response(row)
@@ -162,7 +185,7 @@ async def create_signature(
 async def update_signature(
     sig_id: str,
     body: SignatureUpdateRequest,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_signature_manage),
 ) -> SignatureResponse:
     """Update an existing signature."""
     repo = await _get_repo()
@@ -175,6 +198,9 @@ async def update_signature(
     if updates:
         await repo.update(sig_id, updates)
 
+    # Audit logging
+    await _audit_signature("signature_updated", sig_id, details=updates)
+
     row = await repo.get_by_id(sig_id)
     return _row_to_response(row)
 
@@ -182,7 +208,7 @@ async def update_signature(
 @router.delete("/signatures/{sig_id}", status_code=204)
 async def delete_signature(
     sig_id: str,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_signature_manage),
 ) -> None:
     """Delete a signature."""
     repo = await _get_repo()
@@ -190,3 +216,6 @@ async def delete_signature(
     deleted = await repo.delete(sig_id)
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Signature {sig_id} not found")
+
+    # Audit logging
+    await _audit_signature("signature_deleted", sig_id)

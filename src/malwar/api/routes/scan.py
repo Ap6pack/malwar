@@ -9,13 +9,16 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from malwar.api.auth import require_api_key
+from malwar.api.auth import require_api_key  # noqa: F401 — kept for backward compat
+from malwar.api.rbac import require_scan_create, require_scan_read
 from malwar.core.config import Settings, get_settings
 from malwar.detectors.llm_analyzer.detector import LlmAnalyzerDetector
 from malwar.detectors.rule_engine.detector import RuleEngineDetector
 from malwar.detectors.threat_intel.detector import ThreatIntelDetector
 from malwar.detectors.url_crawler.detector import UrlCrawlerDetector
 from malwar.models.scan import ScanResult
+from malwar.notifications.events import NotificationEvent
+from malwar.notifications.factory import build_router as build_notification_router
 from malwar.notifications.webhook import WebhookNotifier
 from malwar.parsers.skill_parser import parse_skill_content
 from malwar.scanner.pipeline import ScanPipeline
@@ -147,6 +150,52 @@ async def _send_webhook(result: ScanResult, settings: Settings) -> None:
     await notifier.notify(result)
 
 
+async def _dispatch_notifications(result: ScanResult, settings: Settings) -> None:
+    """Dispatch notifications via all configured channels."""
+    try:
+        notification_router = build_notification_router(settings)
+        if not notification_router.channels:
+            return
+        event = NotificationEvent.from_scan_result(result)
+        await notification_router.dispatch(event)
+    except Exception:
+        logger.exception("Failed to dispatch notifications for scan %s", result.scan_id)
+
+
+async def _audit_scan(result: ScanResult, *, actor: str = "cli") -> None:
+    """Fire audit events for a completed scan and its findings."""
+    try:
+        from malwar.audit.logger import get_audit_logger, hash_api_key
+
+        audit = get_audit_logger()
+        hashed_actor = hash_api_key(actor)
+
+        await audit.log_scan_started(
+            scan_id=result.scan_id,
+            target=result.target,
+            actor=hashed_actor,
+            layers=result.layers_executed,
+        )
+        await audit.log_scan_completed(
+            scan_id=result.scan_id,
+            verdict=result.verdict,
+            risk_score=result.risk_score,
+            finding_count=len(result.findings),
+            actor=hashed_actor,
+            duration_ms=result.duration_ms,
+        )
+        for finding in result.findings:
+            await audit.log_finding(
+                scan_id=result.scan_id,
+                rule_id=finding.rule_id,
+                severity=finding.severity,
+                actor=hashed_actor,
+                title=finding.title,
+            )
+    except Exception:
+        logger.exception("Failed to audit scan %s", result.scan_id)
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -154,7 +203,7 @@ async def _send_webhook(result: ScanResult, settings: Settings) -> None:
 @router.post("/scan", response_model=ScanResponseBody)
 async def scan_skill(
     body: ScanRequestBody,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_create),
 ) -> ScanResponseBody:
     """Submit a SKILL.md for scanning."""
     settings = get_settings()
@@ -178,6 +227,11 @@ async def scan_skill(
 
     await _persist_result(result)
     asyncio.create_task(_send_webhook(result, settings))  # noqa: RUF006
+    asyncio.create_task(_dispatch_notifications(result, settings))  # noqa: RUF006
+
+    # Audit logging
+    actor = getattr(_auth, "key_id", "anonymous") if _auth else "anonymous"
+    await _audit_scan(result, actor=actor)
 
     return _result_to_response(result)
 
@@ -185,7 +239,7 @@ async def scan_skill(
 @router.post("/scan/batch", response_model=list[ScanResponseBody])
 async def scan_batch(
     body: BatchScanRequestBody,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_create),
 ) -> list[ScanResponseBody]:
     """Submit a batch of SKILL.md files for scanning."""
     settings = get_settings()
@@ -215,6 +269,7 @@ async def scan_batch(
         result = await pipeline.scan(skill, layers=layers)
         await _persist_result(result)
         asyncio.create_task(_send_webhook(result, settings))  # noqa: RUF006
+        asyncio.create_task(_dispatch_notifications(result, settings))  # noqa: RUF006
         results.append(_result_to_response(result))
 
     return results
@@ -223,7 +278,7 @@ async def scan_batch(
 @router.get("/scan/{scan_id}", response_model=ScanResponseBody)
 async def get_scan(
     scan_id: str,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_read),
 ) -> ScanResponseBody:
     """Retrieve a scan result by ID."""
     from malwar.storage.database import get_db
@@ -274,7 +329,7 @@ async def get_scan(
 @router.get("/scan/{scan_id}/sarif")
 async def get_scan_sarif(
     scan_id: str,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_read),
 ) -> dict:
     """Get SARIF 2.1.0 output for a scan."""
     import json
@@ -316,7 +371,7 @@ async def get_scan_sarif(
 @router.get("/scans", response_model=list[ScanListItem])
 async def list_scans(
     limit: int = 50,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_scan_read),
 ) -> list[ScanListItem]:
     """List recent scans."""
     from malwar.storage.database import get_db

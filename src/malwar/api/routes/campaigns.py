@@ -8,7 +8,8 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from malwar.api.auth import require_api_key
+from malwar.api.auth import require_api_key  # noqa: F401 — kept for backward compat
+from malwar.api.rbac import require_campaign_manage
 
 router = APIRouter()
 
@@ -62,7 +63,7 @@ def _row_to_response(row: dict) -> CampaignResponse:
 
 @router.get("/campaigns", response_model=list[CampaignResponse])
 async def list_campaigns(
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_campaign_manage),
 ) -> list[CampaignResponse]:
     """List all active campaigns."""
     from malwar.storage.database import get_db
@@ -77,7 +78,7 @@ async def list_campaigns(
 @router.get("/campaigns/{campaign_id}", response_model=CampaignDetailResponse)
 async def get_campaign(
     campaign_id: str,
-    _api_key: str = Depends(require_api_key),
+    _auth: object = Depends(require_campaign_manage),
 ) -> CampaignDetailResponse:
     """Retrieve a single campaign with details."""
     from malwar.storage.database import get_db

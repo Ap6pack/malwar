@@ -12,19 +12,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from malwar.api.keys import router as keys_router
 from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware, UsageLoggingMiddleware
 from malwar.api.routes import (
     analytics,
+    audit,
     campaigns,
     diff,
     export,
     feed,
     health,
     ingest,
+    notifications,
     reports,
     scan,
+    schedules,
     signatures,
 )
+from malwar.audit.middleware import AuditMiddleware
 
 _WEB_DIST = Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist"
 
@@ -32,15 +37,30 @@ _WEB_DIST = Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     from malwar.core.config import get_settings
-    from malwar.storage.database import close_db, init_db
+    from malwar.storage.database import close_db, get_db, init_db
 
     settings = get_settings()
     await init_db(settings.db_path, auto_migrate=settings.auto_migrate)
+
+    # Start the scheduler unless explicitly disabled
+    scheduler_engine = None
+    if getattr(app.state, "enable_scheduler", True):
+        from malwar.scheduler.engine import SchedulerEngine
+        from malwar.scheduler.store import JobStore
+
+        db = await get_db()
+        store = JobStore(db)
+        scheduler_engine = SchedulerEngine(store)
+        await scheduler_engine.start()
+
     yield
+
+    if scheduler_engine is not None:
+        await scheduler_engine.stop()
     await close_db()
 
 
-def create_app() -> FastAPI:
+def create_app(*, enable_scheduler: bool = True) -> FastAPI:
     app = FastAPI(
         title="malwar",
         description="Malware detection engine for agentic skills",
@@ -50,6 +70,8 @@ def create_app() -> FastAPI:
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
     )
+
+    app.state.enable_scheduler = enable_scheduler
 
     # CORS for development (Vite dev server)
     app.add_middleware(
@@ -69,6 +91,11 @@ def create_app() -> FastAPI:
     app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
     app.include_router(export.router, prefix="/api/v1", tags=["export"])
     app.include_router(ingest.router, prefix="/api/v1", tags=["ingest"])
+    app.include_router(schedules.router, prefix="/api/v1", tags=["schedules"])
+    app.include_router(audit.router, prefix="/api/v1", tags=["audit"])
+    app.include_router(notifications.router, prefix="/api/v1", tags=["notifications"])
+    app.include_router(keys_router, prefix="/api/v1", tags=["keys"])
+    app.add_middleware(AuditMiddleware)
     app.add_middleware(UsageLoggingMiddleware)
     app.add_middleware(RequestMiddleware)
     app.add_middleware(RateLimitMiddleware)
@@ -90,3 +117,11 @@ def create_app() -> FastAPI:
             return FileResponse(_index)
 
     return app
+
+
+def _create_app_from_env() -> FastAPI:
+    """Factory wrapper that reads MALWAR_NO_SCHEDULER env var."""
+    import os
+
+    enable_scheduler = os.environ.get("MALWAR_NO_SCHEDULER", "") != "1"
+    return create_app(enable_scheduler=enable_scheduler)

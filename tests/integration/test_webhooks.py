@@ -46,6 +46,7 @@ def webhook_app(tmp_path, monkeypatch, webhook_url, webhook_secret):
     monkeypatch.setenv("MALWAR_WEBHOOK_URL", webhook_url)
     monkeypatch.setenv("MALWAR_WEBHOOK_SECRET", webhook_secret)
     monkeypatch.setenv("MALWAR_WEBHOOK_VERDICTS", '["MALICIOUS","SUSPICIOUS"]')
+    monkeypatch.setenv("MALWAR_NOTIFICATION_CHANNELS", '["slack"]')  # prevent auto-detect of webhook
     return create_app()
 
 
