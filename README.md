@@ -13,10 +13,10 @@
 [![CI](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml/badge.svg)](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.13+-3776AB?logo=python&logoColor=white)](https://python.org)
 
-![Detection Rules](https://img.shields.io/badge/detection_rules-19-orange)
+![Detection Rules](https://img.shields.io/badge/detection_rules-26-orange)
 ![Pipeline Layers](https://img.shields.io/badge/pipeline_layers-4-green)
 ![SARIF](https://img.shields.io/badge/output-SARIF_2.1.0-purple)
-![Coverage](https://img.shields.io/badge/coverage-89%25-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)
 
 [Web Dashboard](#web-dashboard) &nbsp;&middot;&nbsp; [API Docs](docs/api-reference.md) &nbsp;&middot;&nbsp; [Detection Rules](docs/detection-rules.md) &nbsp;&middot;&nbsp; [Deployment](docs/deployment.md)
 
