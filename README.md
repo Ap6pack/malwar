@@ -37,7 +37,7 @@ SKILL.md → Rule Engine → URL Crawler → LLM Analyzer → Threat Intel → V
 
 | Layer | What it catches |
 |-------|-----------------|
-| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([19 rules](docs/detection-rules.md)) |
+| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([26 rules](docs/detection-rules.md)) |
 | **URL Crawler** | Malicious URLs, domain reputation, redirect chains to C2 infrastructure |
 | **LLM Analyzer** | Social engineering, hidden intent, context-dependent attacks invisible to regex |
 | **Threat Intel** | Known IOCs, [campaign attribution](docs/threat-campaigns.md), threat actor fingerprints |
@@ -93,7 +93,7 @@ curl -X POST http://localhost:8000/api/v1/scan \
   -d '{"content": "...", "file_name": "SKILL.md"}'
 ```
 
-16 endpoints covering scan submission, results, SARIF export, signatures CRUD, campaigns, and reports. Auth via `X-API-Key` header.
+30+ endpoints covering scan submission, results, SARIF export, signatures CRUD, campaigns, reports, dashboard analytics, audit logs, and RBAC. Auth via `X-API-Key` header.
 
 Full endpoint reference: **[API Docs](docs/api-reference.md)**
 
@@ -130,12 +130,12 @@ All settings via environment variables with `MALWAR_` prefix or `.env` file. Key
 | `MALWAR_ANTHROPIC_API_KEY` | *(empty)* | Anthropic key for LLM layer |
 | `MALWAR_DB_PATH` | `malwar.db` | SQLite database path |
 
-[All 17 configuration options →](docs/deployment.md#configuration)
+[All 40+ configuration options →](docs/deployment.md#configuration)
 
 ## Development
 
 ```bash
-pytest                                # 345 tests
+pytest                                # 1,472 tests
 ruff check src/ tests/                # lint
 mypy src/                             # type check
 ```
@@ -149,12 +149,28 @@ Full dev guide: **[Development](docs/development.md)**
 | | |
 |---|---|
 | **[Architecture](docs/architecture.md)** | Pipeline design, scoring logic, storage layer |
-| **[API Reference](docs/api-reference.md)** | All 16 endpoints with schemas and examples |
-| **[Detection Rules](docs/detection-rules.md)** | All 19 rules with patterns and false positive guidance |
+| **[API Reference](docs/api-reference.md)** | All 30+ endpoints with schemas and examples |
+| **[Detection Rules](docs/detection-rules.md)** | All 26 rules with patterns and false positive guidance |
 | **[Threat Campaigns](docs/threat-campaigns.md)** | Campaign tracking, ClawHavoc case study |
 | **[CLI Reference](docs/cli-reference.md)** | Every command with flags and examples |
 | **[Deployment](docs/deployment.md)** | pip, Docker, nginx, production config |
 | **[Development](docs/development.md)** | Adding rules, endpoints, testing, conventions |
+
+---
+
+## What's New in v0.3.0
+
+**Extensibility** — YAML DSL for custom rules, rule testing framework, plugin system, ML-based risk scoring.
+
+**Infrastructure** — PostgreSQL backend support, Redis caching layer, GitLab CI and Azure DevOps templates.
+
+**Security & Compliance** — Immutable audit logging, role-based access control (RBAC), CI security scanning with SBOM.
+
+**Operations** — Scheduled background scanning, multi-channel notifications (Slack, email, webhooks), git diff scanning.
+
+**User Experience** — Dashboard analytics with trend charts, Rich TUI for interactive terminal usage.
+
+1,472 tests | 26 detection rules | 82% coverage
 
 ---
 

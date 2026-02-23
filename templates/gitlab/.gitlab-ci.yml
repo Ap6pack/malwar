@@ -15,7 +15,7 @@
 #     MALWAR_FAIL_ON: "SUSPICIOUS"
 
 variables:
-  MALWAR_VERSION: ""           # Pin a specific version, e.g. "0.2.1". Empty = latest.
+  MALWAR_VERSION: ""           # Pin a specific version, e.g. "0.3.0". Empty = latest.
   MALWAR_SCAN_PATH: "."       # Directory containing SKILL.md files to scan.
   MALWAR_FAIL_ON: "MALICIOUS" # Verdict threshold: MALICIOUS, SUSPICIOUS, or CAUTION.
   MALWAR_OUTPUT_FORMAT: "gitlab-codequality"  # Output format for CI integration.

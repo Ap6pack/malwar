@@ -31,7 +31,7 @@ include:
 variables:
   MALWAR_SCAN_PATH: "skills/"        # Directory to scan (default: ".")
   MALWAR_FAIL_ON: "SUSPICIOUS"       # Fail threshold (default: "MALICIOUS")
-  MALWAR_VERSION: "0.2.1"            # Pin a version (default: latest)
+  MALWAR_VERSION: "0.3.0"            # Pin a version (default: latest)
   MALWAR_OUTPUT_FORMAT: "gitlab-codequality"  # Output format
 ```
 
@@ -92,7 +92,7 @@ include:
 variables:
   MALWAR_SCAN_PATH: "agent-skills/"
   MALWAR_FAIL_ON: "SUSPICIOUS"
-  MALWAR_VERSION: "0.2.1"
+  MALWAR_VERSION: "0.3.0"
 
 malwar-scan:
   rules:

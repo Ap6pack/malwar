@@ -135,7 +135,7 @@ extends:
   parameters:
     scanPath: "agent-skills/"
     failOn: "SUSPICIOUS"
-    malwarVersion: "0.2.1"
+    malwarVersion: "0.3.0"
 ```
 
 ## See Also

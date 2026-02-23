@@ -143,7 +143,7 @@ include:
 variables:
   MALWAR_SCAN_PATH: "skills/"
   MALWAR_FAIL_ON: "SUSPICIOUS"
-  MALWAR_VERSION: "0.2.1"
+  MALWAR_VERSION: "0.3.0"
 ```
 
 ### Variables

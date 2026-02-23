@@ -32,10 +32,10 @@ class TestChartYaml:
         assert self.chart["name"] == "malwar"
 
     def test_chart_version(self) -> None:
-        assert self.chart["version"] == "0.2.0"
+        assert self.chart["version"] == "0.3.0"
 
     def test_chart_app_version(self) -> None:
-        assert self.chart["appVersion"] == "0.2.0"
+        assert self.chart["appVersion"] == "0.3.0"
 
     def test_chart_type(self) -> None:
         assert self.chart["type"] == "application"

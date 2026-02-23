@@ -16,8 +16,8 @@ This guide covers deploying Malwar on Kubernetes using the included Helm chart.
 ### Building and Pushing the Image
 
 ```bash
-docker build -t ghcr.io/ap6pack/malwar:0.2.0 .
-docker push ghcr.io/ap6pack/malwar:0.2.0
+docker build -t ghcr.io/ap6pack/malwar:0.3.0 .
+docker push ghcr.io/ap6pack/malwar:0.3.0
 ```
 
 ---

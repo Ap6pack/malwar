@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """malwar - Malware detection engine for agentic skills."""
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 from malwar.integrations.exceptions import MalwarBlockedError
 from malwar.integrations.langchain import (
