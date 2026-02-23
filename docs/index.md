@@ -23,7 +23,7 @@ SKILL.md --> Rule Engine --> URL Crawler --> LLM Analyzer --> Threat Intel --> V
 
 | Layer | What It Catches |
 |-------|-----------------|
-| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([19 rules](guide/detection-rules.md)) |
+| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([26 rules](guide/detection-rules.md)) |
 | **URL Crawler** | Malicious URLs, domain reputation, redirect chains to C2 infrastructure |
 | **LLM Analyzer** | Social engineering, hidden intent, context-dependent attacks invisible to regex |
 | **Threat Intel** | Known IOCs, [campaign attribution](guide/threat-campaigns.md), threat actor fingerprints |
@@ -34,17 +34,26 @@ Full pipeline details: **[Architecture](development/architecture.md)**
 
 ## Key Features
 
-- **19 detection rules** covering 7 threat categories
+- **26 detection rules** covering 7 threat categories
 - **4-layer pipeline** combining speed with depth
 - **Sub-50ms scans** for rule-based detection
 - **SARIF 2.1.0 output** for CI/CD integration
-- **REST API** with 16 endpoints, authentication, and rate limiting
-- **Web dashboard** built with React 19 and TypeScript
+- **REST API** with 30+ endpoints, authentication, and RBAC
+- **Web dashboard** with analytics, trend charts, and scan history
+- **Plugin system** for extending detection with third-party plugins
+- **YAML DSL** for writing custom rules without Python
+- **ML-based risk scoring** for anomaly-aware threat assessment
+- **PostgreSQL backend** support alongside SQLite
+- **Redis caching** for scan results and rule compilations
+- **Scheduled scanning** with configurable background jobs
+- **Multi-channel notifications** via Slack, email, and webhooks
+- **Audit logging** with immutable, append-only trail
+- **Rich TUI** for interactive terminal usage
 - **Campaign tracking** with IOC correlation and attribution
 - **STIX/TAXII export** for SIEM integration
 - **Python SDK** for embedding scans in your tools
 - **LangChain integration** with scan-before-execute guards
-- **GitHub Action** for scanning skills in pull requests
+- **CI/CD templates** for GitHub Actions, GitLab CI, and Azure DevOps
 - **Docker and Kubernetes** deployment with Helm chart
 
 ---

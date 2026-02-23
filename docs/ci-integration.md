@@ -180,7 +180,7 @@ malwar-scan:
     when: always
 ```
 
-For full documentation, see [templates/gitlab/README.md](../templates/gitlab/README.md).
+For full documentation, see [templates/gitlab/README.md](https://github.com/Ap6pack/malwar/blob/main/templates/gitlab/README.md).
 
 ---
 
@@ -243,7 +243,7 @@ steps:
     displayName: "Scan SKILL.md files"
 ```
 
-For full documentation, see [templates/azure/README.md](../templates/azure/README.md).
+For full documentation, see [templates/azure/README.md](https://github.com/Ap6pack/malwar/blob/main/templates/azure/README.md).
 
 ---
 

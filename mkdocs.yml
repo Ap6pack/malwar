@@ -39,12 +39,27 @@ nav:
     - CLI Reference: guide/cli-reference.md
     - API Reference: guide/api-reference.md
     - Detection Rules: guide/detection-rules.md
+    - Custom Rules (YAML DSL): custom-rules.md
+    - Rule Testing: rule-testing.md
     - Threat Campaigns: guide/threat-campaigns.md
+    - Diff Scanning: diff-scanning.md
+    - Rich TUI: tui.md
     - Accuracy Report: guide/accuracy-report.md
+  - Features:
+    - Plugin System: plugins.md
+    - ML Scoring: ml-scoring.md
+    - Dashboard Analytics: analytics.md
+    - Scheduled Scanning: scheduled-scanning.md
+    - Notifications: notifications.md
+    - Audit Logging: audit-logging.md
+    - RBAC: rbac.md
+    - Caching (Redis): caching.md
+    - PostgreSQL: postgresql.md
   - Integrations:
     - Python SDK: integrations/sdk.md
     - LangChain: integrations/langchain.md
     - GitHub Action: integrations/github-action.md
+    - CI/CD Integration: ci-integration.md
     - STIX/TAXII Export: integrations/stix-taxii.md
     - Campaign Ingestion: integrations/campaign-ingestion.md
   - Deployment:
