@@ -129,7 +129,7 @@ jobs:
         run: pip-audit --format=json --output=pip-audit-report.json || true
 
       - name: Generate SBOM
-        run: cyclonedx-py environment -o sbom.json --format json
+        run: cyclonedx-py environment --of JSON -o sbom.json
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
