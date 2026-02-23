@@ -186,7 +186,7 @@ docker compose down
 
 ### All Environment Variables
 
-See the full list in the [CLI Reference](cli-reference.md#environment-variables).
+See the full list in the [CLI Reference](guide/cli-reference.md#environment-variables).
 
 ---
 

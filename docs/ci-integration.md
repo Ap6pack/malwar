@@ -115,7 +115,7 @@ jobs:
     category: malwar
 ```
 
-For full documentation, see [GitHub Action docs](github-action.md).
+For full documentation, see [GitHub Action docs](integrations/github-action.md).
 
 ---
 

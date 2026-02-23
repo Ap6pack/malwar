@@ -18,7 +18,7 @@
 ![SARIF](https://img.shields.io/badge/output-SARIF_2.1.0-purple)
 ![Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)
 
-[Web Dashboard](#web-dashboard) &nbsp;&middot;&nbsp; [API Docs](docs/api-reference.md) &nbsp;&middot;&nbsp; [Detection Rules](docs/detection-rules.md) &nbsp;&middot;&nbsp; [Deployment](docs/deployment.md)
+[Web Dashboard](#web-dashboard) &nbsp;&middot;&nbsp; [API Docs](docs/guide/api-reference.md) &nbsp;&middot;&nbsp; [Detection Rules](docs/guide/detection-rules.md) &nbsp;&middot;&nbsp; [Deployment](docs/deployment.md)
 
 </div>
 
@@ -26,7 +26,7 @@
 
 ## Why
 
-**20% of ClawHub's 10,700+ skills are malicious.** The [ClawHavoc campaign](docs/threat-campaigns.md) alone trojanized 824+ skills to deliver the AMOS infostealer. These attacks aren't binaries — they're natural language instructions hidden in Markdown files. VirusTotal sees nothing. Code scanners see nothing. Malwar was built to catch them.
+**20% of ClawHub's 10,700+ skills are malicious.** The [ClawHavoc campaign](docs/guide/threat-campaigns.md) alone trojanized 824+ skills to deliver the AMOS infostealer. These attacks aren't binaries — they're natural language instructions hidden in Markdown files. VirusTotal sees nothing. Code scanners see nothing. Malwar was built to catch them.
 
 ## How It Works
 
@@ -37,12 +37,12 @@ SKILL.md → Rule Engine → URL Crawler → LLM Analyzer → Threat Intel → V
 
 | Layer | What it catches |
 |-------|-----------------|
-| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([26 rules](docs/detection-rules.md)) |
+| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([26 rules](docs/guide/detection-rules.md)) |
 | **URL Crawler** | Malicious URLs, domain reputation, redirect chains to C2 infrastructure |
 | **LLM Analyzer** | Social engineering, hidden intent, context-dependent attacks invisible to regex |
-| **Threat Intel** | Known IOCs, [campaign attribution](docs/threat-campaigns.md), threat actor fingerprints |
+| **Threat Intel** | Known IOCs, [campaign attribution](docs/guide/threat-campaigns.md), threat actor fingerprints |
 
-Full pipeline details: **[Architecture](docs/architecture.md)**
+Full pipeline details: **[Architecture](docs/development/architecture.md)**
 
 ## Quick Start
 
@@ -79,7 +79,7 @@ $ malwar scan suspicious-skill.md
   Scan completed in 42ms (rule_engine, threat_intel)
 ```
 
-Full command reference: **[CLI Guide](docs/cli-reference.md)**
+Full command reference: **[CLI Guide](docs/guide/cli-reference.md)**
 
 ## API
 
@@ -95,7 +95,7 @@ curl -X POST http://localhost:8000/api/v1/scan \
 
 30+ endpoints covering scan submission, results, SARIF export, signatures CRUD, campaigns, reports, dashboard analytics, audit logs, and RBAC. Auth via `X-API-Key` header.
 
-Full endpoint reference: **[API Docs](docs/api-reference.md)**
+Full endpoint reference: **[API Docs](docs/guide/api-reference.md)**
 
 ## Web Dashboard
 
@@ -148,11 +148,11 @@ Full dev guide: **[Development](docs/development.md)**
 
 | | |
 |---|---|
-| **[Architecture](docs/architecture.md)** | Pipeline design, scoring logic, storage layer |
-| **[API Reference](docs/api-reference.md)** | All 30+ endpoints with schemas and examples |
-| **[Detection Rules](docs/detection-rules.md)** | All 26 rules with patterns and false positive guidance |
-| **[Threat Campaigns](docs/threat-campaigns.md)** | Campaign tracking, ClawHavoc case study |
-| **[CLI Reference](docs/cli-reference.md)** | Every command with flags and examples |
+| **[Architecture](docs/development/architecture.md)** | Pipeline design, scoring logic, storage layer |
+| **[API Reference](docs/guide/api-reference.md)** | All 30+ endpoints with schemas and examples |
+| **[Detection Rules](docs/guide/detection-rules.md)** | All 26 rules with patterns and false positive guidance |
+| **[Threat Campaigns](docs/guide/threat-campaigns.md)** | Campaign tracking, ClawHavoc case study |
+| **[CLI Reference](docs/guide/cli-reference.md)** | Every command with flags and examples |
 | **[Deployment](docs/deployment.md)** | pip, Docker, nginx, production config |
 | **[Development](docs/development.md)** | Adding rules, endpoints, testing, conventions |
 

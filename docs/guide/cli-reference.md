@@ -234,6 +234,13 @@ Run seed data independently. Inserts campaign, signature, and publisher seed dat
 malwar db-seed
 ```
 
+**Example:**
+
+```bash
+$ malwar db-seed
+Seed data inserted successfully.
+```
+
 ---
 
 ### malwar signature-list
@@ -315,6 +322,12 @@ malwar signature-add regex "evil-domain-\d+\.example\.com" \
   --campaign-id campaign-new-001
 ```
 
+Add a simple exact match:
+
+```bash
+malwar signature-add exact "malicious-payload.com" -s critical -c known_malware
+```
+
 ---
 
 ### malwar report-show
@@ -327,6 +340,57 @@ Show a detailed report for a previously completed scan.
 malwar report-show <SCAN_ID>
 ```
 
+**Arguments:**
+
+| Argument | Description |
+|---|---|
+| `SCAN_ID` | The unique scan identifier to display |
+
+**Example:**
+
+```bash
+$ malwar report-show a1b2c3d4e5f6
++-------------------------------------------------+
+|                   Scan Report                   |
++-------------------------------------------------+
+| Scan ID:    a1b2c3d4e5f6                        |
+| Skill:      ClawBot Crypto Helper               |
+| Verdict:    MALICIOUS                           |
+| Risk Score: 100/100                             |
+| Severity:   critical                            |
+| Timestamp:  2026-02-20T10:30:00+00:00           |
+| Duration:   1.2s                                |
++-------------------------------------------------+
+
+            Summary
++----------+-------+
+| Severity | Count |
++----------+-------+
+| critical |     3 |
+| high     |     2 |
+| medium   |     1 |
++----------+-------+
+
+           Categories
++--------------------+-------+
+| Category           | Count |
++--------------------+-------+
+| known_malware      |     2 |
+| suspicious_command  |     2 |
+| data_exfiltration  |     1 |
+| social_engineering |     1 |
++--------------------+-------+
+
+                         Findings
++----------------+-----------------------------+----------+-----+------+------------+
+| Rule ID        | Title                       | Severity | Conf| Line | Detector   |
++----------------+-----------------------------+----------+-----+------+------------+
+| MALWAR-MAL-001 | ClawHavoc C2 IP detected    | critical | 0.99| 18   | rule_engine|
+| MALWAR-CMD-001 | Remote script piped to shell | critical | 0.92| 22   | rule_engine|
+| ...            | ...                         | ...      | ... | ...  | ...        |
++----------------+-----------------------------+----------+-----+------+------------+
+```
+
 ---
 
 ### malwar version
@@ -337,6 +401,13 @@ Display the installed malwar version.
 
 ```bash
 malwar version
+```
+
+**Example:**
+
+```bash
+$ malwar version
+malwar v0.1.0
 ```
 
 ---
