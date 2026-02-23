@@ -103,7 +103,46 @@ jobs:
           path: web/dist/
           retention-days: 30
 
-  # ── Job 4: Build the Python package ─────────────────────────────────
+  # ── Job 4: Security scanning and SBOM generation ───────────────────
+  security:
+    name: Security Scan & SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" bandit pip-audit cyclonedx-bom
+
+      - name: Bandit SAST scan
+        run: bandit -r src/ -f json -o bandit-report.json || true
+
+      - name: Dependency audit
+        run: pip-audit --format=json --output=pip-audit-report.json || true
+
+      - name: Generate SBOM
+        run: cyclonedx-py environment -o sbom.json --format json
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            pip-audit-report.json
+            sbom.json
+          retention-days: 30
+
+  # ── Job 5: Build the Python package ─────────────────────────────────
   build-package:
     name: Build Package
     runs-on: ubuntu-latest
