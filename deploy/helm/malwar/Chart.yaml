@@ -3,8 +3,8 @@ apiVersion: v2
 name: malwar
 description: Malwar — Agentic Skills Malware Detection Engine
 type: application
-version: 0.3.0
-appVersion: "0.3.0"
+version: 0.3.1
+appVersion: "0.3.1"
 home: https://github.com/Ap6pack/malwar
 sources:
   - https://github.com/Ap6pack/malwar
