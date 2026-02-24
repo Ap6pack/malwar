@@ -1,0 +1,3236 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic Skills Malware Detection Engine">
+      
+      
+      
+        <link rel="canonical" href="https://ap6pack.github.io/malwar/development/">
+      
+      
+        <link rel="prev" href="../deployment/configuration/">
+      
+      
+        <link rel="next" href="architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Overview - Malwar</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="red" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#development-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Malwar" class="md-header__button md-logo" aria-label="Malwar" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Malwar
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="red" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Ap6pack/malwar" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ap6pack/malwar
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Malwar" class="md-nav__button md-logo" aria-label="Malwar" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Malwar
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Ap6pack/malwar" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Ap6pack/malwar
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/detection-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Detection Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Rules (YAML DSL)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rule-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rule Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/threat-campaigns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Threat Campaigns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crawl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ClawHub Crawling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diff-scanning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diff Scanning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rich TUI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/accuracy-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ml-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ML Scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scheduled-scanning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Scanning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../caching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Caching (Redis)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../postgresql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PostgreSQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/sdk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/github-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Action
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ci-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/stix-taxii/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    STIX/TAXII Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/campaign-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign Ingestion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker & Compose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes & Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#project-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clone-and-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone and Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-setup-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Setup (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-add-a-new-detection-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Add a New Detection Rule
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to Add a New Detection Rule">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-the-rule-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create the Rule File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-implement-the-rule-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Implement the Rule Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-register-the-module-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Register the Module Import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-test-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Test Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-write-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Write Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rule-design-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rule Design Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-threatcategory-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available ThreatCategory Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-add-a-new-api-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Add a New API Endpoint
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to Add a New API Endpoint">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-or-modify-a-route-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create or Modify a Route Module
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-register-the-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Register the Router
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Organization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#async-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Async Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linting-and-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting and Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Linting and Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ruff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ruff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Checking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Package
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-the-python-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build the Python Package
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-the-docker-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build the Docker Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Conventions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Conventions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copyright-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copyright Headers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asyncawait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Async/Await
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#project-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clone-and-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone and Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-setup-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Setup (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-add-a-new-detection-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Add a New Detection Rule
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to Add a New Detection Rule">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-the-rule-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create the Rule File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-implement-the-rule-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Implement the Rule Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-register-the-module-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Register the Module Import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-test-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Test Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-write-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Write Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rule-design-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rule Design Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-threatcategory-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available ThreatCategory Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-add-a-new-api-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Add a New API Endpoint
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to Add a New API Endpoint">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-or-modify-a-route-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create or Modify a Route Module
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-register-the-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Register the Router
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Organization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#async-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Async Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linting-and-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting and Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Linting and Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ruff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ruff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Checking
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Package
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-the-python-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build the Python Package
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-the-docker-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build the Docker Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Conventions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Conventions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copyright-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copyright Headers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asyncawait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Async/Await
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
+
+<h1 id="development-guide">Development Guide<a class="headerlink" href="#development-guide" title="Permanent link">&para;</a></h1>
+<h2 id="project-setup">Project Setup<a class="headerlink" href="#project-setup" title="Permanent link">&para;</a></h2>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Python 3.13+</li>
+<li>Node.js 20+ (for frontend development)</li>
+<li>Git</li>
+</ul>
+<h3 id="clone-and-install">Clone and Install<a class="headerlink" href="#clone-and-install" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Ap6pack/malwar.git
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>malwar
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Install in editable mode with dev dependencies</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Initialize the database</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>malwar<span class="w"> </span>db<span class="w"> </span>init
+</code></pre></div>
+<h3 id="frontend-setup-optional">Frontend Setup (Optional)<a class="headerlink" href="#frontend-setup-optional" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>web
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>npm<span class="w"> </span>ci
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">  </span><span class="c1"># Starts Vite dev server on http://localhost:3000</span>
+</code></pre></div>
+<h3 id="environment-configuration">Environment Configuration<a class="headerlink" href="#environment-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Edit .env with your settings (MALWAR_ANTHROPIC_API_KEY for Layer 3 testing)</span>
+</code></pre></div>
+<hr />
+<h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>malwar/
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>+-- src/malwar/                    # Main package
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>|   +-- __init__.py                # Version: 0.3.1
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>|   +-- __main__.py                # python -m malwar entrypoint
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>|   +-- core/                      # Core infrastructure
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>|   |   +-- config.py              # Pydantic Settings configuration
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>|   |   +-- constants.py           # Enums, severity weights, thresholds
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>|   |   +-- exceptions.py          # Custom exception hierarchy
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>|   |   +-- logging.py             # Structured logging with redaction
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>|   +-- scanner/                   # Pipeline orchestration
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>|   |   +-- pipeline.py            # ScanPipeline: chains the 4 layers
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>|   |   +-- base.py                # BaseDetector abstract interface
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>|   |   +-- context.py             # ScanContext: mutable pipeline state
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>|   |   +-- severity.py            # Risk score and verdict computation
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>|   +-- detectors/                 # Detection layers
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>|   |   +-- rule_engine/           # Layer 1: Pattern matching
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>|   |   |   +-- detector.py        # RuleEngineDetector
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>|   |   |   +-- base_rule.py       # BaseRule abstract class
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>|   |   |   +-- registry.py        # RuleRegistry + @rule decorator
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>|   |   |   +-- rules/             # Individual rule implementations
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>|   |   |       +-- obfuscation.py
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>|   |   |       +-- prompt_injection.py
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>|   |   |       +-- credential_exposure.py
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>|   |   |       +-- exfiltration.py
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>|   |   |       +-- known_malware.py
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>|   |   |       +-- social_engineering.py
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>|   |   |       +-- suspicious_commands.py
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>|   |   +-- url_crawler/           # Layer 2: URL analysis
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>|   |   |   +-- detector.py        # UrlCrawlerDetector
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>|   |   |   +-- extractor.py       # URL extraction from markdown
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>|   |   |   +-- fetcher.py         # SafeFetcher with bounds
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>|   |   |   +-- analyzer.py        # Fetched content analysis
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>|   |   |   +-- reputation.py      # Domain reputation scoring
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>|   |   +-- llm_analyzer/          # Layer 3: LLM semantic analysis
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>|   |   |   +-- detector.py        # LlmAnalyzerDetector
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>|   |   |   +-- prompts.py         # System + user prompt templates
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>|   |   |   +-- parser.py          # LLM JSON response parsing
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>|   |   +-- threat_intel/          # Layer 4: Threat intelligence
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>|   |       +-- detector.py        # ThreatIntelDetector
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>|   |       +-- matcher.py         # ThreatIntelMatcher with IOC correlation
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>|   +-- models/                    # Pydantic data models
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>|   |   +-- finding.py             # Finding, Location
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>|   |   +-- scan.py                # ScanRequest, ScanResult
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>|   |   +-- skill.py               # SkillContent, SkillMetadata, CodeBlock, MarkdownSection
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>|   |   +-- signature.py           # ThreatSignature, Campaign
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a>|   |   +-- report.py              # BatchScanReport
+<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>|   |   +-- sarif.py               # SARIF 2.1.0 models
+<a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a>|   +-- parsers/                   # SKILL.md parsing
+<a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a>|   |   +-- skill_parser.py        # Frontmatter + markdown parsing
+<a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a>|   |   +-- markdown_parser.py     # URL, code block, section extraction
+<a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a>|   +-- crawl/                     # ClawHub registry crawler
+<a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a>|   |   +-- client.py              # Async HTTP client for ClawHub API
+<a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a>|   |   +-- models.py              # Pydantic response models
+<a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a>|   +-- cli/                       # Command-line interface
+<a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a>|   |   +-- app.py                 # Typer app with all commands
+<a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a>|   |   +-- commands/
+<a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a>|   |   |   +-- crawl.py           # ClawHub crawl commands
+<a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a>|   |   |   +-- db.py              # Database management commands
+<a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a>|   |   +-- formatters/
+<a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a>|   |       +-- console.py         # Rich console output
+<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a>|   |       +-- json_fmt.py        # JSON output
+<a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a>|   |       +-- sarif.py           # SARIF 2.1.0 output
+<a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a>|   +-- api/                       # REST API
+<a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a>|   |   +-- app.py                 # FastAPI application factory
+<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a>|   |   +-- auth.py                # X-API-Key authentication
+<a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>|   |   +-- middleware.py          # Rate limiting + request logging
+<a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a>|   |   +-- routes/
+<a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>|   |       +-- scan.py            # POST /scan, GET /scan/{id}, etc.
+<a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a>|   |       +-- health.py          # GET /health, GET /ready
+<a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a>|   |       +-- campaigns.py       # GET /campaigns, GET /campaigns/{id}
+<a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a>|   |       +-- signatures.py      # CRUD /signatures
+<a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a>|   |       +-- reports.py         # GET /reports, GET /reports/{id}
+<a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a>|   +-- storage/                   # Database layer
+<a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>|   |   +-- database.py            # SQLite connection management
+<a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a>|   |   +-- migrations.py          # Schema creation + seed data
+<a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a>|   |   +-- repositories/
+<a id="__codelineno-3-77" name="__codelineno-3-77" href="#__codelineno-3-77"></a>|   |       +-- scans.py           # ScanRepository
+<a id="__codelineno-3-78" name="__codelineno-3-78" href="#__codelineno-3-78"></a>|   |       +-- findings.py        # FindingRepository
+<a id="__codelineno-3-79" name="__codelineno-3-79" href="#__codelineno-3-79"></a>|   |       +-- signatures.py      # SignatureRepository
+<a id="__codelineno-3-80" name="__codelineno-3-80" href="#__codelineno-3-80"></a>|   |       +-- campaigns.py       # CampaignRepository
+<a id="__codelineno-3-81" name="__codelineno-3-81" href="#__codelineno-3-81"></a>|   |       +-- publishers.py      # PublisherRepository
+<a id="__codelineno-3-82" name="__codelineno-3-82" href="#__codelineno-3-82"></a>|   +-- notifications/
+<a id="__codelineno-3-83" name="__codelineno-3-83" href="#__codelineno-3-83"></a>|       +-- webhook.py             # Webhook notification dispatcher
+<a id="__codelineno-3-84" name="__codelineno-3-84" href="#__codelineno-3-84"></a>+-- tests/                         # Test suite
+<a id="__codelineno-3-85" name="__codelineno-3-85" href="#__codelineno-3-85"></a>|   +-- conftest.py                # Shared fixtures
+<a id="__codelineno-3-86" name="__codelineno-3-86" href="#__codelineno-3-86"></a>|   +-- unit/                      # Unit tests
+<a id="__codelineno-3-87" name="__codelineno-3-87" href="#__codelineno-3-87"></a>|   |   +-- test_core_models.py
+<a id="__codelineno-3-88" name="__codelineno-3-88" href="#__codelineno-3-88"></a>|   |   +-- test_skill_parser.py
+<a id="__codelineno-3-89" name="__codelineno-3-89" href="#__codelineno-3-89"></a>|   |   +-- test_markdown_parser.py
+<a id="__codelineno-3-90" name="__codelineno-3-90" href="#__codelineno-3-90"></a>|   |   +-- test_storage.py
+<a id="__codelineno-3-91" name="__codelineno-3-91" href="#__codelineno-3-91"></a>|   |   +-- test_webhook.py
+<a id="__codelineno-3-92" name="__codelineno-3-92" href="#__codelineno-3-92"></a>|   |   +-- detectors/
+<a id="__codelineno-3-93" name="__codelineno-3-93" href="#__codelineno-3-93"></a>|   |       +-- test_llm_analyzer.py
+<a id="__codelineno-3-94" name="__codelineno-3-94" href="#__codelineno-3-94"></a>|   |       +-- test_url_crawler.py
+<a id="__codelineno-3-95" name="__codelineno-3-95" href="#__codelineno-3-95"></a>|   |       +-- test_threat_intel.py
+<a id="__codelineno-3-96" name="__codelineno-3-96" href="#__codelineno-3-96"></a>|   +-- integration/               # Integration tests
+<a id="__codelineno-3-97" name="__codelineno-3-97" href="#__codelineno-3-97"></a>|   |   +-- test_api.py
+<a id="__codelineno-3-98" name="__codelineno-3-98" href="#__codelineno-3-98"></a>|   |   +-- test_scan_pipeline.py
+<a id="__codelineno-3-99" name="__codelineno-3-99" href="#__codelineno-3-99"></a>|   |   +-- test_batch_scan.py
+<a id="__codelineno-3-100" name="__codelineno-3-100" href="#__codelineno-3-100"></a>|   |   +-- test_signatures_api.py
+<a id="__codelineno-3-101" name="__codelineno-3-101" href="#__codelineno-3-101"></a>|   |   +-- test_campaigns_api.py
+<a id="__codelineno-3-102" name="__codelineno-3-102" href="#__codelineno-3-102"></a>|   |   +-- test_reports_api.py
+<a id="__codelineno-3-103" name="__codelineno-3-103" href="#__codelineno-3-103"></a>|   +-- e2e/                       # End-to-end tests
+<a id="__codelineno-3-104" name="__codelineno-3-104" href="#__codelineno-3-104"></a>|   |   +-- test_full_scan.py
+<a id="__codelineno-3-105" name="__codelineno-3-105" href="#__codelineno-3-105"></a>|   +-- fixtures/                  # Test fixture files
+<a id="__codelineno-3-106" name="__codelineno-3-106" href="#__codelineno-3-106"></a>|       +-- skills/
+<a id="__codelineno-3-107" name="__codelineno-3-107" href="#__codelineno-3-107"></a>|           +-- benign/            # Known-clean skill files
+<a id="__codelineno-3-108" name="__codelineno-3-108" href="#__codelineno-3-108"></a>|           +-- malicious/         # Known-malicious skill files
+<a id="__codelineno-3-109" name="__codelineno-3-109" href="#__codelineno-3-109"></a>|           +-- real/              # Real-world skill samples
+<a id="__codelineno-3-110" name="__codelineno-3-110" href="#__codelineno-3-110"></a>|               +-- clawhub/       # Real ClawHub skills
+<a id="__codelineno-3-111" name="__codelineno-3-111" href="#__codelineno-3-111"></a>|               +-- benign/        # Confirmed benign (Anthropic)
+<a id="__codelineno-3-112" name="__codelineno-3-112" href="#__codelineno-3-112"></a>|               +-- malicious/     # Confirmed malicious (Snyk research)
+<a id="__codelineno-3-113" name="__codelineno-3-113" href="#__codelineno-3-113"></a>+-- web/                           # React + TypeScript frontend
+<a id="__codelineno-3-114" name="__codelineno-3-114" href="#__codelineno-3-114"></a>|   +-- src/                       # Frontend source
+<a id="__codelineno-3-115" name="__codelineno-3-115" href="#__codelineno-3-115"></a>|   +-- dist/                      # Compiled assets (served by FastAPI)
+<a id="__codelineno-3-116" name="__codelineno-3-116" href="#__codelineno-3-116"></a>|   +-- package.json
+<a id="__codelineno-3-117" name="__codelineno-3-117" href="#__codelineno-3-117"></a>|   +-- vite.config.ts
+<a id="__codelineno-3-118" name="__codelineno-3-118" href="#__codelineno-3-118"></a>|   +-- tsconfig.json
+<a id="__codelineno-3-119" name="__codelineno-3-119" href="#__codelineno-3-119"></a>+-- docs/                          # Documentation
+<a id="__codelineno-3-120" name="__codelineno-3-120" href="#__codelineno-3-120"></a>+-- pyproject.toml                 # Project configuration
+<a id="__codelineno-3-121" name="__codelineno-3-121" href="#__codelineno-3-121"></a>+-- Dockerfile                     # Multi-stage Docker build
+<a id="__codelineno-3-122" name="__codelineno-3-122" href="#__codelineno-3-122"></a>+-- docker-compose.yml             # Docker Compose deployment
+<a id="__codelineno-3-123" name="__codelineno-3-123" href="#__codelineno-3-123"></a>+-- .env.example                   # Example environment configuration
+<a id="__codelineno-3-124" name="__codelineno-3-124" href="#__codelineno-3-124"></a>+-- .github/workflows/ci.yml       # CI/CD pipeline
+</code></pre></div>
+<hr />
+<h2 id="how-to-add-a-new-detection-rule">How to Add a New Detection Rule<a class="headerlink" href="#how-to-add-a-new-detection-rule" title="Permanent link">&para;</a></h2>
+<p>Detection rules are the primary extension point for malwar. Adding a new rule requires only a single Python file.</p>
+<h3 id="step-1-create-the-rule-file">Step 1: Create the Rule File<a class="headerlink" href="#step-1-create-the-rule-file" title="Permanent link">&para;</a></h3>
+<p>Create a new file in <code>src/malwar/detectors/rule_engine/rules/</code> or add a rule class to an existing file in that directory.</p>
+<h3 id="step-2-implement-the-rule-class">Step 2: Implement the Rule Class<a class="headerlink" href="#step-2-implement-the-rule-class" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># src/malwar/detectors/rule_engine/rules/my_new_rules.py</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="sd">&quot;&quot;&quot;My new detection rules.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.core.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DetectorLayer</span><span class="p">,</span> <span class="n">Severity</span><span class="p">,</span> <span class="n">ThreatCategory</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.detectors.rule_engine.base_rule</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseRule</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.detectors.rule_engine.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">rule</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.models.finding</span><span class="w"> </span><span class="kn">import</span> <span class="n">Finding</span><span class="p">,</span> <span class="n">Location</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.models.skill</span><span class="w"> </span><span class="kn">import</span> <span class="n">SkillContent</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="nd">@rule</span>  <span class="c1"># &lt;-- This decorator auto-registers the rule</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyNewRule</span><span class="p">(</span><span class="n">BaseRule</span><span class="p">):</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="n">rule_id</span> <span class="o">=</span> <span class="s2">&quot;MALWAR-NEW-001&quot;</span>          <span class="c1"># Unique ID following MALWAR-{CATEGORY}-{NUMBER}</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Description of what this detects&quot;</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="n">severity</span> <span class="o">=</span> <span class="n">Severity</span><span class="o">.</span><span class="n">HIGH</span>             <span class="c1"># CRITICAL, HIGH, MEDIUM, LOW, or INFO</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="n">category</span> <span class="o">=</span> <span class="n">ThreatCategory</span><span class="o">.</span><span class="n">SUSPICIOUS_COMMAND</span>  <span class="c1"># Must be a ThreatCategory enum value</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Detailed description of the rule&quot;</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>    <span class="c1"># Compiled regex patterns for performance</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>    <span class="n">PATTERNS</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;your-regex-pattern-here&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>    <span class="p">]</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skill</span><span class="p">:</span> <span class="n">SkillContent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Finding</span><span class="p">]:</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>        <span class="n">findings</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>        <span class="k">for</span> <span class="n">line_num</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">skill</span><span class="o">.</span><span class="n">raw_content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>            <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PATTERNS</span><span class="p">:</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>                <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>                    <span class="n">findings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Finding</span><span class="p">(</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>                        <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rule_id</span><span class="si">}</span><span class="s2">-L</span><span class="si">{</span><span class="n">line_num</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>                        <span class="n">rule_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rule_id</span><span class="p">,</span>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>                        <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>                        <span class="n">description</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>                        <span class="n">severity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>                        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>       <span class="c1"># 0.0 to 1.0</span>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>                        <span class="n">category</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>                        <span class="n">detector_layer</span><span class="o">=</span><span class="n">DetectorLayer</span><span class="o">.</span><span class="n">RULE_ENGINE</span><span class="p">,</span>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>                        <span class="n">location</span><span class="o">=</span><span class="n">Location</span><span class="p">(</span>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>                            <span class="n">line_start</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>                            <span class="n">snippet</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()[:</span><span class="mi">200</span><span class="p">],</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>                        <span class="p">),</span>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>                        <span class="n">evidence</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Describe what matched&quot;</span><span class="p">],</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>                    <span class="p">))</span>
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a>                    <span class="k">break</span>  <span class="c1"># One finding per line</span>
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a>        <span class="k">return</span> <span class="n">findings</span>
+</code></pre></div>
+<h3 id="step-3-register-the-module-import">Step 3: Register the Module Import<a class="headerlink" href="#step-3-register-the-module-import" title="Permanent link">&para;</a></h3>
+<p>If you created a new file, add its import to the rule engine detector:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># src/malwar/detectors/rule_engine/detector.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">malwar.detectors.rule_engine.rules.my_new_rules</span>  <span class="c1"># noqa: F401</span>
+</code></pre></div>
+<p>The <code>@rule</code> decorator handles registration automatically. The import triggers the decorator to execute.</p>
+<h3 id="step-4-add-test-fixtures">Step 4: Add Test Fixtures<a class="headerlink" href="#step-4-add-test-fixtures" title="Permanent link">&para;</a></h3>
+<p>Create test skill files:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># tests/fixtures/skills/malicious/my_new_threat.md</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>---
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>name:<span class="w"> </span>Trigger<span class="w"> </span>Skill
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>author:<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>---
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Test</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Content<span class="w"> </span>that<span class="w"> </span>triggers<span class="w"> </span>your<span class="w"> </span>new<span class="w"> </span>rule...
+</code></pre></div>
+<h3 id="step-5-write-tests">Step 5: Write Tests<a class="headerlink" href="#step-5-write-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># tests/unit/detectors/test_my_new_rules.py</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.detectors.rule_engine.rules.my_new_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">MyNewRule</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.parsers.skill_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_skill_content</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_my_new_rule_detects_threat</span><span class="p">():</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">skill</span> <span class="o">=</span> <span class="n">parse_skill_content</span><span class="p">(</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="s2">&quot;---</span><span class="se">\n</span><span class="s2">name: test</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2"># Test</span><span class="se">\n</span><span class="s2">your-trigger-pattern-here&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;test.md&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="p">)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">rule</span> <span class="o">=</span> <span class="n">MyNewRule</span><span class="p">()</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">findings</span> <span class="o">=</span> <span class="n">rule</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">skill</span><span class="p">)</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">findings</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="k">assert</span> <span class="n">findings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rule_id</span> <span class="o">==</span> <span class="s2">&quot;MALWAR-NEW-001&quot;</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="k">assert</span> <span class="n">findings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;high&quot;</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_my_new_rule_no_false_positive</span><span class="p">():</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="n">skill</span> <span class="o">=</span> <span class="n">parse_skill_content</span><span class="p">(</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>        <span class="s2">&quot;---</span><span class="se">\n</span><span class="s2">name: benign</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2"># Benign</span><span class="se">\n</span><span class="s2">Normal content here.&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>        <span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;test.md&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="p">)</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>    <span class="n">rule</span> <span class="o">=</span> <span class="n">MyNewRule</span><span class="p">()</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>    <span class="n">findings</span> <span class="o">=</span> <span class="n">rule</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">skill</span><span class="p">)</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">findings</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+</code></pre></div>
+<h3 id="rule-design-guidelines">Rule Design Guidelines<a class="headerlink" href="#rule-design-guidelines" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Use compiled regex</strong> -- Define patterns as class-level <code>re.compile()</code> for performance.</li>
+<li><strong>Set appropriate confidence</strong> -- Higher confidence (0.90+) for exact IOC matches. Lower (0.60-0.80) for heuristic patterns.</li>
+<li><strong>Include evidence</strong> -- Always add meaningful evidence strings explaining what triggered the rule.</li>
+<li><strong>Break after first match per line</strong> -- Avoid duplicate findings for the same line.</li>
+<li><strong>Use sections for context</strong> -- For context-sensitive rules (e.g., "dangerous command in prerequisites section"), iterate over <code>skill.sections</code> instead of raw lines.</li>
+<li><strong>Follow the naming convention</strong> -- Rule IDs must follow <code>MALWAR-{CATEGORY}-{NUMBER}</code>.</li>
+</ol>
+<h3 id="available-threatcategory-values">Available ThreatCategory Values<a class="headerlink" href="#available-threatcategory-values" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Enum Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OBFUSCATED_COMMAND</code></td>
+<td>Encoded/obfuscated commands</td>
+</tr>
+<tr>
+<td><code>SOCIAL_ENGINEERING</code></td>
+<td>Deceptive instructions</td>
+</tr>
+<tr>
+<td><code>PROMPT_INJECTION</code></td>
+<td>AI agent instruction override</td>
+</tr>
+<tr>
+<td><code>KNOWN_MALWARE</code></td>
+<td>Known campaign IOCs</td>
+</tr>
+<tr>
+<td><code>CREDENTIAL_EXPOSURE</code></td>
+<td>Secrets and credential harvesting</td>
+</tr>
+<tr>
+<td><code>SUSPICIOUS_COMMAND</code></td>
+<td>Dangerous shell commands</td>
+</tr>
+<tr>
+<td><code>DATA_EXFILTRATION</code></td>
+<td>Sensitive file access and data transmission</td>
+</tr>
+<tr>
+<td><code>MALICIOUS_URL</code></td>
+<td>Malicious or suspicious URLs</td>
+</tr>
+<tr>
+<td><code>SUSPICIOUS_DEPENDENCY</code></td>
+<td>Untrusted package dependencies</td>
+</tr>
+<tr>
+<td><code>TYPOSQUATTING</code></td>
+<td>Name-based deception</td>
+</tr>
+<tr>
+<td><code>SECURITY_DISABLEMENT</code></td>
+<td>Disabling security controls</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="how-to-add-a-new-api-endpoint">How to Add a New API Endpoint<a class="headerlink" href="#how-to-add-a-new-api-endpoint" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-create-or-modify-a-route-module">Step 1: Create or Modify a Route Module<a class="headerlink" href="#step-1-create-or-modify-a-route-module" title="Permanent link">&para;</a></h3>
+<p>API routes live in <code>src/malwar/api/routes/</code>. Either add to an existing module or create a new one.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># src/malwar/api/routes/my_feature.py</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">&quot;&quot;&quot;My feature API endpoints.&quot;&quot;&quot;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.api.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_api_key</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/my-endpoint&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">MyResponse</span><span class="p">)</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">my_endpoint</span><span class="p">(</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="n">_api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_api_key</span><span class="p">),</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MyResponse</span><span class="p">:</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Description of what this endpoint does.&quot;&quot;&quot;</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>    <span class="k">return</span> <span class="n">MyResponse</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">])</span>
+</code></pre></div>
+<h3 id="step-2-register-the-router">Step 2: Register the Router<a class="headerlink" href="#step-2-register-the-router" title="Permanent link">&para;</a></h3>
+<p>Add the router to the FastAPI app in <code>src/malwar/api/app.py</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.api.routes</span><span class="w"> </span><span class="kn">import</span> <span class="n">my_feature</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># In create_app():</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">my_feature</span><span class="o">.</span><span class="n">router</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/v1&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;my-feature&quot;</span><span class="p">])</span>
+</code></pre></div>
+<h3 id="step-3-add-tests">Step 3: Add Tests<a class="headerlink" href="#step-3-add-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># tests/integration/test_my_feature.py</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">httpx</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASGITransport</span><span class="p">,</span> <span class="n">AsyncClient</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">malwar.api.app</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_app</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">app</span><span class="p">():</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="k">return</span> <span class="n">create_app</span><span class="p">()</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_my_endpoint</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">AsyncClient</span><span class="p">(</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>        <span class="n">transport</span><span class="o">=</span><span class="n">ASGITransport</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">),</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>        <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;http://test&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>    <span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/v1/my-endpoint&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>        <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>        <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>        <span class="k">assert</span> <span class="s2">&quot;message&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+</code></pre></div>
+<hr />
+<h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="test-organization">Test Organization<a class="headerlink" href="#test-organization" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Purpose</th>
+<th>Markers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/unit/</code></td>
+<td>Unit tests for individual modules</td>
+<td>(none)</td>
+</tr>
+<tr>
+<td><code>tests/integration/</code></td>
+<td>Tests that exercise multiple components together</td>
+<td><code>@pytest.mark.integration</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/</code></td>
+<td>End-to-end tests scanning real skill files</td>
+<td><code>@pytest.mark.e2e</code></td>
+</tr>
+<tr>
+<td><code>tests/fixtures/</code></td>
+<td>Test data files (SKILL.md samples)</td>
+<td>--</td>
+</tr>
+</tbody>
+</table>
+<h3 id="test-fixtures">Test Fixtures<a class="headerlink" href="#test-fixtures" title="Permanent link">&para;</a></h3>
+<p>The test suite includes both synthetic and real-world skill files:</p>
+<p><strong>Synthetic fixtures</strong> (<code>tests/fixtures/skills/</code>):
+- <code>benign/</code> -- Clean skills: hello_world, git_helper, web_search, code_formatter, legitimate_with_urls
+- <code>malicious/</code> -- Malicious skills: clawhavoc_amos, credential_harvester, obfuscated_curl, base64_reverse_shell, exfil_soul_md, multi_stage_dropper, prompt_injection_basic, prompt_injection_unicode, clickfix_fake_prereq, typosquatted_package</p>
+<p><strong>Real-world fixtures</strong> (<code>tests/fixtures/skills/real/</code>):
+- <code>clawhub/</code> -- Actual ClawHub skills (bankrbot variants, metamask helpers, etc.)
+- <code>benign/</code> -- Confirmed benign skills from Anthropic
+- <code>malicious/</code> -- Confirmed malicious skills from Snyk research</p>
+<h3 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Run all tests</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>pytest
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Run with verbose output</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>pytest<span class="w"> </span>-v
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Run only unit tests</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>pytest<span class="w"> </span>tests/unit/
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Run only integration tests</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>pytest<span class="w"> </span>tests/integration/
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1"># Run only e2e tests</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>pytest<span class="w"> </span>tests/e2e/
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="c1"># Run with coverage</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>malwar<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="c1"># Run with coverage and fail if below threshold</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>malwar<span class="w"> </span>--cov-fail-under<span class="o">=</span><span class="m">85</span>
+</code></pre></div>
+<h3 id="shared-fixtures">Shared Fixtures<a class="headerlink" href="#shared-fixtures" title="Permanent link">&para;</a></h3>
+<p>The <code>tests/conftest.py</code> provides:</p>
+<ul>
+<li><code>benign_dir</code> -- Path to the benign test fixtures directory</li>
+<li><code>malicious_dir</code> -- Path to the malicious test fixtures directory</li>
+<li><code>_clear_rate_limit_state</code> (autouse) -- Resets in-memory rate limit state between tests</li>
+</ul>
+<h3 id="async-testing">Async Testing<a class="headerlink" href="#async-testing" title="Permanent link">&para;</a></h3>
+<p>All tests use <code>pytest-asyncio</code> with <code>asyncio_mode = "auto"</code> configuration. Async test functions are automatically detected and run with an event loop.</p>
+<hr />
+<h2 id="linting-and-formatting">Linting and Formatting<a class="headerlink" href="#linting-and-formatting" title="Permanent link">&para;</a></h2>
+<h3 id="ruff">Ruff<a class="headerlink" href="#ruff" title="Permanent link">&para;</a></h3>
+<p>The project uses Ruff for linting and formatting with a comprehensive rule set.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Check for lint errors</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>ruff<span class="w"> </span>check<span class="w"> </span>src/<span class="w"> </span>tests/
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Auto-fix lint errors</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>ruff<span class="w"> </span>check<span class="w"> </span>--fix<span class="w"> </span>src/<span class="w"> </span>tests/
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Format code</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>ruff<span class="w"> </span>format<span class="w"> </span>src/<span class="w"> </span>tests/
+</code></pre></div>
+<p><strong>Configuration</strong> (from <code>pyproject.toml</code>):
+- Target: Python 3.13
+- Line length: 100
+- Enabled rule sets: E, W, F, I, N, UP, B, S, A, C4, DTZ, T20, SIM, TCH, RUF, ASYNC</p>
+<h3 id="type-checking">Type Checking<a class="headerlink" href="#type-checking" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Run mypy</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mypy<span class="w"> </span>src/<span class="w"> </span>--ignore-missing-imports
+</code></pre></div>
+<p><strong>Configuration</strong> (from <code>pyproject.toml</code>):
+- Python version: 3.13
+- <code>warn_return_any = true</code>
+- <code>warn_unused_configs = true</code></p>
+<hr />
+<h2 id="build-and-package">Build and Package<a class="headerlink" href="#build-and-package" title="Permanent link">&para;</a></h2>
+<h3 id="build-the-python-package">Build the Python Package<a class="headerlink" href="#build-the-python-package" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Install build tool</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>pip<span class="w"> </span>install<span class="w"> </span>build
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Build wheel and sdist</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>python<span class="w"> </span>-m<span class="w"> </span>build
+</code></pre></div>
+<p>Output goes to the <code>dist/</code> directory.</p>
+<h3 id="build-the-docker-image">Build the Docker Image<a class="headerlink" href="#build-the-docker-image" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>malwar<span class="w"> </span>.
+</code></pre></div>
+<p>The Dockerfile uses a multi-stage build:
+1. Stage 1: Build React frontend with Node.js 20
+2. Stage 2: Install Python package and copy frontend assets</p>
+<hr />
+<h2 id="code-conventions">Code Conventions<a class="headerlink" href="#code-conventions" title="Permanent link">&para;</a></h2>
+<h3 id="imports">Imports<a class="headerlink" href="#imports" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use <code>from __future__ import annotations</code> for modern type annotation syntax.</li>
+<li>Organize imports: stdlib, third-party, first-party (<code>malwar.*</code>).</li>
+<li>Ruff isort is configured with <code>known-first-party = ["malwar"]</code>.</li>
+</ul>
+<h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use the custom exception hierarchy from <code>malwar.core.exceptions</code>:</li>
+<li><code>MalwarError</code> -- Base exception</li>
+<li><code>ConfigurationError</code> -- Invalid configuration</li>
+<li><code>ParseError</code> -- Failed to parse SKILL.md</li>
+<li><code>ScanError</code> -- Error during scanning</li>
+<li><code>DetectorError</code> -- Error in a detection layer</li>
+<li><code>StorageError</code> -- Database errors</li>
+<li><code>FetchError</code> -- URL fetch errors</li>
+<li><code>LLMError</code> -- LLM API errors</li>
+<li><code>AuthenticationError</code> -- API auth failures</li>
+</ul>
+<h3 id="copyright-headers">Copyright Headers<a class="headerlink" href="#copyright-headers" title="Permanent link">&para;</a></h3>
+<p>Every source file must include the copyright header:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.</span>
+</code></pre></div>
+<h3 id="data-models">Data Models<a class="headerlink" href="#data-models" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use Pydantic <code>BaseModel</code> for all data models.</li>
+<li>Use <code>Field()</code> with descriptions for API-facing models.</li>
+<li>Use <code>computed_field</code> for derived properties (e.g., <code>risk_score</code>, <code>verdict</code>).</li>
+<li>Use Python <code>StrEnum</code> for enumeration types.</li>
+</ul>
+<h3 id="asyncawait">Async/Await<a class="headerlink" href="#asyncawait" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All I/O operations (database, HTTP, file reading) are async.</li>
+<li>Detection layers implement <code>async def detect()</code>.</li>
+<li>The CLI uses <code>asyncio.run()</code> to bridge sync Typer with async internals.</li>
+</ul>
+<h3 id="logging">Logging<a class="headerlink" href="#logging" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use <code>logging.getLogger("malwar.module.submodule")</code> for all loggers.</li>
+<li>Log levels: DEBUG for verbose tracing, INFO for normal operations, WARNING for degraded states, ERROR for failures.</li>
+<li>Sensitive data is automatically redacted by the custom log formatters.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Ap6pack/malwar" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
