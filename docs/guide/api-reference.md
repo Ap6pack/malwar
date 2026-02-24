@@ -219,7 +219,7 @@ Retrieve a scan result in SARIF 2.1.0 format, suitable for integration with GitH
       "tool": {
         "driver": {
           "name": "malwar",
-          "version": "0.1.0",
+          "version": "0.3.1",
           "rules": [
             {
               "id": "MALWAR-CMD-001",
@@ -599,7 +599,7 @@ Health check endpoint. Not subject to rate limiting or authentication.
 {
   "status": "ok",
   "service": "malwar",
-  "version": "0.1.0"
+  "version": "0.3.1"
 }
 ```
 

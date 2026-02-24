@@ -109,5 +109,5 @@ Malwar is the first tool purpose-built for this gap. Not adapted from code scann
 
 ---
 
-*Malwar v0.3.0 — 26 detection rules, 4-layer pipeline, 1,472 tests, BSL-1.1 licensed.*
+*Malwar v0.3.1 — 26 detection rules, 4-layer pipeline, 1,504 tests, BSL-1.1 licensed.*
 *Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.*

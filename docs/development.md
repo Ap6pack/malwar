@@ -45,7 +45,7 @@ cp .env.example .env
 ```
 malwar/
 +-- src/malwar/                    # Main package
-|   +-- __init__.py                # Version: 0.1.0
+|   +-- __init__.py                # Version: 0.3.1
 |   +-- __main__.py                # python -m malwar entrypoint
 |   +-- core/                      # Core infrastructure
 |   |   +-- config.py              # Pydantic Settings configuration

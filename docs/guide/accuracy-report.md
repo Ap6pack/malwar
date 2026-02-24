@@ -3,7 +3,7 @@
 # Malwar Detection Accuracy Report
 
 **Date:** 2026-02-20
-**Engine version:** 0.1.0
+**Engine version:** 0.3.1
 **Layers tested:** rule_engine, threat_intel (no LLM, no URL crawling)
 **Total fixtures scanned:** 44 (31 labeled, 13 unlabeled ClawHub samples)
 

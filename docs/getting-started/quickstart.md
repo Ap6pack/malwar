@@ -17,7 +17,7 @@ malwar scan SKILL.md
 Example output:
 
 ```
-malwar v0.1.0 - Agentic Skills Malware Scanner
+malwar v0.3.1 - Agentic Skills Malware Scanner
 
   Target:  SKILL.md
   SHA256:  a1b2c3d4e5f6...
@@ -129,7 +129,7 @@ curl -X POST http://localhost:8000/api/v1/scan \
 malwar serve --host 0.0.0.0 --port 9000 --workers 4
 ```
 
-See the full [API Reference](../guide/api-reference.md) for all 16 endpoints.
+See the full [API Reference](../guide/api-reference.md) for all 30+ endpoints.
 
 ---
 
@@ -204,6 +204,6 @@ See the full [LangChain Integration](../integrations/langchain.md) guide.
 ## Next Steps
 
 - [CLI Reference](../guide/cli-reference.md) -- Every command with flags and examples
-- [API Reference](../guide/api-reference.md) -- All 16 endpoints with schemas
-- [Detection Rules](../guide/detection-rules.md) -- All 19 rules with patterns
+- [API Reference](../guide/api-reference.md) -- All 30+ endpoints with schemas
+- [Detection Rules](../guide/detection-rules.md) -- All 26 rules with patterns
 - [Deployment](../deployment/docker.md) -- Docker, Kubernetes, production config
