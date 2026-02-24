@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from malwar import __version__
 from malwar.core.constants import Severity
 from malwar.models.scan import ScanResult
 
@@ -73,7 +74,7 @@ def scan_result_to_sarif(result: ScanResult) -> dict[str, Any]:
                 "tool": {
                     "driver": {
                         "name": "malwar",
-                        "version": "0.1.0",
+                        "version": __version__,
                         "rules": rules,
                     }
                 },

@@ -6,6 +6,8 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from malwar import __version__
+
 router = APIRouter()
 
 
@@ -22,7 +24,7 @@ class ReadyResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
-    return HealthResponse(status="ok", service="malwar", version="0.1.0")
+    return HealthResponse(status="ok", service="malwar", version=__version__)
 
 
 @router.get("/ready", response_model=ReadyResponse)

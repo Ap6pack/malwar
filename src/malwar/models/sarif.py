@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from malwar import __version__
+
 
 class SarifMessage(BaseModel):
     text: str
@@ -44,7 +46,7 @@ class SarifRule(BaseModel):
 
 class SarifDriver(BaseModel):
     name: str = "malwar"
-    version: str = "0.1.0"
+    version: str = __version__
     informationUri: str = "https://github.com/veritasaequitas/malwar"
     rules: list[SarifRule] = Field(default_factory=list)
 

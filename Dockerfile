@@ -49,6 +49,7 @@ USER malwar
 EXPOSE 8000
 
 ENV MALWAR_DB_PATH=/data/malwar.db
+ENV MALWAR_WEB_DIST=/app/web/dist
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1

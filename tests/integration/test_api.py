@@ -53,7 +53,7 @@ class TestHealthEndpoint:
         data = resp.json()
         assert data["status"] == "ok"
         assert data["service"] == "malwar"
-        assert data["version"] == "0.1.0"
+        assert data["version"] == "0.3.1"
 
 
 # ---------------------------------------------------------------------------

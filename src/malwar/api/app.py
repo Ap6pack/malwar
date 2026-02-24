@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -35,7 +36,10 @@ from malwar.api.routes import (
 )
 from malwar.audit.middleware import AuditMiddleware
 
-_WEB_DIST = Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist"
+_WEB_DIST = Path(
+    os.environ.get("MALWAR_WEB_DIST", "")
+    or Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist"
+)
 
 
 @asynccontextmanager
