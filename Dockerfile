@@ -1,6 +1,16 @@
 # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 
-# Stage 1: Install Python dependencies
+# Stage 1: Build React frontend
+FROM node:20-slim AS frontend
+WORKDIR /app/web
+
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+COPY web/ ./
+RUN npm run build
+
+# Stage 2: Install Python dependencies
 FROM python:3.13-slim AS builder
 WORKDIR /app
 
@@ -9,7 +19,7 @@ COPY src/ src/
 
 RUN pip install --no-cache-dir --prefix=/install .
 
-# Stage 2: Runtime image
+# Stage 3: Runtime image
 FROM python:3.13-slim
 WORKDIR /app
 
@@ -26,6 +36,9 @@ COPY --from=builder /install /usr/local
 
 # Copy application source
 COPY src/ src/
+
+# Copy frontend build
+COPY --from=frontend /app/web/dist web/dist
 
 # Create data directory for SQLite
 RUN mkdir -p /data && chown malwar:malwar /data
