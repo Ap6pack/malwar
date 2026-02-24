@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_workers: int = 1
     api_keys: list[str] = []
+    cors_origins: list[str] = ["*"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v if isinstance(v, list) else []
 
     @field_validator("api_keys", mode="before")
     @classmethod

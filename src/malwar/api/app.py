@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from malwar import __version__
 from malwar.api.keys import router as keys_router
 from malwar.api.middleware import RateLimitMiddleware, RequestMiddleware, UsageLoggingMiddleware
 from malwar.api.routes import (
@@ -64,10 +65,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 
 def create_app(*, enable_scheduler: bool = True) -> FastAPI:
+    from malwar.core.config import get_settings
+
+    settings = get_settings()
+
     app = FastAPI(
         title="malwar",
         description="Malware detection engine for agentic skills",
-        version="0.1.0",
+        version=__version__,
         lifespan=lifespan,
         docs_url="/api/docs",
         redoc_url="/api/redoc",
@@ -76,10 +81,10 @@ def create_app(*, enable_scheduler: bool = True) -> FastAPI:
 
     app.state.enable_scheduler = enable_scheduler
 
-    # CORS for development (Vite dev server)
+    # CORS — configurable via MALWAR_CORS_ORIGINS (default: ["*"])
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],
+        allow_origins=settings.cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
