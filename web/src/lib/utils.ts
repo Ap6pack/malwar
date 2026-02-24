@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 import { clsx, type ClassValue } from 'clsx'
 
 export function cn(...inputs: ClassValue[]) {

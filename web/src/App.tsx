@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from './components/Layout'

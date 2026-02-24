@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

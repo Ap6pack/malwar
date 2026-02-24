@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 import { useCallback, useEffect, useState } from 'react'
 import { Shield, AlertTriangle, Calendar, Users, ChevronDown, ChevronUp, X, AlertCircle, Hash } from 'lucide-react'
 import { api, type Campaign } from '../lib/api'

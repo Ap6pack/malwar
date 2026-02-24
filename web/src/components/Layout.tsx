@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import {
