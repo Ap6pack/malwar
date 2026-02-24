@@ -2,8 +2,8 @@
 .git
 __pycache__
 .venv
-node_modules
-web/
+web/node_modules
+web/dist
 tests/
 docs/
 .github/
