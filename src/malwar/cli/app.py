@@ -14,6 +14,7 @@ import typer
 from malwar.cli.commands import analytics as analytics_cmd
 from malwar.cli.commands import audit as audit_cmd
 from malwar.cli.commands import cache as cache_cmd
+from malwar.cli.commands import crawl as crawl_cmd
 from malwar.cli.commands import db, export, ingest, keys, ml, notify, plugin, schedule, test_rules
 from malwar.cli.commands.diff import diff_command
 
@@ -37,6 +38,7 @@ app.add_typer(plugin.app, name="plugin", help="Manage detector plugins")
 app.add_typer(cache_cmd.app, name="cache", help="Manage scan result cache")
 app.add_typer(ml.app, name="ml", help="ML risk scoring model management")
 app.add_typer(analytics_cmd.app, name="analytics", help="Dashboard analytics summary")
+app.add_typer(crawl_cmd.app, name="crawl", help="Crawl and scan skills from ClawHub registry")
 
 
 class OutputFormat(StrEnum):
