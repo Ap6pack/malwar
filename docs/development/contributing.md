@@ -54,6 +54,7 @@ malwar/
 |   |   +-- threat_intel/          # Layer 4: Threat intelligence
 |   +-- models/                    # Pydantic data models
 |   +-- parsers/                   # SKILL.md parsing
+|   +-- crawl/                     # ClawHub registry crawler
 |   +-- cli/                       # Command-line interface
 |   +-- api/                       # REST API
 |   +-- storage/                   # Database layer

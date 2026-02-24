@@ -54,6 +54,8 @@ Full pipeline details: **[Architecture](development/architecture.md)**
 - **Python SDK** for embedding scans in your tools
 - **LangChain integration** with scan-before-execute guards
 - **CI/CD templates** for GitHub Actions, GitLab CI, and Azure DevOps
+- **ClawHub registry integration** — browse, search, and scan skills directly from the registry
+- **Remote URL scanning** — scan any SKILL.md hosted on the web
 - **Docker and Kubernetes** deployment with Helm chart
 
 ---
@@ -83,6 +85,8 @@ malwar scan SKILL.md                    # scan a file
 malwar scan skills/                     # scan a directory
 malwar scan SKILL.md --format sarif     # CI/CD output
 malwar scan SKILL.md --no-llm          # skip LLM (fast + free)
+malwar crawl scan beszel-check          # scan a ClawHub skill by slug
+malwar crawl search "crypto"            # search ClawHub registry
 ```
 
 ```

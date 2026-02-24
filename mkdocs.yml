@@ -42,6 +42,7 @@ nav:
     - Custom Rules (YAML DSL): custom-rules.md
     - Rule Testing: rule-testing.md
     - Threat Campaigns: guide/threat-campaigns.md
+    - ClawHub Crawling: crawl.md
     - Diff Scanning: diff-scanning.md
     - Rich TUI: tui.md
     - Accuracy Report: guide/accuracy-report.md

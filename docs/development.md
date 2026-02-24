@@ -93,9 +93,13 @@ malwar/
 |   +-- parsers/                   # SKILL.md parsing
 |   |   +-- skill_parser.py        # Frontmatter + markdown parsing
 |   |   +-- markdown_parser.py     # URL, code block, section extraction
+|   +-- crawl/                     # ClawHub registry crawler
+|   |   +-- client.py              # Async HTTP client for ClawHub API
+|   |   +-- models.py              # Pydantic response models
 |   +-- cli/                       # Command-line interface
 |   |   +-- app.py                 # Typer app with all commands
 |   |   +-- commands/
+|   |   |   +-- crawl.py           # ClawHub crawl commands
 |   |   |   +-- db.py              # Database management commands
 |   |   +-- formatters/
 |   |       +-- console.py         # Rich console output

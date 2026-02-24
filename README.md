@@ -64,6 +64,8 @@ malwar scan SKILL.md                    # scan a file
 malwar scan skills/                     # scan a directory
 malwar scan SKILL.md --format sarif     # CI/CD output
 malwar scan SKILL.md --no-llm          # skip LLM (fast + free)
+malwar crawl scan beszel-check          # scan a ClawHub skill by slug
+malwar crawl url https://example.com/SKILL.md  # scan any remote SKILL.md
 ```
 
 ```
@@ -135,7 +137,7 @@ All settings via environment variables with `MALWAR_` prefix or `.env` file. Key
 ## Development
 
 ```bash
-pytest                                # 1,472 tests
+pytest                                # 1,504 tests
 ruff check src/ tests/                # lint
 mypy src/                             # type check
 ```
@@ -170,7 +172,9 @@ Full dev guide: **[Development](docs/development.md)**
 
 **User Experience** — Dashboard analytics with trend charts, Rich TUI for interactive terminal usage.
 
-1,472 tests | 26 detection rules | 82% coverage
+**Registry Integration** — `malwar crawl` command to browse, search, and scan skills directly from ClawHub. Also supports scanning any remote SKILL.md by URL.
+
+1,504 tests | 26 detection rules | 82% coverage
 
 ---
 

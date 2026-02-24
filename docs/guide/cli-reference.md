@@ -393,6 +393,150 @@ $ malwar report-show a1b2c3d4e5f6
 
 ---
 
+### malwar crawl
+
+Crawl and scan skills from the ClawHub registry or any remote URL.
+
+**Sub-commands:**
+
+#### malwar crawl scan
+
+Fetch a skill from ClawHub by slug and scan its SKILL.md for threats.
+
+**Usage:**
+
+```bash
+malwar crawl scan <SLUG> [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|---|---|
+| `SLUG` | Skill slug on ClawHub (e.g., `beszel-check`) |
+
+**Options:**
+
+| Option | Short | Type | Default | Description |
+|---|---|---|---|---|
+| `--version` | `-v` | string | latest | Specific skill version to scan |
+| `--format` | `-f` | `console\|json\|sarif` | `console` | Output format |
+| `--output` | `-o` | PATH | stdout | Write output to a file |
+| `--no-llm` | -- | flag | false | Skip the LLM analysis layer |
+| `--no-urls` | -- | flag | false | Skip the URL crawling layer |
+| `--layers` | -- | string | all | Comma-separated layers to run |
+
+**Examples:**
+
+```bash
+malwar crawl scan beszel-check                     # scan latest version
+malwar crawl scan beszel-check --version 1.0.0     # scan specific version
+malwar crawl scan beszel-check --format json        # JSON output
+malwar crawl scan beszel-check --no-llm             # fast scan, no API cost
+```
+
+**Exit codes:** 0 if risk score < 40, 1 if risk score >= 40 (SUSPICIOUS or MALICIOUS).
+
+---
+
+#### malwar crawl search
+
+Search for skills on ClawHub by keyword.
+
+**Usage:**
+
+```bash
+malwar crawl search <QUERY> [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Type | Default | Description |
+|---|---|---|---|---|
+| `--limit` | `-n` | integer | `20` | Maximum results to return |
+
+**Examples:**
+
+```bash
+malwar crawl search "crypto wallet"
+malwar crawl search "hello" --limit 5
+```
+
+---
+
+#### malwar crawl list
+
+List skills from the ClawHub registry with pagination.
+
+**Usage:**
+
+```bash
+malwar crawl list [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Type | Default | Description |
+|---|---|---|---|---|
+| `--limit` | `-n` | integer | `20` | Number of skills to list |
+| `--cursor` | -- | string | -- | Pagination cursor from previous request |
+
+**Examples:**
+
+```bash
+malwar crawl list                      # first 20 skills
+malwar crawl list --limit 50           # more results
+```
+
+---
+
+#### malwar crawl info
+
+Show details and moderation status for a ClawHub skill. Displays metadata, author, download stats, and security flags from ClawHub's VirusTotal integration.
+
+**Usage:**
+
+```bash
+malwar crawl info <SLUG>
+```
+
+**Examples:**
+
+```bash
+malwar crawl info beszel-check
+```
+
+---
+
+#### malwar crawl url
+
+Fetch a SKILL.md from any URL and scan it for threats. Works with any site hosting SKILL.md files -- not limited to ClawHub.
+
+**Usage:**
+
+```bash
+malwar crawl url <URL> [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Type | Default | Description |
+|---|---|---|---|---|
+| `--format` | `-f` | `console\|json\|sarif` | `console` | Output format |
+| `--output` | `-o` | PATH | stdout | Write output to a file |
+| `--no-llm` | -- | flag | false | Skip the LLM analysis layer |
+| `--no-urls` | -- | flag | false | Skip the URL crawling layer |
+| `--layers` | -- | string | all | Comma-separated layers to run |
+
+**Examples:**
+
+```bash
+malwar crawl url https://example.com/SKILL.md
+malwar crawl url https://raw.githubusercontent.com/user/repo/main/SKILL.md --format json
+```
+
+---
+
 ### malwar version
 
 Display the installed malwar version.

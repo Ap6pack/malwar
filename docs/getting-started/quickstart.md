@@ -77,6 +77,34 @@ malwar scan SKILL.md --layers rule_engine,threat_intel
 
 ---
 
+## Scan a ClawHub Skill
+
+Scan skills directly from the [ClawHub registry](https://clawhub.ai) without downloading them:
+
+```bash
+# Scan a skill by slug
+malwar crawl scan beszel-check
+
+# Search for skills
+malwar crawl search "crypto wallet"
+
+# Browse available skills
+malwar crawl list
+
+# View skill details and moderation status
+malwar crawl info beszel-check
+```
+
+You can also scan any remote SKILL.md by URL:
+
+```bash
+malwar crawl url https://example.com/path/to/SKILL.md
+```
+
+See the full [CLI Reference](../guide/cli-reference.md#malwar-crawl) for all crawl options.
+
+---
+
 ## Start the API Server
 
 Launch the REST API with the built-in web dashboard:
