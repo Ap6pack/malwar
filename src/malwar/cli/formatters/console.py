@@ -9,7 +9,6 @@ from rich.table import Table
 from rich.text import Text
 
 from malwar import __version__
-
 from malwar.core.constants import Severity
 from malwar.models.scan import ScanResult
 
