@@ -10,7 +10,30 @@
 
 ---
 
-## Option 1: Install from Source
+## Option 1: Install from PyPI
+
+The fastest way to get started:
+
+```bash
+pip install malwar
+```
+
+Then initialize the database and configure your environment:
+
+```bash
+# Initialize the database
+malwar db init
+
+# Set your Anthropic API key (required for LLM analysis)
+export MALWAR_ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Run a scan
+malwar scan path/to/SKILL.md
+```
+
+---
+
+## Option 2: Install from Source
 
 ```bash
 # Clone the repository
@@ -68,7 +91,7 @@ The compiled frontend assets in `web/dist/` are automatically served by the API 
 
 ---
 
-## Option 2: Docker
+## Option 3: Docker
 
 ### Using Docker Compose (Recommended)
 
@@ -105,7 +128,7 @@ The multi-stage Dockerfile builds both the React frontend (Node.js) and the Pyth
 
 ---
 
-## Option 3: Kubernetes
+## Option 4: Kubernetes
 
 Install with Helm:
 
