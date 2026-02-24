@@ -8,6 +8,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from malwar import __version__
+
 from malwar.core.constants import Severity
 from malwar.models.scan import ScanResult
 
@@ -32,7 +34,7 @@ VERDICT_COLORS = {
 def format_scan_result(result: ScanResult) -> None:
     """Print a scan result to the console with Rich formatting."""
     console.print()
-    console.print("[bold]malwar v0.1.0[/bold] - Agentic Skills Malware Scanner")
+    console.print(f"[bold]malwar v{__version__}[/bold] - Agentic Skills Malware Scanner")
     console.print()
 
     # Target info
