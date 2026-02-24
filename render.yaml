@@ -10,13 +10,9 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /api/v1/health
-    disk:
-      name: malwar-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: MALWAR_DB_PATH
-        value: /data/malwar.db
+        value: /tmp/malwar.db
       - key: MALWAR_API_HOST
         value: 0.0.0.0
       - key: MALWAR_AUTO_MIGRATE
