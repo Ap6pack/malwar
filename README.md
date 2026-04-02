@@ -9,7 +9,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/malwar)](https://pypi.org/project/malwar/)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fap6pack%2Fmalwar-blue)](https://ghcr.io/ap6pack/malwar)
 [![Docs](https://img.shields.io/badge/docs-ap6pack.github.io%2Fmalwar-blue)](https://ap6pack.github.io/malwar)
-[![License](https://img.shields.io/badge/license-BSL--1.1-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![CI](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml/badge.svg)](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.13+-3776AB?logo=python&logoColor=white)](https://python.org)
 
@@ -178,4 +178,4 @@ Full dev guide: **[Development](docs/development.md)**
 
 ---
 
-**BSL-1.1** — Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+**MIT License** — Copyright (c) 2026 Veritas Aequitas Holdings LLC.

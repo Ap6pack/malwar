@@ -67,4 +67,4 @@ Be respectful and constructive. We're all here to make the security ecosystem be
 
 ## Contributions
 
-By submitting a PR, you agree that your contributions are subject to the project's BSL-1.1 terms.
+By submitting a PR, you agree that your contributions are subject to the project's MIT license terms.
