@@ -1,32 +1,29 @@
 <!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
 
-<div align="center">
-
 # Malwar
 
-**Static analysis engine purpose-built for detecting malware in agentic AI skill files.**
+**12% of ClawHub skills are malicious.** A [Snyk security audit](https://snyk.io/articles/skill-md-shell-access/) found 341 trojanized skills delivering the AMOS infostealer to 300,000 users — and that was just the first wave. By February, [824+ malicious skills](https://www.termdock.com/en/blog/clawhub-malicious-skills-incident) were live across 10,700+ listings. VirusTotal missed all of them. Code scanners missed all of them. Malwar catches them.
+
+```bash
+pip install malwar
+malwar db init
+malwar scan SKILL.md
+```
 
 [![PyPI version](https://img.shields.io/pypi/v/malwar)](https://pypi.org/project/malwar/)
-[![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fap6pack%2Fmalwar-blue)](https://ghcr.io/ap6pack/malwar)
-[![Docs](https://img.shields.io/badge/docs-ap6pack.github.io%2Fmalwar-blue)](https://ap6pack.github.io/malwar)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![CI](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml/badge.svg)](https://github.com/Ap6pack/malwar/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.13+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fap6pack%2Fmalwar-blue)](https://ghcr.io/ap6pack/malwar)
+[![Docs](https://img.shields.io/badge/docs-ap6pack.github.io%2Fmalwar-blue)](https://ap6pack.github.io/malwar)
 
-![Detection Rules](https://img.shields.io/badge/detection_rules-26-orange)
-![Pipeline Layers](https://img.shields.io/badge/pipeline_layers-4-green)
-![SARIF](https://img.shields.io/badge/output-SARIF_2.1.0-purple)
-![Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)
-
-[Web Dashboard](#web-dashboard) &nbsp;&middot;&nbsp; [API Docs](docs/guide/api-reference.md) &nbsp;&middot;&nbsp; [Detection Rules](docs/guide/detection-rules.md) &nbsp;&middot;&nbsp; [Deployment](docs/deployment.md)
-
-</div>
+<!-- GIF demo goes here once recorded -->
 
 ---
 
-## Why
+## Why This Exists
 
-**20% of ClawHub's 10,700+ skills are malicious.** The [ClawHavoc campaign](docs/guide/threat-campaigns.md) alone trojanized 824+ skills to deliver the AMOS infostealer. These attacks aren't binaries — they're natural language instructions hidden in Markdown files. VirusTotal sees nothing. Code scanners see nothing. Malwar was built to catch them.
+I was installing Claude Code skills from ClawHub without a second thought — until the [ClawHavoc campaign](docs/guide/threat-campaigns.md) dropped. Hundreds of skills were trojanized with the AMOS infostealer, targeting wallet keys, SSH credentials, and agent memory files. The attacks weren't binaries or exploit code. They were natural language instructions hidden in Markdown, telling the AI to run `curl | bash` as a "prerequisite." No existing security tool is built to catch that. So I built one.
 
 ## How It Works
 
@@ -45,19 +42,6 @@ SKILL.md → Rule Engine → URL Crawler → LLM Analyzer → Threat Intel → V
 Full pipeline details: **[Architecture](docs/development/architecture.md)**
 
 ## Quick Start
-
-```bash
-pip install malwar
-malwar db init
-```
-
-For development:
-
-```bash
-git clone https://github.com/Ap6pack/malwar.git && cd malwar
-pip install -e ".[dev]"
-malwar db init
-```
 
 ```bash
 malwar scan SKILL.md                    # scan a file
@@ -79,6 +63,14 @@ $ malwar scan suspicious-skill.md
   MALWAR-MAL-001   ClawHavoc campaign indicator            critical   L14
 
   Scan completed in 42ms (rule_engine, threat_intel)
+```
+
+For development:
+
+```bash
+git clone https://github.com/Ap6pack/malwar.git && cd malwar
+pip install -e ".[dev]"
+malwar db init
 ```
 
 Full command reference: **[CLI Guide](docs/guide/cli-reference.md)**
