@@ -153,7 +153,7 @@ Full dev guide: **[Development](docs/development.md)**
 
 ---
 
-## What's New in v0.3.0
+## What's New in v0.3.1
 
 **Extensibility** — YAML DSL for custom rules, rule testing framework, plugin system, ML-based risk scoring.
 

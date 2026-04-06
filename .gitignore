@@ -35,3 +35,11 @@ venv/
 .DS_Store
 Thumbs.db
 site/
+
+# Internal — not for public repo
+malwar-playbook/
+fixes.md
+*.cast
+docs/blog/reddit-drafts.md
+docs/blog/show-hn-draft.md
+docs/product-positioning.md
