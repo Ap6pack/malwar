@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 # Malwar GitLab CI Integration
 
 Scan SKILL.md files in your GitLab CI/CD pipelines for malware, prompt injection, data exfiltration, and other threats targeting agentic AI systems.
@@ -47,7 +45,7 @@ variables:
 ### Verdict Thresholds
 
 | Verdict | Risk Score | Description |
-|---------|-----------|-------------|
+|--------- | ----------- | ------------- |
 | `CLEAN` | 0-14 | No threats detected |
 | `CAUTION` | 15-39 | Minor concerns found |
 | `SUSPICIOUS` | 40-74 | Likely threats detected |

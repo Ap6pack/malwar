@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 # Malwar Azure DevOps Integration
 
 Scan SKILL.md files in your Azure DevOps pipelines for malware, prompt injection, data exfiltration, and other threats targeting agentic AI systems.
@@ -27,7 +25,7 @@ extends:
 ## Parameters
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `scanPath` | Directory containing SKILL.md files to scan | `.` |
 | `failOn` | Verdict threshold that fails the pipeline: `MALICIOUS`, `SUSPICIOUS`, or `CAUTION` | `MALICIOUS` |
 | `malwarVersion` | Specific malwar version to install (empty for latest) | `""` |
@@ -44,7 +42,7 @@ extends:
 ## Verdict Thresholds
 
 | Verdict | Risk Score | Description |
-|---------|-----------|-------------|
+| --------- | ----------- | ------------- |
 | `CLEAN` | 0-14 | No threats detected |
 | `CAUTION` | 15-39 | Minor concerns found |
 | `SUSPICIOUS` | 40-74 | Likely threats detected |
