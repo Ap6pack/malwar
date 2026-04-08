@@ -83,7 +83,7 @@ class SearchResult(BaseModel):
     slug: str
     display_name: str = Field(alias="displayName")
     summary: str = ""
-    version: str = ""
+    version: str | None = None
     updated_at: int | None = Field(default=None, alias="updatedAt")
 
     model_config = {"populate_by_name": True}

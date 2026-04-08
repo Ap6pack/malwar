@@ -235,7 +235,7 @@ class TestCrawlList:
         assert "Next page" not in result.output
 
     def test_list_empty(self):
-        cls, _ = _mock_clawhub(list_skills=([], None))
+        cls, _ = _mock_clawhub(list_skills=([], None), search=[])
 
         with patch("malwar.crawl.client.ClawHubClient", cls):
             result = runner.invoke(app, ["list"])

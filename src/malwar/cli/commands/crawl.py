@@ -160,7 +160,7 @@ async def _async_search(query: str, limit: int) -> None:
             r.slug,
             r.display_name,
             r.summary[:60] + ("..." if len(r.summary) > 60 else ""),
-            r.version,
+            r.version or "-",
             f"{r.score:.1f}",
         )
 
@@ -196,9 +196,39 @@ async def _async_list(limit: int, cursor: str | None) -> None:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1) from None
 
+    # The ClawHub /skills endpoint currently returns empty results;
+    # fall back to a broad search so users can still browse skills.
     if not skills:
-        console.print("No skills found.")
+        try:
+            results = await client.search("a", limit=limit)
+        except ClawHubError:
+            results = []
+
+        if not results:
+            console.print("No skills found.")
+            return
+
+        table = Table(title="ClawHub Skills")
+        table.add_column("Slug", style="cyan", no_wrap=True)
+        table.add_column("Name", style="bold")
+        table.add_column("Summary")
+        table.add_column("Score", justify="right", style="dim")
+
+        for r in results:
+            table.add_row(
+                r.slug,
+                r.display_name,
+                r.summary[:60] + ("..." if len(r.summary) > 60 else ""),
+                f"{r.score:.1f}",
+            )
+
+        console.print(table)
+        console.print(
+            "\n  Scan a skill: [bold]malwar crawl scan <slug>[/bold]",
+            style="dim",
+        )
         return
+
 
     table = Table(title="ClawHub Skills")
     table.add_column("Slug", style="cyan", no_wrap=True)
