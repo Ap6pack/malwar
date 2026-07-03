@@ -143,7 +143,7 @@ All settings via environment variables with `MALWAR_` prefix or `.env` file. Key
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MALWAR_API_KEYS` | *(empty)* | API keys (empty = auth disabled) |
-| `MALWAR_ANTHROPIC_API_KEY` | *(empty)* | Anthropic key for LLM layer |
+| `MALWAR_ANTHROPIC_API_KEY` | *(empty)* | Anthropic key for LLM layer (falls back to `ANTHROPIC_API_KEY` or an `ant auth login` / Claude Code CLI login) |
 | `MALWAR_DB_PATH` | `malwar.db` | SQLite database path |
 
 [All 40+ configuration options →](docs/deployment.md#configuration)
