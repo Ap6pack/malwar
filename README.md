@@ -51,6 +51,7 @@ malwar scan SKILL.md --format sarif     # CI/CD output
 malwar scan SKILL.md --no-llm          # skip LLM (fast + free)
 malwar crawl scan beszel-check          # scan a ClawHub skill by slug
 malwar crawl url https://example.com/SKILL.md  # scan any remote SKILL.md
+malwar crawl monitor                    # scan the whole registry, diff vs. yesterday
 ```
 
 ```
@@ -104,6 +105,26 @@ Built-in browser UI at `http://localhost:8000` when running the API server.
 | ![Signatures](docs/images/signatures.png) | ![Scan History](docs/images/scans.png) |
 
 React 19 &middot; TypeScript &middot; Vite &middot; Tailwind CSS 4 &middot; Recharts
+
+## Continuous Monitoring
+
+Catching one malicious skill is good; catching the *next* campaign while it's
+still spreading is the point. `malwar crawl monitor` scans every skill in the
+registry, saves a snapshot, and diffs it against the previous run:
+
+```bash
+malwar crawl monitor                    # full sweep → snapshot → diff
+malwar crawl monitor --fail-on-malicious   # non-zero exit when skills newly turn malicious
+```
+
+It surfaces exactly what changed since yesterday — **newly published**,
+**removed**, **trojanized updates** (content changed under the same version),
+and **verdict regressions** (a skill that was clean is now flagged). The sweep
+is cheap: rule engine + threat intel on everything, LLM escalation only on
+hits. Snapshots live in [`data/registry-snapshots/`](data/registry-snapshots/),
+so committing them turns `git diff` into a permanent, auditable record of the
+registry's daily threat surface. Run it on a schedule (cron, CI, or a Claude
+Code trigger) for ongoing, hands-off security research.
 
 ## Docker
 
