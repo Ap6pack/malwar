@@ -8,7 +8,9 @@ import logging
 import malwar.detectors.rule_engine.rules.agent_hijacking
 import malwar.detectors.rule_engine.rules.credential_exposure
 import malwar.detectors.rule_engine.rules.env_harvesting
+import malwar.detectors.rule_engine.rules.evasion
 import malwar.detectors.rule_engine.rules.exfiltration
+import malwar.detectors.rule_engine.rules.financial_fraud
 import malwar.detectors.rule_engine.rules.known_malware
 import malwar.detectors.rule_engine.rules.multi_step
 

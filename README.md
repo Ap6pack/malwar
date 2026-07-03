@@ -35,7 +35,7 @@ SKILL.md → Rule Engine → URL Crawler → LLM Analyzer → Threat Intel → V
 
 | Layer | What it catches |
 |-------|-----------------|
-| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([26 rules](docs/guide/detection-rules.md)) |
+| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration, agentic financial fraud, scanner evasion ([29 rules](docs/guide/detection-rules.md)) |
 | **URL Crawler** | Malicious URLs, domain reputation, redirect chains to C2 infrastructure |
 | **LLM Analyzer** | Social engineering, hidden intent, context-dependent attacks invisible to regex |
 | **Threat Intel** | Known IOCs, [campaign attribution](docs/guide/threat-campaigns.md), threat actor fingerprints |
@@ -130,12 +130,12 @@ All settings via environment variables with `MALWAR_` prefix or `.env` file. Key
 ## Development
 
 ```bash
-pytest                                # 1,504 tests
+pytest                                # 1,522 tests
 ruff check src/ tests/                # lint
 mypy src/                             # type check
 ```
 
-37 test fixtures: 5 benign, 10 malicious (synthetic), 22 real-world samples from ClawHub and Snyk research.
+49 test fixtures: 5 benign, 22 malicious (synthetic), 22 real-world samples from ClawHub and Snyk research.
 
 Full dev guide: **[Development](docs/development.md)**
 
@@ -145,7 +145,7 @@ Full dev guide: **[Development](docs/development.md)**
 |---|---|
 | **[Architecture](docs/development/architecture.md)** | Pipeline design, scoring logic, storage layer |
 | **[API Reference](docs/guide/api-reference.md)** | All 30+ endpoints with schemas and examples |
-| **[Detection Rules](docs/guide/detection-rules.md)** | All 26 rules with patterns and false positive guidance |
+| **[Detection Rules](docs/guide/detection-rules.md)** | All 29 rules with patterns and false positive guidance |
 | **[Threat Campaigns](docs/guide/threat-campaigns.md)** | Campaign tracking, ClawHavoc case study |
 | **[CLI Reference](docs/guide/cli-reference.md)** | Every command with flags and examples |
 | **[Deployment](docs/deployment.md)** | pip, Docker, nginx, production config |
@@ -167,7 +167,9 @@ Full dev guide: **[Development](docs/development.md)**
 
 **Registry Integration** — `malwar crawl` command to browse, search, and scan skills directly from ClawHub. Also supports scanning any remote SKILL.md by URL.
 
-1,504 tests | 26 detection rules | 82% coverage
+**Emerging Agentic Threats** — Detection for the threat classes Unit 42 disclosed in June 2026: agentic affiliate injection and pump-and-dump / front-running (`MALWAR-FRAUD-*`), plus scanner-evasion via file-size inflation (`MALWAR-EVADE-*`) — the techniques that bypassed ClawScan and VirusTotal. Both the rule engine and the ML risk scorer were extended to cover them.
+
+1,522 tests | 29 detection rules | 82% coverage
 
 ---
 
