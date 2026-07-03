@@ -76,10 +76,13 @@ class LlmAnalyzerDetector(BaseDetector):
         # 3. Call the Anthropic API
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         try:
+            # No `temperature`: current-generation models (Sonnet 5, Opus 4.8,
+            # Fable 5) reject non-default sampling parameters, and temperature=0
+            # never guaranteed determinism anyway. Omitting it keeps the call
+            # compatible across model generations.
             response = await client.messages.create(
                 model=settings.llm_model,
                 max_tokens=settings.llm_max_tokens,
-                temperature=settings.llm_temperature,
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_prompt}],
             )

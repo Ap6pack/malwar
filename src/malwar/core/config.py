@@ -66,8 +66,10 @@ class Settings(BaseSettings):
 
     # LLM (Anthropic)
     anthropic_api_key: str = ""
-    llm_model: str = "claude-sonnet-4-6"
+    llm_model: str = "claude-sonnet-5"
     llm_max_tokens: int = 4096
+    # Retained for backward compatibility; no longer sent to the API (current
+    # models reject non-default sampling parameters). See llm_analyzer.detector.
     llm_temperature: float = 0.0
     llm_skip_below_risk: int = 15
 

@@ -287,6 +287,37 @@ class TestFileSystemModification:
         findings = rule_instance.check(skill)
         assert len(findings) == 0
 
+    def test_benign_no_false_positive_prose_mentioning_skill_md(self, rule_instance):
+        # Regression: documentation prose about SKILL.md must not match. Earlier
+        # the rule matched "cat" inside "duplication" and a bare ">" in ">10k".
+        skill = _make_skill(
+            "- **Best practice**: If files are large (>10k words), include grep "
+            "search patterns in SKILL.md\n"
+            "- **Avoid duplication**: Information should live in either SKILL.md "
+            "or references files, not both. Prefer references files."
+        )
+        findings = rule_instance.check(skill)
+        assert len(findings) == 0
+
+    def test_benign_no_false_positive_prose_with_command_substrings(self, rule_instance):
+        # "platform"/"confirm" contain "rm"; "concatenate" contains "cat".
+        skill = _make_skill(
+            "This cross-platform tool helps you concatenate reports. "
+            "Please confirm before editing your CLAUDE.md configuration."
+        )
+        findings = rule_instance.check(skill)
+        assert len(findings) == 0
+
+    def test_still_detects_redirect_into_skill_md(self, rule_instance):
+        skill = _make_skill('echo "pwned" >> SKILL.md')
+        findings = rule_instance.check(skill)
+        assert len(findings) >= 1
+
+    def test_still_detects_write_into_claude_dir(self, rule_instance):
+        skill = _make_skill('cat payload >> ~/.claude/settings.json')
+        findings = rule_instance.check(skill)
+        assert len(findings) >= 1
+
 
 # ===========================================================================
 # MALWAR-SUPPLY-001: Supply Chain Attack
