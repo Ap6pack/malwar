@@ -88,28 +88,45 @@ runs:
             '*Scanned by [Malwar](https://github.com/Ap6pack/malwar) — malware detection for agentic AI skills.*'
           ].join('\n');
 
-          const { data: comments } = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-          });
-
-          const existing = comments.find(c =>
-            c.user.type === 'Bot' && c.body.includes('Malwar Scan Results')
-          );
-
-          if (existing) {
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: existing.id,
-              body,
-            });
-          } else {
-            await github.rest.issues.createComment({
+          // Posting a PR comment needs a write-scoped GITHUB_TOKEN. Pull
+          // requests from forks get a read-only token regardless of the
+          // workflow's `permissions:` block, so a 403 here is expected and
+          // must not fail the scan — the verdict is still reported via the
+          // step's exit status and the SARIF upload.
+          try {
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body,
             });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Malwar Scan Results')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+          } catch (error) {
+            if (error.status === 403) {
+              core.warning(
+                'Skipped posting the Malwar scan comment: the GITHUB_TOKEN is ' +
+                'read-only. This is expected for pull requests from forks. The ' +
+                'scan result is still reported via the step status and SARIF upload.'
+              );
+            } else {
+              core.warning(`Could not post the Malwar scan comment: ${error.message}`);
+            }
           }
