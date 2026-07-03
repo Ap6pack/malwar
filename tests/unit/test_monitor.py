@@ -19,7 +19,10 @@ from malwar.monitor import (
     SnapshotStore,
     build_snapshot,
     diff_snapshots,
+    render_digest,
+    render_tweet,
 )
+from malwar.monitor.report import TWEET_LIMIT
 
 # A skill body that trips MALWAR-FRAUD-001 (agentic affiliate injection).
 MALICIOUS_BODY = (
@@ -230,3 +233,92 @@ class TestEndToEnd:
         assert [r.slug for r in diff2.newly_malicious] == ["helper"]
         assert any(c.slug == "helper" for c in diff2.verdict_changed)
         assert any(c.slug == "helper" for c in diff2.modified)
+
+
+# ---------------------------------------------------------------------------
+# Digest / tweet rendering
+# ---------------------------------------------------------------------------
+
+
+class TestDigest:
+    def test_digest_lists_newly_flagged(self):
+        curr = _snap([
+            SkillRecord(slug="money-radar", verdict="MALICIOUS", risk_score=88,
+                        installs=12400, finding_rule_ids=["MALWAR-FRAUD-001"]),
+        ])
+        diff = diff_snapshots(None, curr)
+        text = render_digest(diff, curr)
+        assert "money-radar" in text
+        assert "MALWAR-FRAUD-001" in text
+        assert "12,400" in text
+
+    def test_digest_clean_run(self):
+        curr = _snap([SkillRecord(slug="a", verdict="CLEAN")])
+        diff = diff_snapshots(None, curr)
+        text = render_digest(diff, curr)
+        assert "No skills newly flagged" in text
+
+    def test_tweet_within_limit_even_with_many(self):
+        records = [
+            SkillRecord(slug=f"evil-skill-number-{i}", verdict="MALICIOUS", risk_score=90)
+            for i in range(40)
+        ]
+        curr = _snap(records)
+        diff = diff_snapshots(None, curr)
+        tweet = render_tweet(diff, curr)
+        assert len(tweet) <= TWEET_LIMIT
+        assert "40" in tweet  # count is mentioned
+
+    def test_tweet_clean_run(self):
+        curr = _snap([SkillRecord(slug="a", verdict="CLEAN")])
+        tweet = render_tweet(diff_snapshots(None, curr), curr)
+        assert len(tweet) <= TWEET_LIMIT
+        assert "no new threats" in tweet.lower()
+
+
+# ---------------------------------------------------------------------------
+# X publisher (OAuth 1.0a signing + gating)
+# ---------------------------------------------------------------------------
+
+
+class TestXPublisher:
+    def _pub(self):
+        from malwar.notifications.x_channel import XPublisher
+
+        return XPublisher("ck", "cs", "at", "ats")
+
+    def test_is_configured_requires_all_four(self):
+        from malwar.notifications.x_channel import XPublisher
+
+        assert not XPublisher("", "", "", "").is_configured()
+        assert not XPublisher("a", "b", "c", "").is_configured()
+        assert self._pub().is_configured()
+
+    def test_auth_header_is_deterministic_and_structured(self):
+        pub = self._pub()
+        header = pub._auth_header(
+            "POST", "https://api.twitter.com/2/tweets", timestamp=1700000000, nonce="abc123"
+        )
+        assert header.startswith("OAuth ")
+        assert 'oauth_consumer_key="ck"' in header
+        assert 'oauth_signature_method="HMAC-SHA1"' in header
+        assert "oauth_signature=" in header
+        # Same inputs → identical signature (stable, reproducible).
+        header2 = pub._auth_header(
+            "POST", "https://api.twitter.com/2/tweets", timestamp=1700000000, nonce="abc123"
+        )
+        assert header == header2
+
+    def test_auth_header_signature_changes_with_nonce(self):
+        pub = self._pub()
+        h1 = pub._auth_header("POST", _X_URL, timestamp=1700000000, nonce="one")
+        h2 = pub._auth_header("POST", _X_URL, timestamp=1700000000, nonce="two")
+        assert h1 != h2
+
+    async def test_post_skips_when_unconfigured(self):
+        from malwar.notifications.x_channel import XPublisher
+
+        assert await XPublisher("", "", "", "").post("hi") is False
+
+
+_X_URL = "https://api.twitter.com/2/tweets"

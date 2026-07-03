@@ -568,6 +568,8 @@ malwar crawl monitor [OPTIONS]
 | `--format` | `console\|json` | `console` | Output format |
 | `--output` | PATH | stdout | Write the JSON diff to a file |
 | `--no-save` | flag | false | Do not persist the new snapshot |
+| `--digest` | flag | false | Also print a shareable digest + a draft social post |
+| `--publish` | flag | false | Post the digest to X when skills newly turn malicious (requires X API creds) |
 | `--fail-on-malicious` | flag | false | Exit non-zero when newly-flagged skills are found |
 
 **Examples:**
@@ -576,11 +578,24 @@ malwar crawl monitor [OPTIONS]
 malwar crawl monitor                              # full daily sweep + diff
 malwar crawl monitor --max 50 --no-escalate       # quick partial run, rules only
 malwar crawl monitor --format json -o diff.json   # machine-readable diff for alerting
+malwar crawl monitor --digest                     # print a review-ready threat digest
 malwar crawl monitor --fail-on-malicious          # CI/cron: non-zero exit on new threats
 ```
 
 **Exit codes:** 0 normally; 1 when `--fail-on-malicious` is set and one or more
 skills newly turned malicious/suspicious since the last snapshot.
+
+**Publishing to X (Twitter).** `--publish` posts the day's digest to a public
+threat feed via the X v2 API. It fires **only** when a skill *newly* turns
+malicious, and uses non-accusatory, detection-framed wording (findings are
+heuristic and can be false positives — a human-reviewed `--digest` draft is the
+safer default). Requires four OAuth 1.0a credentials, supplied via environment
+variables / secrets and **never** committed:
+
+```
+MALWAR_X_API_KEY              MALWAR_X_ACCESS_TOKEN
+MALWAR_X_API_SECRET           MALWAR_X_ACCESS_TOKEN_SECRET
+```
 
 ---
 

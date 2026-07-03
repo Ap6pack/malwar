@@ -495,6 +495,20 @@ def crawl_monitor(
         bool,
         typer.Option("--no-save", help="Do not persist the new snapshot"),
     ] = False,
+    digest: Annotated[
+        bool,
+        typer.Option(
+            "--digest",
+            help="Also print a shareable digest + draft post (for review before publishing)",
+        ),
+    ] = False,
+    publish: Annotated[
+        bool,
+        typer.Option(
+            "--publish",
+            help="Post the digest to X when skills newly turn malicious (requires X API creds)",
+        ),
+    ] = False,
     fail_on_malicious: Annotated[
         bool,
         typer.Option(
@@ -519,6 +533,8 @@ def crawl_monitor(
             fmt=fmt,
             output=output,
             save=not no_save,
+            digest=digest,
+            publish=publish,
             fail_on_malicious=fail_on_malicious,
         )
     )
@@ -534,6 +550,8 @@ async def _async_monitor(
     fmt: CrawlFormat,
     output: Path | None,
     save: bool,
+    digest: bool,
+    publish: bool,
     fail_on_malicious: bool,
 ) -> int:
     from rich.progress import BarColumn, Progress, TextColumn
@@ -585,6 +603,43 @@ async def _async_monitor(
     else:
         _render_diff_console(diff, snapshot)
 
+    if digest or publish:
+        from malwar.monitor import render_digest, render_tweet
+
+        console.print(Panel(render_digest(diff, snapshot), title="Shareable digest"))
+        tweet = render_tweet(diff, snapshot)
+        console.print(
+            Panel(tweet, title="Draft post (review before publishing)", style="dim")
+        )
+
+    if publish:
+        await _publish_to_x(diff, snapshot)
+
     if fail_on_malicious and diff.newly_malicious:
         return 1
     return 0
+
+
+async def _publish_to_x(diff, snapshot) -> None:
+    """Post the digest to X — only when something newly turned malicious."""
+    from malwar.monitor import render_tweet
+    from malwar.notifications.x_channel import XPublisher
+
+    if not diff.newly_malicious:
+        console.print("[dim]Nothing newly flagged — skipping X post.[/dim]")
+        return
+
+    publisher = XPublisher.from_settings()
+    if not publisher.is_configured():
+        console.print(
+            "[yellow]--publish set but X API credentials are missing "
+            "(set MALWAR_X_API_KEY / _API_SECRET / _ACCESS_TOKEN / "
+            "_ACCESS_TOKEN_SECRET); skipping post.[/yellow]"
+        )
+        return
+
+    ok = await publisher.post(render_tweet(diff, snapshot))
+    if ok:
+        console.print("[green]Posted threat digest to X.[/green]")
+    else:
+        console.print("[red]Failed to post to X (see logs).[/red]")

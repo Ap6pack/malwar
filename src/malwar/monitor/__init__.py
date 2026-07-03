@@ -11,6 +11,7 @@ from malwar.monitor.models import (
     SkillRecord,
     SnapshotDiff,
 )
+from malwar.monitor.report import render_digest, render_tweet
 from malwar.monitor.snapshot import SnapshotStore, build_snapshot
 
 __all__ = [
@@ -21,4 +22,6 @@ __all__ = [
     "SnapshotStore",
     "build_snapshot",
     "diff_snapshots",
+    "render_digest",
+    "render_tweet",
 ]

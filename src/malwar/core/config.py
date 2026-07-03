@@ -140,6 +140,14 @@ class Settings(BaseSettings):
     smtp_from: str = ""
     smtp_to: list[str] = []
 
+    # X / Twitter publishing (OAuth 1.0a user context) — used by
+    # `malwar crawl monitor --publish` to post the daily threat digest.
+    # Provide via environment variables / secrets, never in source.
+    x_api_key: str = ""
+    x_api_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
+
     @field_validator("notification_channels", mode="before")
     @classmethod
     def _parse_notification_channels(cls, v: object) -> list[str]:
