@@ -740,6 +740,8 @@ LLM findings have dynamic IDs in the format `MALWAR-LLM-{NNN}[-L{line}]` and are
 
 LLM findings include the `threat_assessment` (clean/suspicious/malicious) and overall `confidence` from the model.
 
+**Suppressing rule-engine false positives.** The LLM is also shown a summary of prior `rule_engine`/`url_crawler` findings (each with its exact finding ID) and, when highly confident a specific finding is a false positive -- e.g. a well-known AWS documentation example key, or a security skill that documents rather than executes an attack pattern -- it can suppress that finding by ID with a reason. Suppressed findings are excluded from the risk score and verdict but remain visible in every output format (console, JSON, SARIF) marked as suppressed, along with the LLM's reasoning, for auditability. `threat_intel` findings (objective IOC matches) are never eligible for suppression.
+
 ---
 
 ## Threat Intelligence Findings (Layer 4)

@@ -31,18 +31,16 @@ class ScanContext:
 
     @property
     def has_critical(self) -> bool:
-        return any(f.severity == "critical" for f in self.findings)
+        return any(f.severity == "critical" and not f.suppressed for f in self.findings)
 
     @property
     def current_risk_score(self) -> int:
         from malwar.core.constants import SEVERITY_WEIGHTS
 
-        if not self.findings:
+        active = [f for f in self.findings if not f.suppressed]
+        if not active:
             return 0
         return min(
             100,
-            sum(
-                int(SEVERITY_WEIGHTS[f.severity] * f.confidence)
-                for f in self.findings
-            ),
+            sum(int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in active),
         )

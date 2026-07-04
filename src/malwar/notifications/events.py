@@ -52,6 +52,7 @@ class NotificationEvent(BaseModel):
         else:
             event_type = EventType.SCAN_COMPLETE
 
+        active_findings = [f for f in result.findings if not f.suppressed]
         summaries = [
             FindingSummary(
                 rule_id=f.rule_id,
@@ -60,7 +61,7 @@ class NotificationEvent(BaseModel):
                 confidence=f.confidence,
                 category=f.category,
             )
-            for f in result.findings[:10]
+            for f in active_findings[:10]
         ]
 
         return cls(
@@ -69,7 +70,7 @@ class NotificationEvent(BaseModel):
             target=result.target,
             verdict=result.verdict,
             risk_score=result.risk_score,
-            finding_count=len(result.findings),
+            finding_count=len(active_findings),
             findings_summary=summaries,
             skill_name=result.skill_name,
             overall_severity=result.overall_severity,

@@ -61,9 +61,12 @@ def format_scan_result(result: ScanResult) -> None:
     console.print()
 
     # Findings
-    if result.findings:
+    active_findings = [f for f in result.findings if not f.suppressed]
+    suppressed_findings = [f for f in result.findings if f.suppressed]
+
+    if active_findings:
         for finding in sorted(
-            result.findings,
+            active_findings,
             key=lambda f: ["critical", "high", "medium", "low", "info"].index(f.severity),
         ):
             sev_color = SEVERITY_COLORS.get(finding.severity, "white")
@@ -87,6 +90,22 @@ def format_scan_result(result: ScanResult) -> None:
         console.print("  No threats detected.", style="bold green")
         console.print()
 
+    # Suppressed findings — kept visible for transparency, but excluded from
+    # scoring above; the LLM analyzer reviewed these with full context and is
+    # confident they are false positives.
+    if suppressed_findings:
+        console.print(
+            f"  [dim]Suppressed ({len(suppressed_findings)}) — reviewed by LLM "
+            f"and determined to be false positives:[/dim]"
+        )
+        for finding in suppressed_findings:
+            console.print(
+                f"  [dim strike]{finding.rule_id}  {finding.title}[/dim strike]"
+            )
+            if finding.suppressed_reason:
+                console.print(f"          {finding.suppressed_reason}", style="dim italic")
+        console.print()
+
     # Summary line
     counts = result.finding_count_by_severity
     parts = []
@@ -94,7 +113,10 @@ def format_scan_result(result: ScanResult) -> None:
         if sev in counts:
             parts.append(f"{counts[sev]} {sev}")
     summary = ", ".join(parts) if parts else "0 findings"
-    console.print(f"  Summary: {len(result.findings)} findings ({summary})")
+    summary_line = f"  Summary: {len(active_findings)} findings ({summary})"
+    if suppressed_findings:
+        summary_line += f" · {len(suppressed_findings)} suppressed"
+    console.print(summary_line)
     console.print(f"  Layers:  {', '.join(result.layers_executed)}")
     if result.duration_ms is not None:
         console.print(f"  Duration: {result.duration_ms / 1000:.1f}s")

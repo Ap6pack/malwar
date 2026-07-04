@@ -49,6 +49,13 @@ class LlmFinding(BaseModel):
     line_hint: str = ""
 
 
+class LlmSuppression(BaseModel):
+    """A prior-layer finding the LLM is confident is a false positive."""
+
+    finding_id: str
+    reason: str
+
+
 class LlmAnalysisResult(BaseModel):
     """The full structured response from the LLM."""
 
@@ -56,6 +63,7 @@ class LlmAnalysisResult(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     findings: list[LlmFinding]
     summary: str
+    suppressions: list[LlmSuppression] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -187,3 +195,38 @@ def llm_findings_to_findings(
         findings.append(finding)
 
     return findings
+
+
+def apply_suppressions(
+    prior_findings: list[Finding], llm_result: LlmAnalysisResult
+) -> list[str]:
+    """Mark prior-layer findings the LLM identified as false positives.
+
+    Mutates matching :class:`Finding` objects in ``prior_findings`` in place
+    (setting ``suppressed``, ``suppressed_reason``, ``suppressed_by``) so the
+    change is visible through the same list reference held by the scan
+    context. Only findings actually present in ``prior_findings`` — i.e. the
+    ones shown to the LLM — can be suppressed; an unrecognized ``finding_id``
+    is treated as untrusted model output and skipped with a warning rather
+    than raising, so a single bad reference can't fail the whole scan.
+
+    Returns the list of finding_ids that were successfully suppressed.
+    """
+    by_id = {f.id: f for f in prior_findings}
+    suppressed_ids: list[str] = []
+
+    for suppression in llm_result.suppressions:
+        finding = by_id.get(suppression.finding_id)
+        if finding is None:
+            logger.warning(
+                "LLM suppression references unknown finding_id %r; skipping",
+                suppression.finding_id,
+            )
+            continue
+
+        finding.suppressed = True
+        finding.suppressed_reason = suppression.reason
+        finding.suppressed_by = DetectorLayer.LLM_ANALYZER
+        suppressed_ids.append(suppression.finding_id)
+
+    return suppressed_ids

@@ -48,6 +48,7 @@ def _make_finding(
     rule_id: str = "rule-test-001",
     severity: Severity = Severity.HIGH,
     confidence: float = 0.9,
+    suppressed: bool = False,
 ) -> Finding:
     """Create a Finding for testing."""
     return Finding(
@@ -63,6 +64,9 @@ def _make_finding(
         evidence=["matched pattern"],
         ioc_values=[],
         remediation="Remove suspicious code",
+        suppressed=suppressed,
+        suppressed_reason="Example/placeholder value, not a real credential" if suppressed else None,
+        suppressed_by=DetectorLayer.LLM_ANALYZER if suppressed else None,
     )
 
 
@@ -114,6 +118,21 @@ class TestAggregateSeverity:
         ]
         assert aggregate_severity(findings) == Severity.HIGH
 
+    def test_suppressed_critical_excluded(self):
+        """A suppressed CRITICAL finding must not raise the aggregate severity."""
+        findings = [
+            _make_finding(finding_id="f1", severity=Severity.CRITICAL, suppressed=True),
+            _make_finding(finding_id="f2", severity=Severity.LOW),
+        ]
+        assert aggregate_severity(findings) == Severity.LOW
+
+    def test_all_suppressed_returns_info(self):
+        """If every finding is suppressed, aggregate severity is INFO."""
+        findings = [
+            _make_finding(finding_id="f1", severity=Severity.CRITICAL, suppressed=True),
+        ]
+        assert aggregate_severity(findings) == Severity.INFO
+
 
 class TestComputeRiskScore:
     """Tests for compute_risk_score()."""
@@ -159,6 +178,24 @@ class TestComputeRiskScore:
         findings = [_make_finding(severity=Severity.MEDIUM, confidence=1.0)]
         assert compute_risk_score(findings) == 50
 
+    def test_suppressed_finding_contributes_zero(self):
+        """A suppressed finding must not contribute to the risk score at all —
+        this is the issue #1 regression: an LLM-confirmed false positive
+        (e.g. an AWS documentation example key) must not keep the score
+        pinned at 100."""
+        findings = [
+            _make_finding(finding_id="f1", severity=Severity.CRITICAL, confidence=1.0, suppressed=True),
+        ]
+        assert compute_risk_score(findings) == 0
+
+    def test_mixed_suppressed_and_active(self):
+        """Only the active (non-suppressed) finding counts."""
+        findings = [
+            _make_finding(finding_id="f1", severity=Severity.CRITICAL, confidence=1.0, suppressed=True),
+            _make_finding(finding_id="f2", severity=Severity.MEDIUM, confidence=1.0),
+        ]
+        assert compute_risk_score(findings) == 50
+
 
 class TestComputeVerdict:
     """Tests for compute_verdict()."""
@@ -186,6 +223,79 @@ class TestComputeVerdict:
 
     def test_clean_at_zero(self):
         assert compute_verdict(0) == "CLEAN"
+
+
+class TestScanResultSuppression:
+    """ScanResult-level regression tests for issue #1: the LLM analyzer must
+    be able to suppress rule-engine false positives so the score reflects
+    them, while the raw findings list still shows everything for audit."""
+
+    def test_securityreview_example_credentials_scenario(self):
+        """Reproduces the issue's exact motivating example: a security-review
+        skill whose only findings are two AWS example/placeholder access keys
+        (AKIAIOSFODNN7EXAMPLE-style), which the LLM correctly identifies as
+        documentation, not real credentials. Before suppression this scored
+        MALICIOUS at 100/100; after suppression it must score CLEAN at 0."""
+        findings = [
+            _make_finding(
+                finding_id="MALWAR-CRED-001-L10",
+                severity=Severity.HIGH,
+                confidence=1.0,
+                suppressed=True,
+            ),
+            _make_finding(
+                finding_id="MALWAR-CRED-001-L20",
+                severity=Severity.HIGH,
+                confidence=1.0,
+                suppressed=True,
+            ),
+        ]
+        result = ScanResult(
+            scan_id="test-scan",
+            target="securityreview.md",
+            findings=findings,
+        )
+
+        assert result.risk_score == 0
+        assert result.verdict == "CLEAN"
+        assert result.overall_severity == Severity.INFO
+        assert result.active_finding_count == 0
+        assert result.suppressed_finding_count == 2
+        # Transparency: suppressed findings remain in the raw list.
+        assert len(result.findings) == 2
+        assert all(f.suppressed for f in result.findings)
+
+    def test_partial_suppression_keeps_real_threat_scored(self):
+        """Suppressing a false positive must not suppress a genuine,
+        unrelated threat found in the same scan."""
+        findings = [
+            _make_finding(
+                finding_id="MALWAR-CRED-001-L10",
+                severity=Severity.HIGH,
+                confidence=1.0,
+                suppressed=True,
+            ),
+            _make_finding(
+                finding_id="MALWAR-OBF-001-L5",
+                severity=Severity.CRITICAL,
+                confidence=1.0,
+            ),
+        ]
+        result = ScanResult(scan_id="test-scan", target="mixed.md", findings=findings)
+
+        assert result.risk_score == 100
+        assert result.verdict == "MALICIOUS"
+        assert result.active_finding_count == 1
+        assert result.suppressed_finding_count == 1
+        assert result.finding_count_by_severity == {"critical": 1}
+
+    def test_finding_count_by_severity_excludes_suppressed(self):
+        findings = [
+            _make_finding(finding_id="f1", severity=Severity.HIGH, suppressed=True),
+            _make_finding(finding_id="f2", severity=Severity.MEDIUM),
+        ]
+        result = ScanResult(scan_id="test-scan", target="t.md", findings=findings)
+        assert result.finding_count_by_severity == {"medium": 1}
 
 
 # ===========================================================================

@@ -223,6 +223,32 @@ The LLM analyzer sends the full skill content to Claude (via the Anthropic API) 
 - Maps LLM severity strings to `Severity` enum values
 - Resolves `line_hint` strings to actual line numbers in the source
 
+**Suppressing false positives from earlier layers:** The rule engine has no
+contextual understanding, so it sometimes flags content that isn't actually
+malicious once full context is considered -- e.g. a well-known AWS
+documentation example key (`AKIAIOSFODNN7EXAMPLE`), or a security-focused
+skill that documents an attack pattern rather than executing one. Because the
+LLM is shown a summary of prior findings (each with its exact `id`), it can
+respond with a `suppressions` array naming specific `finding_id`s it is
+confident are false positives, with its reasoning.
+
+`apply_suppressions()` matches each suppression against the exact set of
+findings the LLM was shown (only `rule_engine` and `url_crawler` layers --
+`threat_intel` IOC matches are objective and are never eligible) and, on a
+match, sets `suppressed=True` / `suppressed_reason` / `suppressed_by` on the
+existing `Finding` object in place. An unrecognized `finding_id` (the LLM is
+untrusted input) is logged and skipped rather than raising.
+
+Suppressed findings are excluded from `ScanResult.risk_score`,
+`.overall_severity`, and `.finding_count_by_severity`, so a scan that turns
+out to be entirely false positives correctly resolves to `CLEAN` / `0`. They
+are **not** removed from `ScanResult.findings` -- every output format shows
+them for transparency: the console formatter lists them in a separate
+"Suppressed" section with the LLM's reasoning, SARIF uses the format's native
+`suppressions` block (`kind: "external"`), and notification events exclude
+them from `finding_count` / `findings_summary` so a confirmed false positive
+doesn't page anyone.
+
 ### Layer 4: Threat Intelligence (order=40)
 
 **Module:** `malwar.detectors.threat_intel`
