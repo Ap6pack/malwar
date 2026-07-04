@@ -66,8 +66,10 @@ class Settings(BaseSettings):
 
     # LLM (Anthropic)
     anthropic_api_key: str = ""
-    llm_model: str = "claude-sonnet-4-6"
+    llm_model: str = "claude-sonnet-5"
     llm_max_tokens: int = 4096
+    # Retained for backward compatibility; no longer sent to the API (current
+    # models reject non-default sampling parameters). See llm_analyzer.detector.
     llm_temperature: float = 0.0
     llm_skip_below_risk: int = 15
 
@@ -139,6 +141,14 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     smtp_from: str = ""
     smtp_to: list[str] = []
+
+    # X / Twitter publishing (OAuth 1.0a user context) — used by
+    # `malwar crawl monitor --publish` to post the daily threat digest.
+    # Provide via environment variables / secrets, never in source.
+    x_api_key: str = ""
+    x_api_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
 
     @field_validator("notification_channels", mode="before")
     @classmethod

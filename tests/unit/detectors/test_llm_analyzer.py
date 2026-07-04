@@ -439,8 +439,14 @@ class TestLlmAnalyzerDetector:
         assert detector.layer_name == DetectorLayer.LLM_ANALYZER
         assert detector.order == 30
 
-    async def test_skip_when_no_api_key(self) -> None:
-        """When no API key is set, detector should skip gracefully."""
+    @patch("malwar.detectors.llm_analyzer.detector.anthropic.AsyncAnthropic")
+    async def test_skip_when_no_credentials(self, mock_anthropic_cls: MagicMock) -> None:
+        """With no malwar key and no resolvable SDK credentials, skip gracefully."""
+        import anthropic
+
+        # No explicit key → falls back to the SDK chain, which raises when
+        # nothing resolves. Simulate that regardless of ambient env.
+        mock_anthropic_cls.side_effect = anthropic.AnthropicError("no credentials")
         settings = Settings(anthropic_api_key="")
         detector = LlmAnalyzerDetector(settings=settings)
         context = _make_context()
@@ -448,6 +454,37 @@ class TestLlmAnalyzerDetector:
         findings = await detector.detect(context)
 
         assert findings == []
+
+    @patch("malwar.detectors.llm_analyzer.detector.anthropic.AsyncAnthropic")
+    async def test_uses_ambient_credentials_when_no_malwar_key(
+        self, mock_anthropic_cls: MagicMock
+    ) -> None:
+        """With no malwar key but ambient creds (env/OAuth), the LLM layer runs.
+
+        Mirrors running `malwar scan` from an authenticated Claude Code CLI.
+        """
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        text_block = MagicMock()
+        text_block.type = "text"
+        text_block.text = (
+            '{"threat_assessment": "clean", "confidence": 0.9, '
+            '"summary": "ok", "findings": []}'
+        )
+        mock_response.content = [text_block]
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+        mock_anthropic_cls.return_value = mock_client
+
+        settings = Settings(anthropic_api_key="")  # no malwar-specific key
+        detector = LlmAnalyzerDetector(settings=settings)
+        context = _make_context()
+
+        await detector.detect(context)
+
+        # Client was constructed with no explicit api_key (SDK resolves ambient
+        # ANTHROPIC_API_KEY / OAuth profile), and the API was actually called.
+        mock_anthropic_cls.assert_called_once_with()
+        mock_client.messages.create.assert_awaited_once()
 
     @patch("malwar.detectors.llm_analyzer.detector.anthropic.AsyncAnthropic")
     async def test_successful_analysis(self, mock_anthropic_cls: MagicMock) -> None:

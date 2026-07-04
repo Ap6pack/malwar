@@ -34,6 +34,34 @@ _PROMPT_INJECTION_RE = re.compile(
     re.IGNORECASE,
 )
 _HIDDEN_TEXT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+# Agentic financial-fraud signals (semantic, not structural).
+_ADVISORY_RE = re.compile(
+    r"\b(?:recommend|suggest|advise|advice|endorse|promote|"
+    r"best\s+(?:product|option|deal|price)|which\s+to\s+buy|"
+    r"where\s+to\s+buy|financial\s+advice)\b",
+    re.IGNORECASE,
+)
+_AFFILIATE_RE = re.compile(
+    r"\baffiliate\b|\breferral\s+link\b|[?&](?:ref|aff|aff_id|affid|tag|partner)="
+    r"|\b(?:monetize|commission|kickback)\b",
+    re.IGNORECASE,
+)
+_AFFILIATE_DIRECTIVE_RE = re.compile(
+    r"\b(?:always|every|append|insert|route|redirect|rewrite|use\s+this\s+link)\b",
+    re.IGNORECASE,
+)
+_WALLET_RE = re.compile(r"\b0x[a-fA-F0-9]{40}\b")
+_FUND_MOVE_RE = re.compile(
+    r"\b(?:send|transfer|deposit|pool|contribute|forward)\b"
+    r"[^.\n]{0,40}\b(?:funds?|eth|btc|sol|bnb|usdt|usdc|crypto|tokens?|wallet|money)\b"
+    r"|\bpool\s+(?:the\s+)?(?:funds?|money|capital)\b",
+    re.IGNORECASE,
+)
+_MANIPULATION_RE = re.compile(
+    r"\bpump(?:\s+and\s+dump)?\b|\bfront[-\s]?run|\bbuy\s+(?:before|ahead\s+of|early)\b"
+    r"|\bmeme\s*coin\b|\bto\s+the\s+moon\b|\bmoon\s+it\b|\bshill\b",
+    re.IGNORECASE,
+)
 _EXFIL_RE = re.compile(
     r"(?:curl\s+-[Xd].*?POST|curl.*?-d\s+@-|"
     r"env\s*\|.*?curl|cat\s+.*?\|\s*(?:curl|base64)|"
@@ -81,6 +109,8 @@ FEATURE_NAMES: list[str] = [
     "exfiltration_pattern_count",
     "avg_code_block_length",
     "hex_escape_density",
+    "affiliate_injection_score",
+    "financial_manipulation_score",
 ]
 
 
@@ -211,6 +241,30 @@ class FeatureExtractor:
         hex_escapes = _HEX_ESCAPE_RE.findall(body)
         hex_escape_density = len(hex_escapes) / max(len(body), 1)
 
+        # Agentic affiliate injection: advisory authority funneled through a
+        # referral/affiliate mechanic under an instruction.
+        has_advisory = bool(_ADVISORY_RE.search(raw))
+        has_affiliate = bool(_AFFILIATE_RE.search(raw))
+        has_aff_directive = bool(_AFFILIATE_DIRECTIVE_RE.search(raw))
+        if has_advisory and has_affiliate and has_aff_directive:
+            affiliate_injection_score = 1.0
+        elif has_affiliate and (has_advisory or has_aff_directive):
+            affiliate_injection_score = 0.5
+        else:
+            affiliate_injection_score = 0.0
+
+        # Agentic financial manipulation: moving/pooling user funds combined
+        # with pump-and-dump / front-running intent.
+        has_wallet = bool(_WALLET_RE.search(raw))
+        moves_funds = bool(_FUND_MOVE_RE.search(raw)) or has_wallet
+        has_manipulation = bool(_MANIPULATION_RE.search(raw))
+        if moves_funds and has_manipulation:
+            financial_manipulation_score = 1.0
+        elif has_manipulation or has_wallet:
+            financial_manipulation_score = 0.4
+        else:
+            financial_manipulation_score = 0.0
+
         return [
             float(line_count),
             float(skill.file_size_bytes),
@@ -232,6 +286,8 @@ class FeatureExtractor:
             float(exfiltration_pattern_count),
             avg_code_block_length,
             hex_escape_density,
+            affiliate_injection_score,
+            financial_manipulation_score,
         ]
 
     def extract_dict(self, skill: SkillContent) -> dict[str, float]:

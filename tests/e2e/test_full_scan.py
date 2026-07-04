@@ -312,11 +312,11 @@ class TestDirectoryScanning:
 
     async def test_scan_empty_directory(self, tmp_path) -> None:
         """Scan a directory with no .md files raises typer.Exit."""
-        from click.exceptions import Exit as ClickExit
+        import typer
 
         from malwar.cli.app import _async_scan
 
-        with pytest.raises(ClickExit):
+        with pytest.raises(typer.Exit):
             await _async_scan(
                 target=str(tmp_path),
                 fmt=OutputFormat.CONSOLE,
@@ -328,11 +328,11 @@ class TestDirectoryScanning:
 
     async def test_scan_nonexistent_target(self) -> None:
         """Scan a nonexistent target raises typer.Exit."""
-        from click.exceptions import Exit as ClickExit
+        import typer
 
         from malwar.cli.app import _async_scan
 
-        with pytest.raises(ClickExit):
+        with pytest.raises(typer.Exit):
             await _async_scan(
                 target="/nonexistent/path/does_not_exist",
                 fmt=OutputFormat.CONSOLE,

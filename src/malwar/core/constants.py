@@ -38,6 +38,8 @@ class ThreatCategory(StrEnum):
     SUSPICIOUS_DEPENDENCY = "suspicious_dependency"
     TYPOSQUATTING = "typosquatting"
     SECURITY_DISABLEMENT = "security_disablement"
+    FINANCIAL_FRAUD = "financial_fraud"
+    DETECTION_EVASION = "detection_evasion"
 
 
 SEVERITY_WEIGHTS: dict[Severity, int] = {

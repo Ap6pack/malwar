@@ -73,7 +73,7 @@ def _compute_etag(rows: list[dict[str, Any]]) -> str:
         updated = row.get("updated_at") or ""
         if updated > latest:
             latest = updated
-    digest = hashlib.md5(latest.encode()).hexdigest()  # noqa: S324
+    digest = hashlib.md5(latest.encode(), usedforsecurity=False).hexdigest()
     return f'"{digest}"'
 
 
