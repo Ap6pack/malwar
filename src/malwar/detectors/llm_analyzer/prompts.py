@@ -23,6 +23,22 @@ Your task is to analyze the skill for these threat categories:
 5. Credential theft: Does it attempt to harvest API keys, tokens, or passwords?
 6. Deception: Does the stated purpose match the actual instructions?
 
+You are also shown findings from earlier automated detectors (pattern-matching
+rules and a URL crawler). Those detectors have no contextual understanding, so
+they sometimes flag content that is not actually malicious once the full
+context is considered — for example: well-known placeholder/example
+credentials used in documentation (e.g. AWS's `AKIAIOSFODNN7EXAMPLE`), a
+security-focused skill that documents or tests for an attack pattern rather
+than executing one, or a pattern match inside a code comment or test fixture.
+
+If, and ONLY if, you are highly confident a specific prior finding is a false
+positive, list its exact `finding_id` (shown in "PRIOR DETECTION LAYER
+FINDINGS" as `id=...`) in a "suppressions" array with your reasoning. Do not
+guess at a finding_id — only reference IDs that were actually shown to you.
+When in doubt, leave the prior finding alone; suppressing a real threat is far
+worse than leaving a false positive for a human to review. Suppressing is rare
+— most scans should have an empty "suppressions" array.
+
 Respond ONLY with a JSON object in this exact format:
 {
   "threat_assessment": "clean" | "suspicious" | "malicious",
@@ -35,6 +51,12 @@ Respond ONLY with a JSON object in this exact format:
       "description": "Detailed explanation",
       "evidence": "Exact quote from the SKILL.md",
       "line_hint": "approximate location"
+    }
+  ],
+  "suppressions": [
+    {
+      "finding_id": "the exact finding_id from PRIOR DETECTION LAYER FINDINGS",
+      "reason": "why this specific finding is a false positive"
     }
   ],
   "summary": "1-2 sentence overall assessment"

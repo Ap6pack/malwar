@@ -11,6 +11,7 @@ from malwar.core.config import Settings, get_settings
 from malwar.core.constants import DetectorLayer
 from malwar.core.exceptions import LLMError
 from malwar.detectors.llm_analyzer.parser import (
+    apply_suppressions,
     llm_findings_to_findings,
     parse_llm_response,
 )
@@ -22,20 +23,28 @@ from malwar.scanner.context import ScanContext
 logger = logging.getLogger("malwar.detectors.llm_analyzer")
 
 
-def _summarize_prior_findings(context: ScanContext) -> str:
-    """Build a concise summary of findings from earlier detection layers."""
-    prior = [
+def _prior_findings(context: ScanContext) -> list[Finding]:
+    """Findings from earlier layers that the LLM is shown and may suppress."""
+    return [
         f
         for f in context.findings
         if f.detector_layer in (DetectorLayer.RULE_ENGINE, DetectorLayer.URL_CRAWLER)
     ]
+
+
+def _summarize_prior_findings(prior: list[Finding]) -> str:
+    """Build a concise summary of findings from earlier detection layers.
+
+    Includes each finding's ``id`` so the LLM can reference a specific
+    finding (not just a rule) in a suppression annotation.
+    """
     if not prior:
         return ""
 
     lines: list[str] = []
     for f in prior:
         lines.append(
-            f"- [{f.severity.upper()}] {f.title} (category={f.category}, "
+            f"- [{f.severity.upper()}] {f.title} (id={f.id}, category={f.category}, "
             f"rule={f.rule_id}): {f.description[:150]}"
         )
     return "\n".join(lines)
@@ -94,7 +103,8 @@ class LlmAnalyzerDetector(BaseDetector):
             return []
 
         # 1. Build prior findings summary
-        prior_summary = _summarize_prior_findings(context)
+        prior_findings = _prior_findings(context)
+        prior_summary = _summarize_prior_findings(prior_findings)
 
         # 2. Build user prompt
         user_prompt = build_user_prompt(context.skill, prior_summary)
@@ -143,15 +153,29 @@ class LlmAnalyzerDetector(BaseDetector):
             context.errors.append(error_msg)
             return []
 
-        # 6. Store raw analysis in context
+        # 6. Apply any suppressions to prior-layer findings the LLM is
+        # confident are false positives. Mutates the matched Finding objects
+        # in place (they remain in context.findings / the eventual
+        # ScanResult.findings for transparency, just excluded from scoring).
+        suppressed_ids = apply_suppressions(prior_findings, llm_result)
+        if suppressed_ids:
+            logger.info(
+                "LLM suppressed %d prior finding(s) as false positives for %s: %s",
+                len(suppressed_ids),
+                context.skill.file_path,
+                suppressed_ids,
+            )
+
+        # 7. Store raw analysis in context
         context.llm_analysis = {
             "threat_assessment": llm_result.threat_assessment,
             "confidence": llm_result.confidence,
             "summary": llm_result.summary,
             "raw_findings_count": len(llm_result.findings),
+            "suppressed_finding_ids": suppressed_ids,
         }
 
-        # 7. Convert to standard Finding objects
+        # 8. Convert to standard Finding objects
         findings = llm_findings_to_findings(llm_result, context.skill)
 
         logger.info(

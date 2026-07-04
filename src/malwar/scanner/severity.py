@@ -8,19 +8,21 @@ from malwar.models.finding import Finding
 
 
 def aggregate_severity(findings: list[Finding]) -> Severity:
-    """Return the highest severity across all findings."""
-    if not findings:
+    """Return the highest severity across all non-suppressed findings."""
+    active = [f for f in findings if not f.suppressed]
+    if not active:
         return Severity.INFO
-    return max(findings, key=lambda f: SEVERITY_WEIGHTS[f.severity]).severity
+    return max(active, key=lambda f: SEVERITY_WEIGHTS[f.severity]).severity
 
 
 def compute_risk_score(findings: list[Finding]) -> int:
-    """Weighted sum of severity * confidence, capped at 100."""
-    if not findings:
+    """Weighted sum of severity * confidence over non-suppressed findings, capped at 100."""
+    active = [f for f in findings if not f.suppressed]
+    if not active:
         return 0
     return min(
         100,
-        sum(int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in findings),
+        sum(int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in active),
     )
 
 

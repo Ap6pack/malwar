@@ -37,3 +37,11 @@ class Finding(BaseModel):
     remediation: str = ""
     metadata: dict[str, object] = Field(default_factory=dict)
     detected_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    # Suppression: a later layer (currently only the LLM analyzer) can mark an
+    # earlier layer's finding as a false positive after reviewing full context.
+    # Suppressed findings are excluded from risk scoring but remain in the
+    # findings list and scan output for transparency and auditability.
+    suppressed: bool = False
+    suppressed_reason: str | None = None
+    suppressed_by: DetectorLayer | None = None

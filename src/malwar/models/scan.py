@@ -46,21 +46,21 @@ class ScanResult(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def risk_score(self) -> int:
-        if not self.findings:
+        active = [f for f in self.findings if not f.suppressed]
+        if not active:
             return 0
         return min(
             100,
-            sum(
-                int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in self.findings
-            ),
+            sum(int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in active),
         )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def overall_severity(self) -> Severity:
-        if not self.findings:
+        active = [f for f in self.findings if not f.suppressed]
+        if not active:
             return Severity.INFO
-        return max(self.findings, key=lambda f: SEVERITY_WEIGHTS[f.severity]).severity
+        return max(active, key=lambda f: SEVERITY_WEIGHTS[f.severity]).severity
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -78,5 +78,19 @@ class ScanResult(BaseModel):
     def finding_count_by_severity(self) -> dict[str, int]:
         counts: dict[str, int] = {}
         for f in self.findings:
+            if f.suppressed:
+                continue
             counts[f.severity] = counts.get(f.severity, 0) + 1
         return counts
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def active_finding_count(self) -> int:
+        """Findings that count toward risk scoring (i.e. not suppressed)."""
+        return sum(1 for f in self.findings if not f.suppressed)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def suppressed_finding_count(self) -> int:
+        """Findings a later layer identified as false positives."""
+        return sum(1 for f in self.findings if f.suppressed)

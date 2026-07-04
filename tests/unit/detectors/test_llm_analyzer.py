@@ -10,10 +10,16 @@ import pytest
 
 from malwar.core.config import Settings
 from malwar.core.constants import DetectorLayer, Severity, ThreatCategory
-from malwar.detectors.llm_analyzer.detector import LlmAnalyzerDetector, _summarize_prior_findings
+from malwar.detectors.llm_analyzer.detector import (
+    LlmAnalyzerDetector,
+    _prior_findings,
+    _summarize_prior_findings,
+)
 from malwar.detectors.llm_analyzer.parser import (
     LlmAnalysisResult,
     LlmFinding,
+    LlmSuppression,
+    apply_suppressions,
     llm_findings_to_findings,
     parse_llm_response,
 )
@@ -65,6 +71,7 @@ def _make_llm_response_json(
     confidence: float = 0.95,
     findings: list[dict] | None = None,
     summary: str = "Malicious skill detected.",
+    suppressions: list[dict] | None = None,
 ) -> str:
     if findings is None:
         findings = [
@@ -77,14 +84,15 @@ def _make_llm_response_json(
                 "line_hint": "line 5",
             }
         ]
-    return json.dumps(
-        {
-            "threat_assessment": threat_assessment,
-            "confidence": confidence,
-            "findings": findings,
-            "summary": summary,
-        }
-    )
+    payload = {
+        "threat_assessment": threat_assessment,
+        "confidence": confidence,
+        "findings": findings,
+        "summary": summary,
+    }
+    if suppressions is not None:
+        payload["suppressions"] = suppressions
+    return json.dumps(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -425,6 +433,98 @@ class TestLlmFindingsToFindings:
 
 
 # ---------------------------------------------------------------------------
+# Suppression tests
+# ---------------------------------------------------------------------------
+
+
+class TestApplySuppressions:
+    """Tests for apply_suppressions (issue #1: LLM-suppressible false positives)."""
+
+    def _finding(self, finding_id: str, rule_id: str = "MALWAR-CRED-001") -> Finding:
+        return Finding(
+            id=finding_id,
+            rule_id=rule_id,
+            title="AWS access key",
+            description="Detected AWS access key pattern",
+            severity=Severity.HIGH,
+            confidence=0.9,
+            category=ThreatCategory.CREDENTIAL_EXPOSURE,
+            detector_layer=DetectorLayer.RULE_ENGINE,
+        )
+
+    def test_matching_finding_id_is_suppressed(self) -> None:
+        prior = [self._finding("MALWAR-CRED-001-L42")]
+        llm_result = LlmAnalysisResult(
+            threat_assessment="clean",
+            confidence=0.95,
+            findings=[],
+            summary="Example credentials only.",
+            suppressions=[
+                LlmSuppression(
+                    finding_id="MALWAR-CRED-001-L42",
+                    reason="Well-known AWS documentation example key",
+                )
+            ],
+        )
+
+        suppressed_ids = apply_suppressions(prior, llm_result)
+
+        assert suppressed_ids == ["MALWAR-CRED-001-L42"]
+        assert prior[0].suppressed is True
+        assert prior[0].suppressed_reason == "Well-known AWS documentation example key"
+        assert prior[0].suppressed_by == DetectorLayer.LLM_ANALYZER
+
+    def test_unrecognized_finding_id_is_skipped_not_raised(self) -> None:
+        prior = [self._finding("MALWAR-CRED-001-L42")]
+        llm_result = LlmAnalysisResult(
+            threat_assessment="clean",
+            confidence=0.95,
+            findings=[],
+            summary="Nothing suspicious.",
+            suppressions=[
+                LlmSuppression(finding_id="MALWAR-CRED-001-L999", reason="hallucinated"),
+            ],
+        )
+
+        suppressed_ids = apply_suppressions(prior, llm_result)
+
+        assert suppressed_ids == []
+        assert prior[0].suppressed is False
+
+    def test_only_matching_finding_is_suppressed_others_untouched(self) -> None:
+        prior = [
+            self._finding("MALWAR-CRED-001-L42"),
+            self._finding("MALWAR-CRED-001-L50"),
+        ]
+        llm_result = LlmAnalysisResult(
+            threat_assessment="suspicious",
+            confidence=0.8,
+            findings=[],
+            summary="One is real, one is a placeholder.",
+            suppressions=[
+                LlmSuppression(finding_id="MALWAR-CRED-001-L42", reason="example key"),
+            ],
+        )
+
+        apply_suppressions(prior, llm_result)
+
+        assert prior[0].suppressed is True
+        assert prior[1].suppressed is False
+
+    def test_no_suppressions_is_a_noop(self) -> None:
+        prior = [self._finding("MALWAR-CRED-001-L42")]
+        llm_result = LlmAnalysisResult(
+            threat_assessment="malicious",
+            confidence=0.9,
+            findings=[],
+            summary="Real credential theft.",
+        )
+
+        assert apply_suppressions(prior, llm_result) == []
+        assert prior[0].suppressed is False
+
+
+# ---------------------------------------------------------------------------
 # Detector tests
 # ---------------------------------------------------------------------------
 
@@ -539,6 +639,79 @@ class TestLlmAnalyzerDetector:
         assert call_kwargs["system"] == SYSTEM_PROMPT
 
     @patch("malwar.detectors.llm_analyzer.detector.anthropic.AsyncAnthropic")
+    async def test_suppresses_prior_false_positive_end_to_end(
+        self, mock_anthropic_cls: MagicMock
+    ) -> None:
+        """Reproduces issue #1's motivating example end-to-end through the
+        real detector: a rule-engine finding for an AWS example/placeholder
+        key is present in the context before the LLM runs; the LLM responds
+        with a suppression for that exact finding_id; after detect() returns,
+        the prior finding must be marked suppressed and excluded from risk
+        scoring, while remaining visible in context.findings for audit."""
+        settings = Settings(anthropic_api_key="test-key")
+        detector = LlmAnalyzerDetector(settings=settings)
+
+        skill = _make_skill(
+            raw_content=(
+                "# Security Review Skill\n"
+                "Example AWS key for documentation: AKIAIOSFODNN7EXAMPLE\n"
+            )
+        )
+        context = _make_context(skill=skill)
+        prior_finding = Finding(
+            id="MALWAR-CRED-001-L2",
+            rule_id="MALWAR-CRED-001",
+            title="AWS access key detected",
+            description="Detected an AWS access key pattern",
+            severity=Severity.HIGH,
+            confidence=1.0,
+            category=ThreatCategory.CREDENTIAL_EXPOSURE,
+            detector_layer=DetectorLayer.RULE_ENGINE,
+        )
+        context.add_findings([prior_finding])
+
+        mock_text_block = MagicMock()
+        mock_text_block.type = "text"
+        mock_text_block.text = _make_llm_response_json(
+            threat_assessment="clean",
+            confidence=0.97,
+            findings=[],
+            summary="This is a well-known AWS documentation example key, not a real credential.",
+            suppressions=[
+                {
+                    "finding_id": "MALWAR-CRED-001-L2",
+                    "reason": "AKIAIOSFODNN7EXAMPLE is AWS's well-known documentation placeholder key",
+                }
+            ],
+        )
+        mock_response = MagicMock()
+        mock_response.content = [mock_text_block]
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+        mock_anthropic_cls.return_value = mock_client
+
+        new_findings = await detector.detect(context)
+
+        # The LLM contributed no new findings of its own.
+        assert new_findings == []
+
+        # The prior finding is still in the context (transparency) but marked
+        # suppressed, with the reason and suppressing layer recorded.
+        assert len(context.findings) == 1
+        assert context.findings[0] is prior_finding
+        assert prior_finding.suppressed is True
+        assert prior_finding.suppressed_reason == (
+            "AKIAIOSFODNN7EXAMPLE is AWS's well-known documentation placeholder key"
+        )
+        assert prior_finding.suppressed_by == DetectorLayer.LLM_ANALYZER
+
+        # And it no longer counts toward risk scoring.
+        assert context.current_risk_score == 0
+
+        # The suppression is recorded for auditability.
+        assert context.llm_analysis["suppressed_finding_ids"] == ["MALWAR-CRED-001-L2"]
+
+    @patch("malwar.detectors.llm_analyzer.detector.anthropic.AsyncAnthropic")
     async def test_api_error_handled(self, mock_anthropic_cls: MagicMock) -> None:
         """Test that API errors are handled gracefully."""
         import anthropic as anthropic_module
@@ -650,11 +823,11 @@ class TestLlmAnalyzerDetector:
 
 
 class TestSummarizePriorFindings:
-    """Tests for _summarize_prior_findings helper."""
+    """Tests for _prior_findings / _summarize_prior_findings helpers."""
 
     def test_no_prior_findings(self) -> None:
         context = _make_context()
-        assert _summarize_prior_findings(context) == ""
+        assert _summarize_prior_findings(_prior_findings(context)) == ""
 
     def test_rule_engine_findings_included(self) -> None:
         context = _make_context()
@@ -670,9 +843,28 @@ class TestSummarizePriorFindings:
                 detector_layer=DetectorLayer.RULE_ENGINE,
             )
         )
-        summary = _summarize_prior_findings(context)
+        summary = _summarize_prior_findings(_prior_findings(context))
         assert "Test finding" in summary
         assert "HIGH" in summary
+
+    def test_summary_includes_finding_id(self) -> None:
+        """The finding id must appear so the LLM can reference it precisely
+        when suppressing a specific finding rather than a whole rule."""
+        context = _make_context()
+        context.findings.append(
+            Finding(
+                id="MALWAR-CRED-001-L42",
+                rule_id="MALWAR-CRED-001",
+                title="AWS key",
+                description="desc",
+                severity=Severity.HIGH,
+                confidence=0.9,
+                category=ThreatCategory.CREDENTIAL_EXPOSURE,
+                detector_layer=DetectorLayer.RULE_ENGINE,
+            )
+        )
+        summary = _summarize_prior_findings(_prior_findings(context))
+        assert "id=MALWAR-CRED-001-L42" in summary
 
     def test_llm_analyzer_findings_excluded(self) -> None:
         context = _make_context()
@@ -688,5 +880,25 @@ class TestSummarizePriorFindings:
                 detector_layer=DetectorLayer.LLM_ANALYZER,
             )
         )
-        summary = _summarize_prior_findings(context)
-        assert summary == ""
+        prior = _prior_findings(context)
+        assert prior == []
+        assert _summarize_prior_findings(prior) == ""
+
+    def test_threat_intel_findings_excluded_from_prior(self) -> None:
+        """Only rule_engine / url_crawler findings are shown to the LLM —
+        threat_intel IOC matches are objective, not heuristic, and must not
+        be suppressible."""
+        context = _make_context()
+        context.findings.append(
+            Finding(
+                id="MALWAR-TI-001",
+                rule_id="threat-intel-ioc",
+                title="Known C2 IP match",
+                description="desc",
+                severity=Severity.CRITICAL,
+                confidence=1.0,
+                category=ThreatCategory.MALICIOUS_URL,
+                detector_layer=DetectorLayer.THREAT_INTEL,
+            )
+        )
+        assert _prior_findings(context) == []

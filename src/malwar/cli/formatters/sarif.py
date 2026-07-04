@@ -64,6 +64,16 @@ def scan_result_to_sarif(result: ScanResult) -> dict[str, Any]:
                 "category": finding.category,
             }
 
+        # SARIF's native suppressions mechanism: the finding stays in the
+        # results list (transparency) but viewers that respect `kind` will
+        # hide or de-emphasize it. "external" because the suppression came
+        # from a later analysis pass, not an inline source annotation.
+        if finding.suppressed:
+            sarif_result["suppressions"] = [{
+                "kind": "external",
+                "justification": finding.suppressed_reason or "Suppressed by LLM analysis",
+            }]
+
         results.append(sarif_result)
 
     return {
