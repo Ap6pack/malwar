@@ -141,7 +141,14 @@ async def _async_scan(
     if target_path.is_dir():
         md_files = sorted(target_path.glob("*.md"))
         if not md_files:
-            typer.echo(f"No .md files found in {target}", err=True)
+            from rich.console import Console
+
+            console = Console(stderr=True)
+            console.print(
+                f"[red]Error:[/red] No .md files found in '{target}'.\n"
+                f"  Check that the path is correct and contains SKILL.md or "
+                f"other .md files."
+            )
             raise typer.Exit(1)
 
         results = []
@@ -192,7 +199,13 @@ async def _async_scan(
             return int(verdict_to_exit_code(result.verdict))
 
     else:
-        typer.echo(f"Target not found: {target}", err=True)
+        from rich.console import Console
+
+        console = Console(stderr=True)
+        console.print(
+            f"[red]Error:[/red] Path '{target}' does not exist.\n"
+            f"  Check the path and try again."
+        )
         if ci_mode:
             from malwar.ci.exit_codes import CIExitCode
             return int(CIExitCode.SCAN_ERROR)

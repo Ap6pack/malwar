@@ -310,13 +310,13 @@ class TestDirectoryScanning:
         for entry in data:
             assert entry["version"] == "2.1.0"
 
-    async def test_scan_empty_directory(self, tmp_path) -> None:
-        """Scan a directory with no .md files raises typer.Exit."""
+    async def test_scan_empty_directory(self, tmp_path, capsys) -> None:
+        """Scan a directory with no .md files gives a helpful error and exits 1."""
         import typer
 
         from malwar.cli.app import _async_scan
 
-        with pytest.raises(typer.Exit):
+        with pytest.raises(typer.Exit) as exc_info:
             await _async_scan(
                 target=str(tmp_path),
                 fmt=OutputFormat.CONSOLE,
@@ -326,18 +326,31 @@ class TestDirectoryScanning:
                 layers_str="rule_engine,threat_intel",
             )
 
-    async def test_scan_nonexistent_target(self) -> None:
-        """Scan a nonexistent target raises typer.Exit."""
+        assert exc_info.value.exit_code == 1
+        stderr = capsys.readouterr().err
+        assert "No .md files found" in stderr
+        assert str(tmp_path) in stderr
+        assert "Traceback" not in stderr
+
+    async def test_scan_nonexistent_target(self, capsys) -> None:
+        """Scan a nonexistent target gives a clear error and exits 1."""
         import typer
 
         from malwar.cli.app import _async_scan
 
-        with pytest.raises(typer.Exit):
+        target = "/nonexistent/path/does_not_exist"
+        with pytest.raises(typer.Exit) as exc_info:
             await _async_scan(
-                target="/nonexistent/path/does_not_exist",
+                target=target,
                 fmt=OutputFormat.CONSOLE,
                 output=None,
                 no_llm=True,
                 no_urls=True,
                 layers_str="rule_engine,threat_intel",
             )
+
+        assert exc_info.value.exit_code == 1
+        stderr = capsys.readouterr().err
+        assert target in stderr
+        assert "does not exist" in stderr
+        assert "Traceback" not in stderr
