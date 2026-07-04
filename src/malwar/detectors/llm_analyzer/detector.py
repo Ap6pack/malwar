@@ -55,14 +55,40 @@ class LlmAnalyzerDetector(BaseDetector):
     def order(self) -> int:
         return 30
 
+    @staticmethod
+    def _build_client(settings: Settings) -> anthropic.AsyncAnthropic | None:
+        """Resolve Anthropic credentials, or return None if none are available.
+
+        Resolution order:
+          1. An explicit ``MALWAR_ANTHROPIC_API_KEY`` (the settings value).
+          2. The SDK's own credential chain — ``ANTHROPIC_API_KEY``,
+             ``ANTHROPIC_AUTH_TOKEN``, or an OAuth profile from ``ant auth
+             login`` / the Claude Code CLI login. Constructing the client with
+             no explicit key lets the SDK resolve these; it raises when nothing
+             is available, which we treat as "no credentials".
+
+        This is why ``malwar scan`` picks up the LLM layer automatically when
+        run from an already-authenticated Claude Code CLI, without setting a
+        malwar-specific key.
+        """
+        if settings.anthropic_api_key:
+            return anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        try:
+            return anthropic.AsyncAnthropic()
+        except anthropic.AnthropicError:
+            return None
+
     async def detect(self, context: ScanContext) -> list[Finding]:
         """Send skill content to the LLM and parse the threat analysis."""
         settings = self._settings
 
-        # Guard: skip if no API key is configured
-        if not settings.anthropic_api_key:
+        # Guard: skip if no Anthropic credentials can be resolved.
+        client = self._build_client(settings)
+        if client is None:
             logger.warning(
-                "Anthropic API key not configured; skipping LLM analysis for %s",
+                "No Anthropic credentials found (set MALWAR_ANTHROPIC_API_KEY or "
+                "ANTHROPIC_API_KEY, or run `ant auth login`); skipping LLM "
+                "analysis for %s",
                 context.skill.file_path,
             )
             return []
@@ -74,12 +100,14 @@ class LlmAnalyzerDetector(BaseDetector):
         user_prompt = build_user_prompt(context.skill, prior_summary)
 
         # 3. Call the Anthropic API
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         try:
+            # No `temperature`: current-generation models (Sonnet 5, Opus 4.8,
+            # Fable 5) reject non-default sampling parameters, and temperature=0
+            # never guaranteed determinism anyway. Omitting it keeps the call
+            # compatible across model generations.
             response = await client.messages.create(
                 model=settings.llm_model,
                 max_tokens=settings.llm_max_tokens,
-                temperature=settings.llm_temperature,
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_prompt}],
             )

@@ -401,3 +401,245 @@ async def _async_crawl_url(
     _format_and_output(result, fmt, output)
 
     return 1 if result.risk_score >= 40 else 0
+
+
+# ---------------------------------------------------------------------------
+# Continuous registry monitoring
+# ---------------------------------------------------------------------------
+
+_DEFAULT_SNAPSHOT_DIR = "data/registry-snapshots"
+
+
+def _render_diff_console(diff, snapshot) -> None:
+    """Print a human-readable summary of a snapshot diff."""
+    summary = (
+        f"Skills scanned: [bold]{snapshot.skill_count}[/bold]  "
+        f"Flagged: [bold]{snapshot.flagged_count}[/bold]  "
+        f"Scan errors: [dim]{len(snapshot.errors)}[/dim]"
+    )
+    console.print(Panel(summary, title="Registry Snapshot"))
+
+    if diff.is_first_run:
+        console.print(
+            "[dim]First run — no previous snapshot to diff against. "
+            "Baseline saved.[/dim]"
+        )
+
+    if diff.newly_malicious:
+        table = Table(title="⚠  Newly flagged skills", style="red")
+        table.add_column("Slug", style="cyan", no_wrap=True)
+        table.add_column("Verdict", style="bold")
+        table.add_column("Risk", justify="right")
+        table.add_column("Installs", justify="right", style="dim")
+        table.add_column("Rules")
+        for r in diff.newly_malicious:
+            table.add_row(
+                r.slug,
+                r.verdict,
+                str(r.risk_score),
+                f"{r.installs:,}",
+                ", ".join(r.finding_rule_ids[:4]),
+            )
+        console.print(table)
+
+    if diff.verdict_changed:
+        table = Table(title="Verdict changes")
+        table.add_column("Slug", style="cyan", no_wrap=True)
+        table.add_column("Change")
+        for c in diff.verdict_changed:
+            table.add_row(c.slug, c.detail)
+        console.print(table)
+
+    if diff.modified:
+        table = Table(title="Modified skills")
+        table.add_column("Slug", style="cyan", no_wrap=True)
+        table.add_column("Change")
+        for c in diff.modified:
+            table.add_row(c.slug, c.detail)
+        console.print(table)
+
+    counts = (
+        f"[green]+{len(diff.added)} added[/green]  "
+        f"[red]-{len(diff.removed)} removed[/red]  "
+        f"{len(diff.modified)} modified  "
+        f"{len(diff.verdict_changed)} verdict changes"
+    )
+    console.print(counts)
+
+
+@app.command(name="monitor")
+def crawl_monitor(
+    snapshot_dir: Annotated[
+        Path,
+        typer.Option("--snapshot-dir", help="Directory holding snapshot history"),
+    ] = Path(_DEFAULT_SNAPSHOT_DIR),
+    max_skills: Annotated[
+        int | None,
+        typer.Option("--max", help="Cap the number of skills scanned (testing)"),
+    ] = None,
+    no_escalate: Annotated[
+        bool,
+        typer.Option("--no-escalate", help="Never escalate flagged skills to the LLM"),
+    ] = False,
+    concurrency: Annotated[
+        int, typer.Option("--concurrency", help="Skills scanned in parallel")
+    ] = 8,
+    fmt: Annotated[
+        CrawlFormat, typer.Option("--format", "-f", help="Output format")
+    ] = CrawlFormat.CONSOLE,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Write the JSON diff to this file"),
+    ] = None,
+    no_save: Annotated[
+        bool,
+        typer.Option("--no-save", help="Do not persist the new snapshot"),
+    ] = False,
+    digest: Annotated[
+        bool,
+        typer.Option(
+            "--digest",
+            help="Also print a shareable digest + draft post (for review before publishing)",
+        ),
+    ] = False,
+    publish: Annotated[
+        bool,
+        typer.Option(
+            "--publish",
+            help="Post the digest to X when skills newly turn malicious (requires X API creds)",
+        ),
+    ] = False,
+    fail_on_malicious: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-malicious",
+            help="Exit non-zero when newly-flagged skills are found",
+        ),
+    ] = False,
+) -> None:
+    """Scan every skill in the registry and diff against the last snapshot.
+
+    Designed to run on a schedule (e.g. daily): it crawls the whole registry,
+    fast-scans each skill (escalating flagged ones to the LLM), diffs the
+    result against the previous snapshot, and reports what changed — with a
+    headline list of skills that newly turned malicious.
+    """
+    exit_code = asyncio.run(
+        _async_monitor(
+            snapshot_dir=snapshot_dir,
+            max_skills=max_skills,
+            escalate=not no_escalate,
+            concurrency=concurrency,
+            fmt=fmt,
+            output=output,
+            save=not no_save,
+            digest=digest,
+            publish=publish,
+            fail_on_malicious=fail_on_malicious,
+        )
+    )
+    raise typer.Exit(exit_code)
+
+
+async def _async_monitor(
+    *,
+    snapshot_dir: Path,
+    max_skills: int | None,
+    escalate: bool,
+    concurrency: int,
+    fmt: CrawlFormat,
+    output: Path | None,
+    save: bool,
+    digest: bool,
+    publish: bool,
+    fail_on_malicious: bool,
+) -> int:
+    from rich.progress import BarColumn, Progress, TextColumn
+
+    from malwar.monitor import SnapshotStore, build_snapshot, diff_snapshots
+
+    store = SnapshotStore(snapshot_dir)
+    previous = store.load_latest()
+
+    scope = f" (max {max_skills})" if max_skills else ""
+    console.print(f"Crawling ClawHub registry{scope}...", style="dim")
+
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task_id = progress.add_task("Scanning skills", total=None)
+
+        def _on_progress(done: int, total: int, slug: str) -> None:
+            progress.update(
+                task_id, total=total, completed=done, description=f"Scanning {slug}"
+            )
+
+        snapshot = await build_snapshot(
+            max_skills=max_skills,
+            escalate=escalate,
+            concurrency=concurrency,
+            on_progress=_on_progress,
+        )
+
+    if snapshot.skill_count == 0:
+        console.print("[yellow]No skills found in the registry.[/yellow]")
+        return 0
+
+    diff = diff_snapshots(previous, snapshot)
+
+    if save:
+        archive = store.save(snapshot)
+        console.print(f"[dim]Snapshot saved to {archive}[/dim]")
+
+    if fmt == CrawlFormat.JSON:
+        import json
+
+        payload = json.dumps(diff.model_dump(), indent=2, sort_keys=True)
+        _write(payload, output)
+    else:
+        _render_diff_console(diff, snapshot)
+
+    if digest or publish:
+        from malwar.monitor import render_digest, render_tweet
+
+        console.print(Panel(render_digest(diff, snapshot), title="Shareable digest"))
+        tweet = render_tweet(diff, snapshot)
+        console.print(
+            Panel(tweet, title="Draft post (review before publishing)", style="dim")
+        )
+
+    if publish:
+        await _publish_to_x(diff, snapshot)
+
+    if fail_on_malicious and diff.newly_malicious:
+        return 1
+    return 0
+
+
+async def _publish_to_x(diff, snapshot) -> None:
+    """Post the digest to X — only when something newly turned malicious."""
+    from malwar.monitor import render_tweet
+    from malwar.notifications.x_channel import XPublisher
+
+    if not diff.newly_malicious:
+        console.print("[dim]Nothing newly flagged — skipping X post.[/dim]")
+        return
+
+    publisher = XPublisher.from_settings()
+    if not publisher.is_configured():
+        console.print(
+            "[yellow]--publish set but X API credentials are missing "
+            "(set MALWAR_X_API_KEY / _API_SECRET / _ACCESS_TOKEN / "
+            "_ACCESS_TOKEN_SECRET); skipping post.[/yellow]"
+        )
+        return
+
+    ok = await publisher.post(render_tweet(diff, snapshot))
+    if ok:
+        console.print("[green]Posted threat digest to X.[/green]")
+    else:
+        console.print("[red]Failed to post to X (see logs).[/red]")

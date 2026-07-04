@@ -62,8 +62,8 @@ def format_gitlab_code_quality(results: list[ScanResult]) -> str:
             # Build a stable fingerprint from rule_id + target + line
             line = finding.location.line_start if finding.location else 1
             fingerprint_src = f"{finding.rule_id}:{result.target}:{line}"
-            fingerprint = hashlib.md5(  # noqa: S324
-                fingerprint_src.encode()
+            fingerprint = hashlib.md5(
+                fingerprint_src.encode(), usedforsecurity=False
             ).hexdigest()
 
             issue: dict[str, Any] = {

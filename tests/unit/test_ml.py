@@ -117,7 +117,7 @@ class TestFeatureExtractor:
 
     def test_feature_names_match_length(self):
         extractor = FeatureExtractor()
-        assert len(extractor.feature_names()) == 20
+        assert len(extractor.feature_names()) == 22
         assert extractor.feature_names() == FEATURE_NAMES
 
     def test_extract_returns_correct_length(self):

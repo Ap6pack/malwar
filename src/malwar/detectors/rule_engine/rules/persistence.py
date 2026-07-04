@@ -103,38 +103,46 @@ class FileSystemModification(BaseRule):
     PATTERNS = [
         # Writing/copying to system directories (with possible args between command and path)
         re.compile(
-            r"(?:cp|mv)\s+\S+\s+/(?:etc|usr/local/bin|usr/local/sbin|usr/bin|usr/sbin|opt)/",
+            r"\b(?:cp|mv)\b\s+\S+\s+/(?:etc|usr/local/bin|usr/local/sbin|usr/bin|usr/sbin|opt)/",
             re.IGNORECASE,
         ),
         re.compile(
-            r"(?:tee|>>|>\s*)\s*/(?:etc|usr/local/bin|usr/local/sbin|usr/bin|usr/sbin|opt)/",
+            r"(?:\btee\b|>>|>\s*)\s*/(?:etc|usr/local/bin|usr/local/sbin|usr/bin|usr/sbin|opt)/",
             re.IGNORECASE,
         ),
         re.compile(
-            r"(?:echo|printf|cat)\s+.*(?:>>|>)\s*/(?:etc|usr/local/bin|usr/local/sbin|usr/bin|usr/sbin|opt)/",
+            r"\b(?:echo|printf|cat)\b\s+.*(?:>>|>)\s*/(?:etc|usr/local/bin|usr/local/sbin|usr/bin|usr/sbin|opt)/",
             re.IGNORECASE,
         ),
         re.compile(
-            r"(?:install|mkdir\s+-p)\s+/(?:etc|usr/local/bin|usr/local/sbin)/",
+            r"\b(?:install|mkdir\s+-p)\b\s+/(?:etc|usr/local/bin|usr/local/sbin)/",
             re.IGNORECASE,
         ),
-        # Modifying agent config / skill files
+        # Modifying agent config / skill files — a write command acting on the file.
+        # Command names are word-bounded so prose like "duplication" or ">10k words
+        # ... SKILL.md" does not match; a real write op or redirection is required.
         re.compile(
-            r"(?:echo|printf|cat|tee|sed|>>|>).*(?:SKILL\.md|CLAUDE\.md|\.claude/|\.cursor/)",
+            r"\b(?:echo|printf|cat|tee|sed)\b[^\n]*"
+            r"(?:\b(?:SKILL|CLAUDE)\.md\b|\.claude/|\.cursor/)",
+            re.IGNORECASE,
+        ),
+        # A redirection or pipe writing directly into an agent/skill file or config dir.
+        re.compile(
+            r"(?:>>?|\|)\s*\S*/?(?:SKILL\.md|CLAUDE\.md|\.claude/|\.cursor/)",
             re.IGNORECASE,
         ),
         re.compile(
-            r"(?:cp|mv|rm)\s+.*(?:SKILL\.md|CLAUDE\.md|\.claude/settings|\.cursor/)",
+            r"\b(?:cp|mv|rm)\b\s+.*(?:SKILL\.md|CLAUDE\.md|\.claude/settings|\.cursor/)",
             re.IGNORECASE,
         ),
         # chmod on system binaries
         re.compile(
-            r"chmod\s+.*\s+/(?:etc|usr|bin|sbin)/",
+            r"\bchmod\b\s+.*\s+/(?:etc|usr|bin|sbin)/",
             re.IGNORECASE,
         ),
         # Writing to /tmp then moving to system paths
         re.compile(
-            r"mv\s+/tmp/\S+\s+/(?:usr|bin|sbin|etc|opt)/",
+            r"\bmv\b\s+/tmp/\S+\s+/(?:usr|bin|sbin|etc|opt)/",
             re.IGNORECASE,
         ),
     ]

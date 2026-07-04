@@ -49,7 +49,9 @@ jobs:
 
   # ── Job 2: Run the test suite with coverage ─────────────────────────
   test:
-    name: Tests
+    # Check-run name must stay "test" to match the required status check
+    # configured in the `main` branch protection rule.
+    name: test
     runs-on: ubuntu-latest
 
     steps:
@@ -116,7 +118,9 @@ jobs:
 
   # ── Job 4: Security scanning and SBOM generation ───────────────────
   security:
-    name: Security Scan & SBOM
+    # Check-run name must stay "security" to match the required status check
+    # configured in the `main` branch protection rule.
+    name: security
     runs-on: ubuntu-latest
 
     steps:
