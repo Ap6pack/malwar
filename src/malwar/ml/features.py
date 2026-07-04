@@ -16,7 +16,9 @@ _HEX_ESCAPE_RE = re.compile(r"\\x[0-9a-fA-F]{2}")
 _COMMAND_PATTERNS = re.compile(
     r"\b(?:curl|wget|bash|sh|eval|exec|base64|chmod\s+\+x|sudo|"
     r"crontab|systemctl|launchctl|nc\b|ncat|python[23]?\s+-c|"
-    r"perl\s+-e|ruby\s+-e|rm\s+-rf|dd\s+if=|mkfifo|/dev/tcp)\b",
+    r"perl\s+-e|ruby\s+-e|rm\s+-rf|dd\s+if=|mkfifo|/dev/tcp|"
+    r"IEX|Invoke-Expression|Invoke-WebRequest|Start-BitsTransfer|"
+    r"DownloadString|DownloadData|DownloadFile|-enc(?:odedcommand)?)\b",
     re.IGNORECASE,
 )
 _ENV_VAR_RE = re.compile(

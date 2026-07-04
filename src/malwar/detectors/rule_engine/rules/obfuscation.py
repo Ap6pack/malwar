@@ -102,6 +102,76 @@ class HexEncodedPayload(BaseRule):
 
 
 @rule
+class PowerShellDownloadCradle(BaseRule):
+    rule_id = "MALWAR-OBF-004"
+    title = "PowerShell download cradle"
+    severity = Severity.CRITICAL
+    category = ThreatCategory.OBFUSCATED_COMMAND
+    description = (
+        "Detects PowerShell download cradle patterns used to fetch and "
+        "execute remote payloads on Windows: WebClient/IEX pipelines, "
+        "Invoke-Expression against a remote URL, Start-BitsTransfer, and "
+        "base64-encoded (-enc/-EncodedCommand) invocations"
+    )
+
+    PATTERNS = [
+        # (New-Object Net.WebClient).DownloadString(...) piped into IEX,
+        # in either call order.
+        re.compile(
+            r"""(?:IEX\s*\(|Invoke-Expression\s*\()?\s*
+                \(?\s*New-Object\s+(?:Net\.WebClient|System\.Net\.WebClient)\s*\)?
+                \s*\.\s*(?:DownloadString|DownloadData|DownloadFile)\s*\(""",
+            re.IGNORECASE | re.VERBOSE,
+        ),
+        re.compile(
+            r"""(?:IEX|Invoke-Expression)\s*\(\s*\(?\s*New-Object""",
+            re.IGNORECASE,
+        ),
+        # Invoke-Expression / IEX pulling from a remote URL via
+        # DownloadString/Invoke-WebRequest/iwr/curl output.
+        re.compile(
+            r"""(?:IEX|Invoke-Expression)\b[^\n]*https?://""",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"""(?:Invoke-WebRequest|iwr|curl|wget)\b[^\n]*https?://[^\n]*
+                \|\s*(?:IEX|Invoke-Expression)\b""",
+            re.IGNORECASE | re.VERBOSE,
+        ),
+        # BITS download of a payload
+        re.compile(
+            r"""Start-BitsTransfer\b[^\n]*-Source\s+https?://""",
+            re.IGNORECASE,
+        ),
+        # Base64-encoded PowerShell command (dropper obfuscation)
+        re.compile(
+            r"""powershell(?:\.exe)?\s+[^\n]*-(?:enc|e|encodedcommand)\b""",
+            re.IGNORECASE,
+        ),
+    ]
+
+    def check(self, skill: SkillContent) -> list[Finding]:
+        findings = []
+        for line_num, line in enumerate(skill.raw_content.splitlines(), 1):
+            for pattern in self.PATTERNS:
+                if pattern.search(line):
+                    findings.append(Finding(
+                        id=f"{self.rule_id}-L{line_num}",
+                        rule_id=self.rule_id,
+                        title=self.title,
+                        description=self.description,
+                        severity=self.severity,
+                        confidence=0.90,
+                        category=self.category,
+                        detector_layer=DetectorLayer.RULE_ENGINE,
+                        location=Location(line_start=line_num, snippet=line.strip()[:300]),
+                        evidence=["Pattern: PowerShell download cradle / encoded invocation"],
+                    ))
+                    break  # One finding per line
+        return findings
+
+
+@rule
 class IPAddressInCommand(BaseRule):
     rule_id = "MALWAR-OBF-003"
     title = "Direct IP address in curl/wget command"
