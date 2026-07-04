@@ -35,7 +35,7 @@ SKILL.md → Rule Engine → URL Crawler → LLM Analyzer → Threat Intel → V
 
 | Layer | What it catches |
 |-------|-----------------|
-| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration, agentic financial fraud, scanner evasion ([29 rules](docs/guide/detection-rules.md)) |
+| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration, agentic financial fraud, scanner evasion ([30 rules](docs/guide/detection-rules.md)) |
 | **URL Crawler** | Malicious URLs, domain reputation, redirect chains to C2 infrastructure |
 | **LLM Analyzer** | Social engineering, hidden intent, context-dependent attacks invisible to regex |
 | **Threat Intel** | Known IOCs, [campaign attribution](docs/guide/threat-campaigns.md), threat actor fingerprints |
@@ -166,7 +166,7 @@ Full dev guide: **[Development](docs/development.md)**
 |---|---|
 | **[Architecture](docs/development/architecture.md)** | Pipeline design, scoring logic, storage layer |
 | **[API Reference](docs/guide/api-reference.md)** | All 30+ endpoints with schemas and examples |
-| **[Detection Rules](docs/guide/detection-rules.md)** | All 29 rules with patterns and false positive guidance |
+| **[Detection Rules](docs/guide/detection-rules.md)** | All 30 rules with patterns and false positive guidance |
 | **[Threat Campaigns](docs/guide/threat-campaigns.md)** | Campaign tracking, ClawHavoc case study |
 | **[CLI Reference](docs/guide/cli-reference.md)** | Every command with flags and examples |
 | **[Deployment](docs/deployment.md)** | pip, Docker, nginx, production config |
