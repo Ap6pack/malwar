@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI command: malwar test-rules — run rule test suite from a manifest."""
 
 from __future__ import annotations

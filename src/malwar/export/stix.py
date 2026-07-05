@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """STIX 2.1 bundle generation from Malwar threat intelligence data.
 
 Generates valid STIX 2.1 JSON directly without requiring the ``stix2``

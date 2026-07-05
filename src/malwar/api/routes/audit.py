@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Audit log API endpoints for querying the compliance audit trail."""
 
 from __future__ import annotations

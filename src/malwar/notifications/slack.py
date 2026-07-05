@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Slack notification channel using Block Kit formatting."""
 
 from __future__ import annotations

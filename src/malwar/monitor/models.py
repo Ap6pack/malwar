@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Models for registry snapshots and snapshot diffs."""
 
 from __future__ import annotations

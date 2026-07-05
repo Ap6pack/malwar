@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """LangChain-compatible integration for Malwar.
 
 This module provides three integration points:

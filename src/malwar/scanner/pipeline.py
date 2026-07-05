@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Scanner pipeline orchestrator — chains the 4 detection layers."""
 
 from __future__ import annotations

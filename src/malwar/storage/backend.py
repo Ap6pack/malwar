@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Abstract database backend interface for pluggable storage engines.
 
 Both the SQLite (aiosqlite) and PostgreSQL (asyncpg) backends implement

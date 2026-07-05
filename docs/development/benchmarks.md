@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Performance Benchmarks
 
 Latency benchmarks for malwar's scan pipeline, measured across the full fixture

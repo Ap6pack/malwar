@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Logistic regression risk scorer implemented in pure Python (no numpy/sklearn)."""
 
 from __future__ import annotations

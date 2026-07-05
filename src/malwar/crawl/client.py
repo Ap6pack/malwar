@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Async HTTP client for the ClawHub skill registry API."""
 
 from __future__ import annotations

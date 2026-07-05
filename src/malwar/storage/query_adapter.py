@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Query parameter adapter for cross-database compatibility.
 
 SQLite uses ``?`` placeholders while PostgreSQL uses ``$1, $2, …``

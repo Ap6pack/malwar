@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Microsoft Teams notification channel using Adaptive Cards."""
 
 from __future__ import annotations

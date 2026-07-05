@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Interactive file browser/scanner with real-time result display."""
 
 from __future__ import annotations

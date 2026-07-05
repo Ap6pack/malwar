@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Kubernetes Deployment Guide
 
 This guide covers deploying Malwar on Kubernetes using the included Helm chart.

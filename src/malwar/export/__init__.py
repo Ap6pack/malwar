@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """STIX/TAXII threat intelligence export for Malwar."""
 
 from malwar.export.stix import (

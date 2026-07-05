@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """ScanJob dataclass and related types for scheduled scanning."""
 
 from __future__ import annotations

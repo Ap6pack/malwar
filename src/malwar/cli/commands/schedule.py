@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI commands for scheduled scanning management."""
 
 from __future__ import annotations

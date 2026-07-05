@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Public SDK interface for embedding malwar in other tools.
 
 Usage::

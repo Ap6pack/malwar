@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Scan API endpoints with DB persistence."""
 
 from __future__ import annotations

@@ -1,8 +1,4 @@
 {{/*
-Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-*/}}
-
-{{/*
 Expand the name of the chart.
 */}}
 {{- define "malwar.name" -}}

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Standardized exit codes for CI/CD pipeline integrations.
 
 Exit codes:

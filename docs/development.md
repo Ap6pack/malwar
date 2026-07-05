@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Development Guide
 
 ## Project Setup
@@ -191,7 +189,6 @@ Create a new file in `src/malwar/detectors/rule_engine/rules/` or add a rule cla
 
 ```python
 # src/malwar/detectors/rule_engine/rules/my_new_rules.py
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """My new detection rules."""
 
 from __future__ import annotations
@@ -334,7 +331,6 @@ API routes live in `src/malwar/api/routes/`. Either add to an existing module or
 
 ```python
 # src/malwar/api/routes/my_feature.py
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """My feature API endpoints."""
 
 from fastapi import APIRouter, Depends
@@ -549,7 +545,6 @@ The Dockerfile uses a multi-stage build:
 Every source file must include the copyright header:
 
 ```python
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 ```
 
 ### Data Models

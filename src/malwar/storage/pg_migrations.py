@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """PostgreSQL-specific schema migrations.
 
 Mirrors the SQLite migration history in ``migrations.py`` but uses

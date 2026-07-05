@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Plugin lifecycle manager — load, validate, enable/disable, list."""
 
 from __future__ import annotations

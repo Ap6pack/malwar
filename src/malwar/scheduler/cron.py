@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Simple cron expression parser.
 
 Supports standard 5-field cron expressions:

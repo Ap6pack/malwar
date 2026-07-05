@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """API endpoints for STIX/TAXII threat intelligence export."""
 
 from __future__ import annotations

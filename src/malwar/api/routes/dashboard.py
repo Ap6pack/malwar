@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Dashboard analytics API endpoints — overview, trends, heatmaps, rules, layers."""
 
 from __future__ import annotations

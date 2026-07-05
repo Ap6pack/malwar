@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Parse SKILL.md files into SkillContent objects."""
 
 from __future__ import annotations

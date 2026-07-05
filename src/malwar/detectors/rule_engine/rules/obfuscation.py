@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Obfuscation detection rules: base64, hex encoding, IP-in-commands."""
 
 from __future__ import annotations

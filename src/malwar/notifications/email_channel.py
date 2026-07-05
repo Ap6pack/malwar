@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Email notification channel via SMTP with HTML templates."""
 
 from __future__ import annotations

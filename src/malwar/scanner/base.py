@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Abstract base detector interface for all detection layers."""
 
 from __future__ import annotations

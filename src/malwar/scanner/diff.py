@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Diff scanning engine — compare two versions of a skill and flag changes."""
 
 from __future__ import annotations

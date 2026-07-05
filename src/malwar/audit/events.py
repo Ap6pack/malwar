@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Audit event data model and event type enumeration."""
 
 from __future__ import annotations

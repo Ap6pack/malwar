@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Generic webhook notification channel for custom HTTP POST endpoints."""
 
 from __future__ import annotations

@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Malwar
 
 **Static analysis engine purpose-built for detecting malware in agentic AI skill files.**

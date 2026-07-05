@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """In-memory LRU cache backend with TTL expiry.
 
 This is the default backend and requires no external services.  It uses

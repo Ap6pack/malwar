@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Scheduled scanning API endpoints (issue #26)."""
 
 from __future__ import annotations

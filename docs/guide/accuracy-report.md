@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. -->
-
 # Malwar Detection Accuracy Report
 
 **Date:** 2026-07-05

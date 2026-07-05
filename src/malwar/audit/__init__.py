@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Audit logging module for compliance and security event tracking."""
 
 from malwar.audit.events import AuditEvent, AuditEventType

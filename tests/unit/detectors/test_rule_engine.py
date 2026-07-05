@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for the rule engine detection rules.
 
 Tests cover all rules with both true positive (malicious) and true negative

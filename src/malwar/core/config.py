@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Application configuration via environment variables and .env files."""
 
 from pathlib import Path

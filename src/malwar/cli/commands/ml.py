@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI commands for ML risk scoring model management."""
 
 from __future__ import annotations

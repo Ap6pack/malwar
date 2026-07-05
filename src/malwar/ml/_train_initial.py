@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """One-off script to train the initial model from test fixtures."""
 
 from __future__ import annotations

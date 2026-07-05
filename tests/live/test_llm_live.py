@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Live LLM layer tests using the real Anthropic API.
 
 These tests require ``MALWAR_ANTHROPIC_API_KEY`` to be set in the environment.

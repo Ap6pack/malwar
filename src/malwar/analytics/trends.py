@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Trend analysis — moving averages, period-over-period comparison, anomaly detection."""
 
 from __future__ import annotations

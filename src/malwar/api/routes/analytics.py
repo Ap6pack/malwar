@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Analytics API endpoints for API usage metering."""
 
 from __future__ import annotations

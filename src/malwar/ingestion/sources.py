@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Threat source adapters for ingesting campaign data from external formats.
 
 Provides a base ``ThreatSource`` class and concrete implementations for

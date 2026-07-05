@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for core models and utility modules: severity, logging, report, sarif, signature."""
 
 from __future__ import annotations

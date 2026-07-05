@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for PostgreSQL backend support: interface, query adaptation, config, and mock backend."""
 
 from __future__ import annotations

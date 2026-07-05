@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """PagerDuty notification channel using Events API v2."""
 
 from __future__ import annotations

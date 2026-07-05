@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """PostgreSQL implementation of the abstract :class:`DatabaseBackend`.
 
 Wraps an :mod:`asyncpg` connection pool and exposes the uniform query

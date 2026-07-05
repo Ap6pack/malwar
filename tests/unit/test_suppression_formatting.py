@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for how suppressed findings surface in output formats and
 notifications (issue #1): transparent in every output, excluded from scoring.
 """

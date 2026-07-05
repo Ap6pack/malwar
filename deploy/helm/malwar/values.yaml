@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 # Default values for malwar Helm chart.
 
 replicaCount: 1

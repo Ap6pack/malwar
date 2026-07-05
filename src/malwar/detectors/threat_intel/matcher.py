@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Match IOCs from prior detection layers against known threat signatures."""
 
 from __future__ import annotations

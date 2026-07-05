@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for validating the Helm chart structure and YAML correctness."""
 
 from __future__ import annotations

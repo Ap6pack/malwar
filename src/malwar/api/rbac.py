@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Role-based access control for API keys.
 
 Defines roles, permissions, role-to-permission mappings, and a FastAPI

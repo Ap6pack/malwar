@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for per-API-key and per-IP rate limiting (issue #10)."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI commands for API key management (RBAC)."""
 
 from __future__ import annotations

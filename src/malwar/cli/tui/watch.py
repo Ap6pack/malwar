@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Watch mode — polls a directory for SKILL.md changes and auto-scans."""
 
 from __future__ import annotations

@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Quick Start
 
 This guide walks you through scanning your first file, starting the API server, and using the Python SDK.

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Versioned database migration system for the malwar database.
 
 Replaces the previous create-or-ignore approach with a proper migration

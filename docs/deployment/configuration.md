@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Configuration
 
 All settings are managed via environment variables with the `MALWAR_` prefix, loaded from `.env` files using Pydantic Settings.

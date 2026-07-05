@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Diff two registry snapshots to surface security-relevant changes.
 
 The daily monitor keeps yesterday's snapshot and today's; the diff is what a

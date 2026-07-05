@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Performance benchmarks across the full fixture set.
 
 Loads every .md fixture from tests/fixtures/skills/ and runs three scan

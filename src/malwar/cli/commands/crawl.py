@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI commands for crawling and scanning skills from ClawHub."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for ML-based risk scoring: feature extraction, model, training, calibration, pipeline."""
 
 from __future__ import annotations

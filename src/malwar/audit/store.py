@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Audit event persistence to the SQLite audit_log table."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """JobStore — persist scheduled scan jobs and run history to SQLite."""
 
 from __future__ import annotations

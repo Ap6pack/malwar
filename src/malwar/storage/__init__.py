@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Storage layer -- database backends, migrations, and repositories."""
 
 from malwar.storage.backend import DatabaseBackend

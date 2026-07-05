@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI command for diff scanning — compare two versions of a skill."""
 
 from __future__ import annotations
