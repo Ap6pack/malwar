@@ -1,4 +1,3 @@
-// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 const BASE = '/api/v1'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {

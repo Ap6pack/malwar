@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Environment variable harvesting detection rules."""
 
 from __future__ import annotations

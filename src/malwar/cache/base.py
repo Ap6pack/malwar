@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Abstract cache backend interface with TTL support."""
 
 from __future__ import annotations

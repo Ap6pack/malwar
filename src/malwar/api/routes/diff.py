@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Diff scanning API endpoint — compare two versions of a skill."""
 
 from __future__ import annotations

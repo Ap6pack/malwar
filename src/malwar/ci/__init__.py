@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CI/CD integration module for malwar.
 
 Provides output formatters and exit codes for GitLab CI, Azure DevOps,

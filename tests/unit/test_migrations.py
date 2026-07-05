@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the versioned database migration system."""
 
 from __future__ import annotations

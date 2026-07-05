@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the webhook notification dispatcher."""
 
 from __future__ import annotations

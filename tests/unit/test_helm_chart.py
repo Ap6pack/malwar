@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for validating the Helm chart structure and YAML correctness."""
 
 from __future__ import annotations
@@ -32,10 +31,10 @@ class TestChartYaml:
         assert self.chart["name"] == "malwar"
 
     def test_chart_version(self) -> None:
-        assert self.chart["version"] == "0.3.1"
+        assert self.chart["version"] == "0.4.0"
 
     def test_chart_app_version(self) -> None:
-        assert self.chart["appVersion"] == "0.3.1"
+        assert self.chart["appVersion"] == "0.4.0"
 
     def test_chart_type(self) -> None:
         assert self.chart["type"] == "application"

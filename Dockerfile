@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 # Stage 1: Build React frontend
 FROM node:20-slim AS frontend
 WORKDIR /app/web

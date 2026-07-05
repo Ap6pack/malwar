@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Crawl the whole registry, scan every skill, and persist the result.
 
 The sweep is deliberately cheap by default: every skill is scanned with the

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Integration tests for the FastAPI API endpoints."""
 
 from __future__ import annotations
@@ -53,7 +52,7 @@ class TestHealthEndpoint:
         data = resp.json()
         assert data["status"] == "ok"
         assert data["service"] == "malwar"
-        assert data["version"] == "0.3.1"
+        assert data["version"] == "0.4.0"
 
 
 # ---------------------------------------------------------------------------

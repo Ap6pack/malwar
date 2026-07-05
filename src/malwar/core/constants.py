@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Enumerations, severity weights, and threshold constants."""
 
 from enum import StrEnum

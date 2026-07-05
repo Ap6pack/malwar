@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Quick Start
 
 This guide walks you through scanning your first file, starting the API server, and using the Python SDK.
@@ -17,7 +15,7 @@ malwar scan SKILL.md
 Example output:
 
 ```
-malwar v0.3.1 - Agentic Skills Malware Scanner
+malwar v0.4.0 - Agentic Skills Malware Scanner
 
   Target:  SKILL.md
   SHA256:  a1b2c3d4e5f6...

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Live dashboard panel showing scan status, recent results, and system stats."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Webhook notification dispatcher for scan results."""
 
 from __future__ import annotations

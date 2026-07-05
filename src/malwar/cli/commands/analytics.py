@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI command: ``malwar analytics summary`` — Rich-formatted terminal dashboard."""
 
 from __future__ import annotations

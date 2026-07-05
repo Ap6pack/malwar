@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for CI/CD integration module.
 
 Tests cover:
@@ -406,11 +405,6 @@ class TestGitlabTemplateYaml:
         assert "MALWAR_SCAN_PATH" in data["variables"]
         assert "MALWAR_FAIL_ON" in data["variables"]
 
-    def test_has_copyright_header(self):
-        path = TEMPLATES_DIR / "gitlab" / ".gitlab-ci.yml"
-        content = path.read_text(encoding="utf-8")
-        assert "Copyright (c) 2026 Veritas Aequitas Holdings LLC" in content
-
 
 class TestAzureTemplateYaml:
     """Test that the Azure DevOps pipeline template is valid YAML."""
@@ -456,11 +450,6 @@ class TestAzureTemplateYaml:
         path = TEMPLATES_DIR / "azure" / "azure-pipelines.yml"
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert "trigger" in data
-
-    def test_has_copyright_header(self):
-        path = TEMPLATES_DIR / "azure" / "azure-pipelines.yml"
-        content = path.read_text(encoding="utf-8")
-        assert "Copyright (c) 2026 Veritas Aequitas Holdings LLC" in content
 
     def test_fail_on_parameter_values(self):
         path = TEMPLATES_DIR / "azure" / "azure-pipelines.yml"

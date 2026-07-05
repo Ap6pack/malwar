@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Database connection management with pluggable backend support.
 
 Supports both SQLite (aiosqlite, default) and PostgreSQL (asyncpg).

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the caching layer: backends, TTL expiry, key generation, and pipeline integration."""
 
 from __future__ import annotations

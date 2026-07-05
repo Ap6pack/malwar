@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Publish short threat digests to X (Twitter) via the v2 API.
 
 Used by ``malwar crawl monitor --publish`` to post the daily sweep summary to a

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Plugin discovery and loading from multiple sources."""
 
 from __future__ import annotations

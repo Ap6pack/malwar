@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Extract structured elements from a markdown body."""
 
 from __future__ import annotations

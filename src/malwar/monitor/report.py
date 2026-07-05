@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Human-shareable digests of a snapshot diff.
 
 `render_digest` produces a compact plaintext summary of a day's registry sweep

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Centralized audit logger that writes to both structured JSON files and SQLite."""
 
 from __future__ import annotations

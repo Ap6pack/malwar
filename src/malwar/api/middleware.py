@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Request middleware for logging, request ID tracking, rate limiting, and usage metering."""
 
 from __future__ import annotations

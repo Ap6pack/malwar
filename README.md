@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Malwar
 
 **12% of ClawHub skills are malicious.** A [Snyk security audit](https://snyk.io/articles/skill-md-shell-access/) found 341 trojanized skills delivering the AMOS infostealer to 300,000 users — and that was just the first wave. By February, [824+ malicious skills](https://www.termdock.com/en/blog/clawhub-malicious-skills-incident) were live across 10,700+ listings. VirusTotal missed all of them. Code scanners missed all of them. Malwar catches them.

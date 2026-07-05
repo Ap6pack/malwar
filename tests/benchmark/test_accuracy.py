@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Detection accuracy benchmark — runs all test fixtures through the scanner.
 
 Scans every .md fixture in tests/fixtures/skills/ using the rule_engine and

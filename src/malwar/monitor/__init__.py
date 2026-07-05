@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Continuous registry monitoring — snapshot the whole ClawHub registry and
 diff it over time to surface newly-published or newly-malicious skills."""
 

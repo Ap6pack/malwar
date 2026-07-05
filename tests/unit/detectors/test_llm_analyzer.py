@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for the LLM semantic analyzer (Layer 3)."""
 
 from __future__ import annotations

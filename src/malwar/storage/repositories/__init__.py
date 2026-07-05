@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Repository modules for database access."""
 
 from malwar.storage.repositories.campaigns import CampaignRepository

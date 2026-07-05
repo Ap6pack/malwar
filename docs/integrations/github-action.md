@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 # Malwar GitHub Action
 
 Scan SKILL.md files in pull requests for malware, prompt injection, data exfiltration, and other threats targeting agentic AI systems.

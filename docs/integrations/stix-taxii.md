@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # STIX/TAXII Threat Intelligence Export
 
 Malwar supports exporting its threat intelligence data in **STIX 2.1** (Structured Threat Information eXpression) format and serving it via **TAXII 2.1** (Trusted Automated eXchange of Intelligence Information) compatible endpoints.

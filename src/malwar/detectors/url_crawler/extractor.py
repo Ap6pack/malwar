@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Extract and normalize all URLs from SKILL.md content."""
 
 from __future__ import annotations

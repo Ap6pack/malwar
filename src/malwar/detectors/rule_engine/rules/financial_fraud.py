@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Agentic financial-fraud detection rules.
 
 These target a threat class that goes beyond malware delivery: skills that

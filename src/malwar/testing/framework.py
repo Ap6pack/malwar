@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Rule testing framework — manifest, runner, and report."""
 
 from __future__ import annotations

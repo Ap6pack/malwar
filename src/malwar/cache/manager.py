@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Cache manager that wraps cache operations with key generation.
 
 The :class:`CacheManager` is the primary public interface for the caching

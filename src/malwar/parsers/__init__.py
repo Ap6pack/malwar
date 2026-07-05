@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """SKILL.md parsing utilities."""
 
 from malwar.parsers.markdown_parser import extract_code_blocks, extract_sections, extract_urls

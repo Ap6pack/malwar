@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the SQLite storage layer: database, migrations, and repositories."""
 
 from __future__ import annotations

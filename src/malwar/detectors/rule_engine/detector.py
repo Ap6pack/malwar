@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Layer 1: Rule-based detection engine."""
 
 from __future__ import annotations

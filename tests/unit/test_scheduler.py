@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the scheduled scanning subsystem (issue #26).
 
 Covers cron parsing, job management (CRUD), store persistence,

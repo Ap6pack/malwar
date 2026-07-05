@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Signature CRUD API endpoints."""
 
 from __future__ import annotations

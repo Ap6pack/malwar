@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """SchedulerEngine — runs scheduled scan jobs on configurable cron schedules.
 
 Uses pure asyncio (no external scheduler dependencies).  The engine is

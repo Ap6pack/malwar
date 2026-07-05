@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Malwar Python SDK
 
 The Malwar SDK provides a clean Python interface for embedding skill-file scanning

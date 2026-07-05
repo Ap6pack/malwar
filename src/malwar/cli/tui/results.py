@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Rich-formatted scan result display with color-coded verdicts and severity badges."""
 
 from __future__ import annotations

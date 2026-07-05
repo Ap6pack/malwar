@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Analyze fetched URL content for malicious indicators."""
 
 from __future__ import annotations

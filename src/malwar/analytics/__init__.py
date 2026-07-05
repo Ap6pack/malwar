@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Dashboard analytics — trends, heatmaps, timeline."""
 
 from malwar.analytics.aggregator import AnalyticsAggregator

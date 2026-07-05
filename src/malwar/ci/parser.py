@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CI-specific output formatters for malwar scan results.
 
 Provides:

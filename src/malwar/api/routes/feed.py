@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Public IOC feed endpoint.
 
 Provides a machine-readable feed of all Indicators of Compromise (IOCs)

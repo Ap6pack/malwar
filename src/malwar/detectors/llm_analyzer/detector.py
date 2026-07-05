@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Layer 3: LLM-powered semantic analysis of SKILL.md content."""
 
 from __future__ import annotations

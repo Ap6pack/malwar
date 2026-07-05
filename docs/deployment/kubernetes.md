@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Kubernetes Deployment Guide
 
 This guide covers deploying Malwar on Kubernetes using the included Helm chart.
@@ -17,10 +15,10 @@ This guide covers deploying Malwar on Kubernetes using the included Helm chart.
 
 ```bash
 # Build the Docker image
-docker build -t ghcr.io/ap6pack/malwar:0.3.1 .
+docker build -t ghcr.io/ap6pack/malwar:0.4.0 .
 
 # Push to your registry
-docker push ghcr.io/ap6pack/malwar:0.3.1
+docker push ghcr.io/ap6pack/malwar:0.4.0
 ```
 
 ---
@@ -295,7 +293,7 @@ For Prometheus monitoring, consider adding a sidecar or middleware that exposes 
 helm upgrade malwar deploy/helm/malwar/ -f custom-values.yaml
 
 # Upgrade the image tag
-helm upgrade malwar deploy/helm/malwar/ --set image.tag=0.3.1
+helm upgrade malwar deploy/helm/malwar/ --set image.tag=0.4.0
 
 # Roll back if needed
 helm rollback malwar

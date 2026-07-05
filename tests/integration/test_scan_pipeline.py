@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Integration tests: full pipeline scan against all fixtures."""
 
 from pathlib import Path

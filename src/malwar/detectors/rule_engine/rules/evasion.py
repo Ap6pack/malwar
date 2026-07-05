@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Scanner-evasion detection rules.
 
 Covers techniques whose primary purpose is to defeat automated marketplace

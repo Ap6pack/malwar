@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Heatmap data generation — day-of-week x hour-of-day, severity heatmap."""
 
 from __future__ import annotations

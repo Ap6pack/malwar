@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Registry snapshots
 
 This directory is the on-disk history for `malwar crawl monitor`.

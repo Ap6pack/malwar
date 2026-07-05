@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """FastAPI middleware that automatically logs API requests as audit events."""
 
 from __future__ import annotations

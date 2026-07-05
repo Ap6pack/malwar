@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # API Reference
 
 ## Overview
@@ -219,7 +217,7 @@ Retrieve a scan result in SARIF 2.1.0 format, suitable for integration with GitH
       "tool": {
         "driver": {
           "name": "malwar",
-          "version": "0.3.1",
+          "version": "0.4.0",
           "rules": [
             {
               "id": "MALWAR-CMD-001",
@@ -599,7 +597,7 @@ Health check endpoint. Not subject to rate limiting or authentication.
 {
   "status": "ok",
   "service": "malwar",
-  "version": "0.3.1"
+  "version": "0.4.0"
 }
 ```
 

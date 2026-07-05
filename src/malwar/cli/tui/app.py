@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Main TUI application using Rich Live display with panels, tables, and progress bars."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for the audit logging module."""
 
 from __future__ import annotations

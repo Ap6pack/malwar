@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """API key management — generation, storage, verification, and revocation.
 
 Keys are stored in the ``api_keys`` SQLite table.  The raw key value is

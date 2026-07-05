@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Reports API endpoints — scan results with enriched breakdowns."""
 
 from __future__ import annotations

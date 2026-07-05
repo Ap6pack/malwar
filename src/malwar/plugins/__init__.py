@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Plugin system for third-party detector modules."""
 
 from malwar.plugins.base import DetectorPlugin

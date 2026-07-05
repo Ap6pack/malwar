@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Domain models for malwar."""
 
 from malwar.models.finding import Finding, Location

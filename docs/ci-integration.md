@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 # CI/CD Integration Guide
 
 Malwar integrates with all major CI/CD platforms to scan SKILL.md files for malware, prompt injection, data exfiltration, and other threats targeting agentic AI systems. This guide covers GitHub Actions, GitLab CI/CD, and Azure DevOps.
@@ -143,7 +141,7 @@ include:
 variables:
   MALWAR_SCAN_PATH: "skills/"
   MALWAR_FAIL_ON: "SUSPICIOUS"
-  MALWAR_VERSION: "0.3.1"
+  MALWAR_VERSION: "0.4.0"
 ```
 
 ### Variables

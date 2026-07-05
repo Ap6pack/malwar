@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Scan context passed through the detection pipeline."""
 
 from __future__ import annotations

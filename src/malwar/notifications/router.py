@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Notification router — dispatches events to configured channels based on filters."""
 
 from __future__ import annotations

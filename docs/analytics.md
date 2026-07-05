@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 # Dashboard Analytics
 
 Malwar includes a built-in analytics engine that computes trends, heatmaps, and timeline data from scan history. This page covers the analytics module, API endpoints, and CLI commands.

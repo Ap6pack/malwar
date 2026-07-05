@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Campaign import engine with deduplication and merge support.
 
 The ``CampaignImporter`` class coordinates fetching data from a

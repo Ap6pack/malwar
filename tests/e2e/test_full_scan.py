@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """End-to-end tests exercising the full scan flow through CLI internals."""
 
 from __future__ import annotations

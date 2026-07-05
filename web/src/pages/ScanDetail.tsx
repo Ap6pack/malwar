@@ -1,5 +1,3 @@
-// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {

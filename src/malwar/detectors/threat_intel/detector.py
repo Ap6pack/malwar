@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Layer 4: Threat intelligence correlation and campaign attribution."""
 
 from __future__ import annotations

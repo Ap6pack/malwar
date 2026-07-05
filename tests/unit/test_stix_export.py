@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for STIX 2.1 bundle generation and TAXII response formatting."""
 
 from __future__ import annotations

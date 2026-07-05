@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # LangChain Integration
 
 Malwar provides a scan-before-execute integration layer that works standalone

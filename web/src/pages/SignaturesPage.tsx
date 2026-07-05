@@ -1,4 +1,3 @@
-// Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Fingerprint, Search, X, AlertCircle } from 'lucide-react'
 import { api, type Signature } from '../lib/api'

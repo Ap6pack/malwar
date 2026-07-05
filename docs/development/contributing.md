@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # Contributing
 
 ## Getting Started
@@ -77,8 +75,6 @@ malwar/
 Create a new file in `src/malwar/detectors/rule_engine/rules/` or add to an existing file:
 
 ```python
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-
 from malwar.core.constants import DetectorLayer, Severity, ThreatCategory
 from malwar.detectors.rule_engine.base_rule import BaseRule
 from malwar.detectors.rule_engine.registry import rule
@@ -197,7 +193,6 @@ mypy src/                     # Type checking
 Every source file must include:
 
 ```python
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 ```
 
 ### Imports

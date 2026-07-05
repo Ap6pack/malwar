@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Repository for publisher/author records."""
 
 from __future__ import annotations

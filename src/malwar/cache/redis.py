@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Redis cache backend using the ``redis`` async client.
 
 This backend is **optional** -- if the ``redis`` package is not installed

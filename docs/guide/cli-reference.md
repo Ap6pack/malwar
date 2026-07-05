@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # CLI Reference
 
 ## Overview
@@ -104,7 +102,7 @@ malwar scan SKILL.md --layers rule_engine,threat_intel
 
 **Console (default):**
 ```
-malwar v0.3.1 - Agentic Skills Malware Scanner
+malwar v0.4.0 - Agentic Skills Malware Scanner
 
   Target:  tests/fixtures/skills/malicious/clawhavoc_amos.md
   SHA256:  a1b2c3d4e5f6...
@@ -613,7 +611,7 @@ malwar version
 
 ```bash
 $ malwar version
-malwar v0.3.1
+malwar v0.4.0
 ```
 
 ---

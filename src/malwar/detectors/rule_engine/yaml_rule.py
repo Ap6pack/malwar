@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """YAML-based custom rule: parses a YAML definition into a BaseRule-compatible object."""
 
 from __future__ import annotations

@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved. -->
-
 # ClawHub Registry Crawling
 
 Malwar can fetch and scan skills directly from the [ClawHub registry](https://clawhub.ai) -- the largest community skill marketplace with 5,700+ skills. This lets you audit remote skills for threats without manually downloading them.

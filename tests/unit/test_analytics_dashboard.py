@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for dashboard analytics — aggregation, trends, heatmaps, and edge cases."""
 
 from __future__ import annotations

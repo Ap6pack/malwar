@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for the LangChain integration module.
 
 These tests exercise MalwarScanTool, MalwarGuard, MalwarCallbackHandler,

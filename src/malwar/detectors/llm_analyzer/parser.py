@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Parse LLM response JSON into structured Finding objects."""
 
 from __future__ import annotations

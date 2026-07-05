@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Integration tests for the public IOC feed endpoint."""
 
 from __future__ import annotations

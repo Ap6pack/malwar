@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Example detector plugin demonstrating the malwar plugin interface.
 
 This plugin scans SKILL.md files for the presence of ``TODO`` or ``FIXME``

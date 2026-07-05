@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Abstract base class for detector plugins."""
 
 from __future__ import annotations

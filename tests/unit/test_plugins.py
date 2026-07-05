@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the plugin system: loading, validation, lifecycle, and hooks."""
 
 from __future__ import annotations

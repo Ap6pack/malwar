@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for the YAML-based custom rule authoring system."""
 
 from __future__ import annotations

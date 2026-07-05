@@ -40,10 +40,6 @@ mypy src/
 
 - **Linter**: Ruff (config in `pyproject.toml`)
 - **Type hints**: Required for all public functions
-- **Copyright header**: Every Python file must start with:
-  ```python
-  # Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
-  ```
 
 ## Adding a Detection Rule
 

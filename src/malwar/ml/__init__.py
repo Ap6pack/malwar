@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """ML-based risk scoring for SKILL.md malware detection."""
 
 from malwar.ml.calibrator import RiskCalibrator

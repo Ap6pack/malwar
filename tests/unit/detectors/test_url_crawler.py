@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Unit tests for the Layer 2 URL crawler detection modules."""
 
 from __future__ import annotations

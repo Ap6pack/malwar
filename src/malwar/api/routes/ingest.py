@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """API endpoint for ingesting threat intelligence data."""
 
 from __future__ import annotations

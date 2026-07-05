@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Tests for TUI module: result formatting, watch mode, dashboard data assembly."""
 
 from __future__ import annotations

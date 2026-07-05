@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Notification event models for scan result dispatching."""
 
 from __future__ import annotations

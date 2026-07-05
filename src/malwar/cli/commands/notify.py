@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """CLI commands for notification channel management and testing."""
 
 from __future__ import annotations

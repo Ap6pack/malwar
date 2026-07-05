@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """TAXII 2.1 response formatters for Malwar threat intelligence.
 
 This module provides functions that format STIX bundles and metadata

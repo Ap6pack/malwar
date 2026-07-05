@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Malwar SKILL.md scanner for GitHub Actions.
 
 Finds files matching a glob pattern, scans each with the malwar SDK,

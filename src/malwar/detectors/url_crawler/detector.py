@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Layer 2: URL crawler detection -- fetches and analyzes URLs found in skills."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Severity aggregation and verdict computation."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Model trainer: trains/retrains logistic regression from labeled scan data."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Shared test fixtures and configuration."""
 
 from pathlib import Path

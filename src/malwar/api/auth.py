@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """API key authentication dependency.
 
 This module preserves the original ``require_api_key`` interface for

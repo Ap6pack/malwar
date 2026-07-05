@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """Async HTTP fetcher with safety bounds for URL analysis."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
 """SQLite implementation of the abstract :class:`DatabaseBackend`.
 
 Wraps an :mod:`aiosqlite` connection and exposes the uniform query
