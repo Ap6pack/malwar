@@ -644,7 +644,7 @@ class TestSarifModels:
     def test_sarif_driver_defaults(self):
         driver = SarifDriver()
         assert driver.name == "malwar"
-        assert driver.version == "0.3.1"
+        assert driver.version == "0.4.0"
         assert driver.informationUri == "https://github.com/veritasaequitas/malwar"
         assert driver.rules == []
 

@@ -44,7 +44,7 @@ Response
 Fetching https://clawhub.ai/nitishgargiitd/image-cog...
 Anthropic API key not configured; skipping LLM analysis for image-cog
 
-malwar v0.3.1 - Agentic Skills Malware Scanner
+malwar v0.4.0 - Agentic Skills Malware Scanner
 
   Target:    image-cog
   SHA256:    ab2caf5a4691fdd6...
@@ -125,7 +125,7 @@ Response
 Fetching SKILL.md for python-executor...
 Anthropic API key not configured; skipping LLM analysis for clawhub:python-executor/SKILL.md
 
-malwar v0.3.1 - Agentic Skills Malware Scanner
+malwar v0.4.0 - Agentic Skills Malware Scanner
 
   Target:    clawhub:python-executor/SKILL.md
   SHA256:    92928f9f1ba888b6...

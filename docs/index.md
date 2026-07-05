@@ -123,16 +123,16 @@ See the full [CLI Reference](guide/cli-reference.md) and [Quick Start Guide](get
 
 ## Detection Accuracy
 
-Tested against 44 fixtures (31 labeled, 13 real-world ClawHub samples):
+Tested against 51 fixtures (38 labeled, 13 real-world ClawHub samples), rule engine + threat intel only (no LLM):
 
 | Metric | Value |
 |--------|-------|
-| **Accuracy** | 96.8% |
-| **Precision** | 95.8% |
+| **Accuracy** | 100.0% |
+| **Precision** | 100.0% |
 | **Recall** | 100.0% |
-| **F1 Score** | 97.9% |
+| **F1 Score** | 100.0% |
 
-Every malicious sample is detected. See the full [Accuracy Report](guide/accuracy-report.md).
+Every malicious sample is detected and no benign sample is flagged. See the full [Accuracy Report](guide/accuracy-report.md).
 
 ---
 
