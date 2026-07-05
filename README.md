@@ -151,12 +151,12 @@ All settings via environment variables with `MALWAR_` prefix or `.env` file. Key
 ## Development
 
 ```bash
-pytest                                # 1,522 tests
+pytest                                # 1,596 tests
 ruff check src/ tests/                # lint
 mypy src/                             # type check
 ```
 
-49 test fixtures: 5 benign, 22 malicious (synthetic), 22 real-world samples from ClawHub and Snyk research.
+51 test fixtures: 6 benign, 23 malicious (synthetic), 3 real-world benign, 6 real-world malicious, 13 real ClawHub samples.
 
 Full dev guide: **[Development](docs/development.md)**
 
@@ -190,7 +190,7 @@ Full dev guide: **[Development](docs/development.md)**
 
 **Emerging Agentic Threats** — Detection for the threat classes Unit 42 disclosed in June 2026: agentic affiliate injection and pump-and-dump / front-running (`MALWAR-FRAUD-*`), plus scanner-evasion via file-size inflation (`MALWAR-EVADE-*`) — the techniques that bypassed ClawScan and VirusTotal. Both the rule engine and the ML risk scorer were extended to cover them.
 
-1,522 tests | 29 detection rules | 82% coverage
+1,596 tests | 30 detection rules | 82% coverage
 
 ---
 

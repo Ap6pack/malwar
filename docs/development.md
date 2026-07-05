@@ -63,13 +63,21 @@ malwar/
 |   |   |   +-- base_rule.py       # BaseRule abstract class
 |   |   |   +-- registry.py        # RuleRegistry + @rule decorator
 |   |   |   +-- rules/             # Individual rule implementations
-|   |   |       +-- obfuscation.py
+|   |   |       +-- obfuscation.py         # OBF-001..004 (incl. PowerShell cradle)
 |   |   |       +-- prompt_injection.py
 |   |   |       +-- credential_exposure.py
 |   |   |       +-- exfiltration.py
 |   |   |       +-- known_malware.py
 |   |   |       +-- social_engineering.py
 |   |   |       +-- suspicious_commands.py
+|   |   |       +-- persistence.py
+|   |   |       +-- agent_hijacking.py
+|   |   |       +-- env_harvesting.py
+|   |   |       +-- multi_step.py
+|   |   |       +-- steganography.py
+|   |   |       +-- supply_chain.py
+|   |   |       +-- financial_fraud.py      # FRAUD-001/002 (affiliate injection, front-running)
+|   |   |       +-- evasion.py              # EVADE-001 (scanner-evasion padding)
 |   |   +-- url_crawler/           # Layer 2: URL analysis
 |   |   |   +-- detector.py        # UrlCrawlerDetector
 |   |   |   +-- extractor.py       # URL extraction from markdown
@@ -313,6 +321,8 @@ def test_my_new_rule_no_false_positive():
 | `SUSPICIOUS_DEPENDENCY` | Untrusted package dependencies |
 | `TYPOSQUATTING` | Name-based deception |
 | `SECURITY_DISABLEMENT` | Disabling security controls |
+| `FINANCIAL_FRAUD` | Agentic affiliate injection, front-running / pump-and-dump |
+| `DETECTION_EVASION` | Scanner-evasion via file-size inflation / junk padding |
 
 ---
 
@@ -434,7 +444,7 @@ pytest tests/e2e/
 pytest --cov=malwar --cov-report=term-missing
 
 # Run with coverage and fail if below threshold
-pytest --cov=malwar --cov-fail-under=85
+pytest --cov=malwar --cov-fail-under=80
 ```
 
 ### Shared Fixtures

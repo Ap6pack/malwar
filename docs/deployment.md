@@ -379,7 +379,7 @@ Layer 3 (LLM analysis) calls the Anthropic API and incurs costs. Cost control me
 The project includes a CI workflow (`.github/workflows/ci.yml`) with four jobs:
 
 1. **Lint & Type Check** -- Runs `ruff check` and `mypy`
-2. **Tests** -- Runs `pytest` with coverage (minimum 85%)
+2. **Tests** -- Runs `pytest` with coverage (minimum 80%)
 3. **Build Frontend** -- Builds the React frontend with `npm ci && npm run build`
 4. **Build Package** -- Builds the Python package with `python -m build`
 

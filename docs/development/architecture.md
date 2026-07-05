@@ -159,13 +159,21 @@ The rule engine performs fast, deterministic pattern matching against the skill 
 
 | Category | Rules | What it Detects |
 |---|---|---|
-| Obfuscation | MALWAR-OBF-001 to OBF-003 | Base64 commands, hex payloads, raw IP in commands |
+| Obfuscation | MALWAR-OBF-001 to OBF-004 | Base64 commands, hex payloads, raw IP in commands, PowerShell download cradle |
 | Prompt Injection | MALWAR-PI-001 to PI-003 | Instruction overrides, Unicode smuggling, hidden HTML comments |
 | Credential Exposure | MALWAR-CRED-001 to CRED-002 | Hardcoded secrets, credential harvesting instructions |
 | Data Exfiltration | MALWAR-EXFIL-001 to EXFIL-003 | Agent memory access, curl POST exfil, crypto wallet access |
 | Known Malware | MALWAR-MAL-001 | ClawHavoc C2 IPs, domains, repos, known authors |
 | Social Engineering | MALWAR-SE-001 to SE-003 | ClickFix fake prerequisites, suspicious downloads, typosquatting |
 | Suspicious Commands | MALWAR-CMD-001 to CMD-004 | Piped execution, npx -y, password archives, download-and-execute |
+| Persistence | MALWAR-PERSIST-001 to PERSIST-002 | Crontab/systemd/launchd persistence, agent-config & system-file writes |
+| Agent Hijacking | MALWAR-HIJACK-001 | Agent identity/role hijacking |
+| Env Harvesting | MALWAR-ENV-001 | Harvesting environment variables and secrets |
+| Multi-Step | MALWAR-MULTI-001 | Multi-step manipulation chains |
+| Steganography | MALWAR-STEG-001 | Zero-width / invisible-character hidden content |
+| Supply Chain | MALWAR-SUPPLY-001 | Malicious packages, suspicious install patterns, typosquats |
+| Financial Fraud | MALWAR-FRAUD-001 to FRAUD-002 | Agentic affiliate injection, front-running / pump-and-dump |
+| Detection Evasion | MALWAR-EVADE-001 | Scanner-evasion via file-size inflation / junk padding |
 
 ### Layer 2: URL Crawler (order=20)
 

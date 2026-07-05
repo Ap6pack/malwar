@@ -44,7 +44,7 @@ Response
 Fetching https://clawhub.ai/nitishgargiitd/image-cog...
 Anthropic API key not configured; skipping LLM analysis for image-cog
 
-malwar v0.1.0 - Agentic Skills Malware Scanner
+malwar v0.3.1 - Agentic Skills Malware Scanner
 
   Target:    image-cog
   SHA256:    ab2caf5a4691fdd6...
@@ -83,11 +83,12 @@ MEDIUM     url_serves_binary  URL serves binary/archive content
 ## 3. Understanding Results
 Malwar categorizes files based on a **risk score (0-100)**. Use the table below to determine your next steps:
 
-|Verdict |Risk Level |Recommended Action |
+|Verdict |Risk Score |Recommended Action |
 | :-- | :-- | :-- |
-|CLEAN |Low (0-20) |Safe to install in your Claude commands folder. |
-|SUSPICIOUS |Medium (21-60) | Review flagged lines; check for unusual shell commands. |
-|MALICIOUS | High (61+) | Do not install. Potential data exfiltration or harmful scripts. |
+|CLEAN | 0-14 |Safe to install in your Claude commands folder. |
+|CAUTION | 15-39 | Review the flagged lines before installing. |
+|SUSPICIOUS | 40-74 | Review carefully; check for unusual shell commands. |
+|MALICIOUS | 75+ | Do not install. Potential data exfiltration or harmful scripts. |
 
 ![Malwar Verdict](../images/malwar-verdict.png)
 
@@ -124,7 +125,7 @@ Response
 Fetching SKILL.md for python-executor...
 Anthropic API key not configured; skipping LLM analysis for clawhub:python-executor/SKILL.md
 
-malwar v0.1.0 - Agentic Skills Malware Scanner
+malwar v0.3.1 - Agentic Skills Malware Scanner
 
   Target:    clawhub:python-executor/SKILL.md
   SHA256:    92928f9f1ba888b6...

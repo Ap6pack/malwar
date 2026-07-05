@@ -21,27 +21,28 @@ Before moving a third-party skill into your .claude/commands/ directory, run a s
 
 Scan a Local File
 
-``` Bash
+``` bash
 malwar scan ./path/to/your-skill.md
 ```
-![Malwar](image.png)
+![Local scan output](../images/malwar-scan-local.png)
 
 Scan a Remote URL
 
-``` Bash
-malwar scan [https://example.com/path/to/remote-skill.md](https://example.com/path/to/remote-skill.md)
+``` bash
+malwar crawl url https://example.com/path/to/remote-skill.md
 ```
  
 ## 3. Understanding Results
 Malwar categorizes files based on a **risk score (0-100)**. Use the table below to determine your next steps:
 
-|VerdictRisk |LevelRecommended |Action |
+| Verdict | Risk Score | Recommended Action |
 | :-- | :-- | :-- |
-|CLEAN |Low (0-20) |Safe to install in your Claude commands folder. |
-|SUSPICIOUS |Medium (21-60) | Review flagged lines; check for unusual shell commands. |
-|MALICIOUS | High (61+) | Do not install. Potential data exfiltration or harmful scripts. |
+| CLEAN | 0-14 | Safe to install in your Claude commands folder. |
+| CAUTION | 15-39 | Review the flagged lines before installing. |
+| SUSPICIOUS | 40-74 | Review carefully; check for unusual shell commands. |
+| MALICIOUS | 75+ | Do not install. Potential data exfiltration or harmful scripts. |
 
-![Result](image-1.png)
+![Malwar Verdict](../images/malwar-verdict.png)
 
 ## 4. Safe Installation Workflow
 To maintain a secure environment, adopt this two-step process:

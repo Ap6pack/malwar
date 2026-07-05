@@ -398,9 +398,8 @@ The ShadowPkg attack chain leverages dependency confusion and typosquatting:
 | Layer | Detection | Rule/Mechanism |
 |---|---|---|
 | Layer 1 | Typosquatted packages | MALWAR-SUPPLY-001 |
-| Layer 1 | Suspicious registry URLs | MALWAR-SUPPLY-002 |
-| Layer 1 | Git-based package installs | MALWAR-CMD-002 |
-| Layer 2 | Malicious registry domain | Domain reputation scoring |
+| Layer 1 | Suspicious pip/npm install patterns | MALWAR-SUPPLY-001 |
+| Layer 2 | Malicious registry domain / URLs | Domain reputation scoring |
 | Layer 3 | Deceptive dependency intent | LLM semantic analysis |
 | Layer 4 | Signature correlation | sig-shadowpkg-crossenv, sig-shadowpkg-colourfool, sig-shadowpkg-evil-registry, sig-shadowpkg-evil-mirror |
 

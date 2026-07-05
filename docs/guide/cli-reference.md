@@ -630,7 +630,7 @@ All malwar configuration is done through environment variables with the `MALWAR_
 | `MALWAR_API_WORKERS` | `1` | Number of Uvicorn workers |
 | `MALWAR_API_KEYS` | (empty) | Comma-separated API keys for authentication |
 | `MALWAR_ANTHROPIC_API_KEY` | (empty) | Anthropic API key for LLM analysis |
-| `MALWAR_LLM_MODEL` | `claude-sonnet-4-20250514` | LLM model to use |
+| `MALWAR_LLM_MODEL` | `claude-sonnet-5` | LLM model to use |
 | `MALWAR_LLM_MAX_TOKENS` | `4096` | Maximum tokens for LLM response |
 | `MALWAR_LLM_TEMPERATURE` | `0.0` | LLM sampling temperature |
 | `MALWAR_LLM_SKIP_BELOW_RISK` | `15` | Skip LLM if risk score is below this |

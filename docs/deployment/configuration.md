@@ -32,10 +32,10 @@ All settings are managed via environment variables with the `MALWAR_` prefix, lo
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MALWAR_ANTHROPIC_API_KEY` | *(empty)* | Anthropic API key for LLM analysis |
-| `MALWAR_LLM_MODEL` | `claude-sonnet-4-20250514` | LLM model to use |
+| `MALWAR_ANTHROPIC_API_KEY` | *(empty)* | Anthropic API key for LLM analysis. If unset, the LLM layer falls back to the standard `ANTHROPIC_API_KEY` env var, then to an `ant auth login` / Claude Code CLI OAuth profile. |
+| `MALWAR_LLM_MODEL` | `claude-sonnet-5` | LLM model to use |
 | `MALWAR_LLM_MAX_TOKENS` | `4096` | Maximum tokens for LLM response |
-| `MALWAR_LLM_TEMPERATURE` | `0.0` | LLM sampling temperature |
+| `MALWAR_LLM_TEMPERATURE` | `0.0` | Retained for backward compatibility; no longer sent (current models reject non-default sampling parameters) |
 | `MALWAR_LLM_SKIP_BELOW_RISK` | `15` | Skip LLM if risk score is below this threshold |
 
 ### URL Crawler (Layer 2)
@@ -59,6 +59,17 @@ All settings are managed via environment variables with the `MALWAR_` prefix, lo
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MALWAR_SCAN_MAX_FILE_SIZE` | `524288` | Max SKILL.md file size (512 KB) |
+
+### X (Twitter) Publishing
+
+Used by `malwar crawl monitor --publish` to post the daily threat digest. All four are required to enable posting; leave empty to disable.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MALWAR_X_API_KEY` | *(empty)* | X/Twitter API consumer key |
+| `MALWAR_X_API_SECRET` | *(empty)* | X/Twitter API consumer secret |
+| `MALWAR_X_ACCESS_TOKEN` | *(empty)* | X/Twitter user access token |
+| `MALWAR_X_ACCESS_TOKEN_SECRET` | *(empty)* | X/Twitter user access token secret |
 
 ### Webhooks
 
