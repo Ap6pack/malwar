@@ -23,6 +23,9 @@ malwar crawl info beszel-check
 
 # Scan any remote SKILL.md by URL
 malwar crawl url https://example.com/SKILL.md
+
+# Sweep the whole registry and diff against the previous snapshot
+malwar crawl monitor
 ```
 
 ---
@@ -93,6 +96,20 @@ Fetch and scan any remote SKILL.md by URL. Not limited to ClawHub -- works with 
 malwar crawl url https://example.com/SKILL.md
 malwar crawl url https://raw.githubusercontent.com/user/repo/main/SKILL.md --format json
 ```
+
+### crawl monitor
+
+Sweep the **entire** registry, fast-scan every skill (rule engine + threat intel, escalating flagged ones to the LLM), and diff the result against the previous snapshot to surface what changed -- newly published skills, removed skills, trojanized updates (content changed under the same version), and verdict regressions, with a headline list of skills that newly turned malicious. Snapshots persist under `data/registry-snapshots/` (`latest.json` is the diff baseline, plus a dated archive per run), so committing that directory makes `git diff` a permanent day-over-day record. Designed to run on a schedule.
+
+```bash
+malwar crawl monitor                     # full sweep -> snapshot -> diff
+malwar crawl monitor --digest            # also print a shareable digest + draft post
+malwar crawl monitor --publish           # post the digest to X when skills newly turn malicious
+malwar crawl monitor --fail-on-malicious # exit non-zero when newly-flagged skills are found (CI/cron)
+malwar crawl monitor --max 100 --no-escalate   # quick partial run, rules only
+```
+
+**Options:** `--snapshot-dir`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
 
 ---
 

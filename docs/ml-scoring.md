@@ -10,7 +10,7 @@ Malwar includes an ML-based risk scoring model that complements the rule engine 
 SKILL.md
   |
   v
-[Feature Extractor] --> 20-dimensional feature vector
+[Feature Extractor] --> 22-dimensional feature vector
   |
   v
 [Risk Scorer] --> P(malicious) in [0.0, 1.0]
@@ -21,7 +21,7 @@ SKILL.md
 
 ### Components
 
-- **`malwar.ml.features.FeatureExtractor`** -- Extracts 20 numerical features from a `SkillContent` object
+- **`malwar.ml.features.FeatureExtractor`** -- Extracts 22 numerical features from a `SkillContent` object
 - **`malwar.ml.model.RiskScorer`** -- Logistic regression model: `P(malicious) = sigmoid(X @ weights + bias)`
 - **`malwar.ml.trainer.ModelTrainer`** -- Trains/retrains the model from labeled skill files
 - **`malwar.ml.calibrator.RiskCalibrator`** -- Blends ML and rule engine scores
@@ -50,6 +50,8 @@ SKILL.md
 | 18 | `exfiltration_pattern_count` | Data exfiltration pattern matches |
 | 19 | `avg_code_block_length` | Average length of code blocks |
 | 20 | `hex_escape_density` | Hex escape sequences per body character |
+| 21 | `affiliate_injection_score` | Agentic affiliate-injection indicator [0, 1] |
+| 22 | `financial_manipulation_score` | Fund-transfer + market-manipulation indicator [0, 1] |
 
 ## Configuration
 
@@ -70,15 +72,15 @@ The model is stored as a JSON file (`src/malwar/ml/weights.json`) containing:
 
 ```json
 {
-  "weights": [w1, w2, ..., w20],
+  "weights": [w1, w2, ..., w22],
   "bias": 0.123,
-  "feature_means": [m1, m2, ..., m20],
-  "feature_stds": [s1, s2, ..., s20],
+  "feature_means": [m1, m2, ..., m22],
+  "feature_stds": [s1, s2, ..., s22],
   "metadata": {
     "version": "1.0.0",
     "trained_at": "2026-02-20T...",
-    "num_features": 20,
-    "training_samples": 24,
+    "num_features": 22,
+    "training_samples": 29,
     "training_accuracy": 1.0,
     "feature_names": ["line_count", ...]
   }
@@ -116,7 +118,7 @@ The `ml_risk_score` field on `ScanResult` is optional and does not affect existi
 
 ## Training
 
-The initial model is trained on the test fixture files (5 benign + 19 malicious). To retrain with additional labeled data:
+The initial model is trained on the labeled test fixture files (6 benign + 23 malicious = 29 samples). To retrain with additional labeled data:
 
 1. Place benign `.md` files in a `benign/` subdirectory
 2. Place malicious `.md` files in a `malicious/` subdirectory

@@ -50,6 +50,8 @@ Use any of these values for `category`:
 - `suspicious_dependency`
 - `typosquatting`
 - `security_disablement`
+- `financial_fraud`
+- `detection_evasion`
 
 ## Pattern definitions
 

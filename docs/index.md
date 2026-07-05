@@ -23,7 +23,7 @@ SKILL.md --> Rule Engine --> URL Crawler --> LLM Analyzer --> Threat Intel --> V
 
 | Layer | What It Catches |
 |-------|-----------------|
-| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration patterns ([26 rules](guide/detection-rules.md)) |
+| **Rule Engine** | Obfuscated commands, prompt injection, credential exposure, exfiltration, agentic financial fraud, scanner evasion ([30 rules](guide/detection-rules.md)) |
 | **URL Crawler** | Malicious URLs, domain reputation, redirect chains to C2 infrastructure |
 | **LLM Analyzer** | Social engineering, hidden intent, context-dependent attacks invisible to regex |
 | **Threat Intel** | Known IOCs, [campaign attribution](guide/threat-campaigns.md), threat actor fingerprints |
@@ -34,7 +34,7 @@ Full pipeline details: **[Architecture](development/architecture.md)**
 
 ## Key Features
 
-- **26 detection rules** covering 7 threat categories
+- **30 detection rules** covering 13 threat categories
 - **4-layer pipeline** combining speed with depth
 - **Sub-50ms scans** for rule-based detection
 - **SARIF 2.1.0 output** for CI/CD integration
@@ -46,7 +46,9 @@ Full pipeline details: **[Architecture](development/architecture.md)**
 - **PostgreSQL backend** support alongside SQLite
 - **Redis caching** for scan results and rule compilations
 - **Scheduled scanning** with configurable background jobs
-- **Multi-channel notifications** via Slack, email, and webhooks
+- **Multi-channel notifications** via Slack, Teams, PagerDuty, email, and webhooks
+- **Continuous registry monitoring** — `crawl monitor` sweeps the whole registry daily and diffs against the previous snapshot to surface newly-malicious skills
+- **LLM false-positive suppression** — the LLM layer can demote rule-engine findings it identifies as false positives, excluding them from the score while keeping them visible
 - **Audit logging** with immutable, append-only trail
 - **Rich TUI** for interactive terminal usage
 - **Campaign tracking** with IOC correlation and attribution
@@ -87,6 +89,7 @@ malwar scan SKILL.md --format sarif     # CI/CD output
 malwar scan SKILL.md --no-llm          # skip LLM (fast + free)
 malwar crawl scan beszel-check          # scan a ClawHub skill by slug
 malwar crawl search "crypto"            # search ClawHub registry
+malwar crawl monitor                    # sweep the whole registry, diff vs. yesterday
 ```
 
 ```
@@ -133,4 +136,4 @@ Every malicious sample is detected. See the full [Accuracy Report](guide/accurac
 
 ---
 
-**Proprietary** -- Copyright (c) 2026 Veritas Aequitas Holdings LLC. All rights reserved.
+**MIT License** -- Copyright (c) 2026 Veritas Aequitas Holdings LLC.

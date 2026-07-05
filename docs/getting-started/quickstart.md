@@ -205,5 +205,5 @@ See the full [LangChain Integration](../integrations/langchain.md) guide.
 
 - [CLI Reference](../guide/cli-reference.md) -- Every command with flags and examples
 - [API Reference](../guide/api-reference.md) -- All 30+ endpoints with schemas
-- [Detection Rules](../guide/detection-rules.md) -- All 26 rules with patterns
+- [Detection Rules](../guide/detection-rules.md) -- All 30 rules with patterns
 - [Deployment](../deployment/docker.md) -- Docker, Kubernetes, production config

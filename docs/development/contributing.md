@@ -165,7 +165,7 @@ pytest -v                                 # Verbose output
 pytest tests/unit/                        # Unit tests only
 pytest tests/integration/                 # Integration tests only
 pytest --cov=malwar --cov-report=term-missing  # With coverage
-pytest --cov=malwar --cov-fail-under=85   # Coverage threshold
+pytest --cov=malwar --cov-fail-under=80   # Coverage threshold
 ```
 
 ### Test Organization
