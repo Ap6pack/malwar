@@ -43,6 +43,12 @@ postgres = [
 cache = [
     "redis[hiredis]>=5.0.0",
 ]
+hf = [
+    # Free, local second-opinion escalation tier (monitor.escalation). Heavy —
+    # only needed for `malwar crawl monitor --escalate-backend hf|tiered`.
+    "transformers>=4.44.0",
+    "torch>=2.2.0",
+]
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
@@ -114,6 +120,11 @@ warn_unused_configs = true
 module = ["frontmatter", "frontmatter.*", "aiofiles", "aiofiles.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+# Optional 'hf' extra — imported lazily in monitor.escalation.
+module = ["transformers"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

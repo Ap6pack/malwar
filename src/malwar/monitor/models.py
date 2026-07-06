@@ -43,7 +43,16 @@ class SkillRecord(BaseModel):
     risk_score: int = 0
     finding_rule_ids: list[str] = Field(default_factory=list)
     installs: int = 0
+    # ML anomaly probability [0,1] from the first (rules) pass — a cheap signal
+    # for "looks clean but off" skills that drives targeted escalation.
+    ml_risk_score: float | None = None
     llm_escalated: bool = False
+    # Targeted escalation outcome (see monitor.escalation). Which second-opinion
+    # backend ran on this skill, its verdict, and its confidence — empty when the
+    # skill wasn't in the ambiguous band or escalation was disabled.
+    escalation_backend: str = ""
+    escalation_verdict: str = ""
+    escalation_score: float | None = None
     moderation_blocked: bool = False
     moderation_suspicious: bool = False
     scanned_at: str = Field(
@@ -71,6 +80,8 @@ class RegistrySnapshot(BaseModel):
     scanned_count: int = 0
     reused_count: int = 0
     pending_count: int = 0
+    # Skills sent to a second-opinion escalation backend this run.
+    escalated_count: int = 0
 
     @property
     def skill_count(self) -> int:

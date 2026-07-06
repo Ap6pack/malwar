@@ -13,6 +13,8 @@ from malwar.crawl.models import (
     VersionInfo,
 )
 from malwar.monitor import (
+    EscalationPolicy,
+    EscalationResult,
     RegistrySnapshot,
     SkillRecord,
     SnapshotStore,
@@ -102,7 +104,7 @@ class FakeClawHubClient:
 class TestBuildSnapshot:
     async def test_scans_all_skills(self):
         client = FakeClawHubClient({"good": BENIGN_BODY, "money-radar": MALICIOUS_BODY})
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         assert snap.skill_count == 2
         assert snap.registry == "https://clawhub.test"
         assert snap.skills["good"].verdict == "CLEAN"
@@ -111,7 +113,7 @@ class TestBuildSnapshot:
 
     async def test_records_content_hash_and_version(self):
         client = FakeClawHubClient({"good": BENIGN_BODY})
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         rec = snap.skills["good"]
         assert rec.content_sha256 and len(rec.content_sha256) == 64
         assert rec.version == "1.0.0"
@@ -121,7 +123,7 @@ class TestBuildSnapshot:
         # Metadata comes from the listing, so a scanned skill costs a single
         # request (the file) — the per-skill detail endpoint is never hit.
         client = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         assert snap.skill_count == 2
         assert client.detail_fetches == []
         assert sorted(client.file_fetches) == ["a", "b"]
@@ -129,7 +131,7 @@ class TestBuildSnapshot:
 
     async def test_max_skills_cap(self):
         client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(10)})
-        snap = await build_snapshot(client, escalate=False, max_skills=3)
+        snap = await build_snapshot(client, max_skills=3)
         assert snap.skill_count == 3
 
     async def test_fetch_error_recorded_not_fatal(self):
@@ -138,7 +140,7 @@ class TestBuildSnapshot:
         async def _boom(slug, path="SKILL.md", version=None):
             raise ClawHubError("boom")
         client.get_skill_file = _boom  # type: ignore[assignment]
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         assert snap.skills["good"].error is not None
         assert "good" in snap.errors
 
@@ -152,7 +154,7 @@ class TestBuildSnapshot:
             return BENIGN_BODY
 
         client.get_skill_file = _boom  # type: ignore[assignment]
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         assert snap.skill_count == 2
         assert snap.skills["good"].verdict == "CLEAN"
         assert snap.skills["bad"].error is not None
@@ -166,19 +168,19 @@ class TestBuildSnapshot:
 
         client.list_skills = _boom  # type: ignore[assignment]
         # search fallback returns [] in the fake → empty snapshot, no exception.
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         assert snap.skill_count == 0
 
 
 class TestIncrementalSweep:
     async def test_unchanged_skills_are_not_refetched(self):
         client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
         assert day1.scanned_count == 2
         assert day1.reused_count == 0
 
         client2 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
-        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        day2 = await build_snapshot(client2, previous=day1)
         # Nothing changed → nothing re-fetched, everything carried forward.
         assert client2.file_fetches == []
         assert day2.scanned_count == 0
@@ -187,13 +189,13 @@ class TestIncrementalSweep:
 
     async def test_version_bump_triggers_rescan(self):
         client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
 
         client2 = FakeClawHubClient(
             {"a": BENIGN_BODY, "b": BENIGN_BODY},
             versions={"a": "2.0.0", "b": "1.0.0"},
         )
-        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        day2 = await build_snapshot(client2, previous=day1)
         # Only the version-bumped skill is re-fetched.
         assert client2.file_fetches == ["a"]
         assert day2.scanned_count == 1
@@ -201,19 +203,19 @@ class TestIncrementalSweep:
 
     async def test_updated_at_change_triggers_rescan(self):
         client1 = FakeClawHubClient({"a": BENIGN_BODY}, updated_ats={"a": 1000})
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
 
         client2 = FakeClawHubClient({"a": BENIGN_BODY}, updated_ats={"a": 2000})
-        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        day2 = await build_snapshot(client2, previous=day1)
         assert client2.file_fetches == ["a"]
         assert day2.scanned_count == 1
 
     async def test_new_skill_is_scanned_others_reused(self):
         client1 = FakeClawHubClient({"a": BENIGN_BODY})
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
 
         client2 = FakeClawHubClient({"a": BENIGN_BODY, "new": MALICIOUS_BODY})
-        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        day2 = await build_snapshot(client2, previous=day1)
         assert client2.file_fetches == ["new"]
         assert day2.scanned_count == 1
         assert day2.reused_count == 1
@@ -221,17 +223,17 @@ class TestIncrementalSweep:
 
     async def test_force_rescan_scans_everything(self):
         client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
 
         client2 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
-        day2 = await build_snapshot(client2, previous=day1, force_rescan=True, escalate=False)
+        day2 = await build_snapshot(client2, previous=day1, force_rescan=True)
         assert sorted(client2.file_fetches) == ["a", "b"]
         assert day2.scanned_count == 2
         assert day2.reused_count == 0
 
     async def test_scan_budget_defers_overflow(self):
         client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(5)})
-        snap = await build_snapshot(client, escalate=False, scan_budget=2)
+        snap = await build_snapshot(client, scan_budget=2)
         # Only 2 scanned this run; the other 3 recorded as UNKNOWN placeholders.
         assert snap.skill_count == 5
         assert snap.scanned_count == 2
@@ -247,14 +249,14 @@ class TestIncrementalSweep:
         # Three runs of budget 2 must fully cover a 5-skill registry.
         for _ in range(3):
             client = FakeClawHubClient(skills)
-            prev = await build_snapshot(client, previous=prev, escalate=False, scan_budget=2)
+            prev = await build_snapshot(client, previous=prev, scan_budget=2)
         assert prev is not None
         assert prev.pending_count == 0
         assert all(r.verdict == "CLEAN" for r in prev.skills.values())
 
     async def test_no_budget_scans_all(self):
         client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(4)})
-        snap = await build_snapshot(client, escalate=False)
+        snap = await build_snapshot(client)
         assert snap.scanned_count == 4
         assert snap.pending_count == 0
 
@@ -266,15 +268,85 @@ class TestIncrementalSweep:
             raise ClawHubError("boom")
 
         client1.get_skill_file = _boom  # type: ignore[assignment]
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
         assert day1.skills["a"].error is not None
 
         # Day 2: same version, but the errored record must be retried (not reused).
         client2 = FakeClawHubClient({"a": BENIGN_BODY})
-        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        day2 = await build_snapshot(client2, previous=day1)
         assert client2.file_fetches == ["a"]
         assert day2.skills["a"].error is None
         assert day2.skills["a"].verdict == "CLEAN"
+
+
+class _RecordingBackend:
+    """Escalation backend that records which skills it was asked to assess."""
+
+    def __init__(self, name: str, result: EscalationResult):
+        self.name = name
+        self._result = result
+        self.assessed: list[str] = []
+
+    async def assess(self, content: str, *, file_name: str) -> EscalationResult:
+        self.assessed.append(file_name)
+        return self._result
+
+
+class TestEscalationPhase:
+    async def test_only_ambiguous_band_is_escalated(self):
+        # money-radar scores in the ambiguous band (SUSPICIOUS, < MALICIOUS);
+        # the benign skill is confident-clean and must not be escalated.
+        client = FakeClawHubClient({"clean": BENIGN_BODY, "amb": MALICIOUS_BODY})
+        backend = _RecordingBackend("hf", EscalationResult(backend="hf", flagged=True))
+        snap = await build_snapshot(client, escalation=backend)
+        assert backend.assessed == ["amb/SKILL.md"]
+        assert snap.escalated_count == 1
+        assert snap.skills["amb"].escalation_backend == "hf"
+        assert snap.skills["clean"].escalation_backend == ""
+
+    async def test_no_escalation_by_default(self):
+        client = FakeClawHubClient({"amb": MALICIOUS_BODY})
+        snap = await build_snapshot(client)  # NoneBackend
+        assert snap.escalated_count == 0
+        assert snap.skills["amb"].escalation_backend == ""
+
+    async def test_authoritative_backend_overrides_verdict(self):
+        # Simulate an LLM second opinion clearing a rule-engine false positive.
+        client = FakeClawHubClient({"amb": MALICIOUS_BODY})
+        backend = _RecordingBackend(
+            "anthropic",
+            EscalationResult(
+                backend="anthropic", flagged=False, verdict="CLEAN", score=0.0, authoritative=True
+            ),
+        )
+        snap = await build_snapshot(client, escalation=backend)
+        assert snap.skills["amb"].verdict == "CLEAN"  # adopted the authoritative verdict
+        assert snap.skills["amb"].risk_score == 0
+        assert snap.skills["amb"].llm_escalated is True
+
+    async def test_non_authoritative_backend_records_but_keeps_verdict(self):
+        client = FakeClawHubClient({"amb": MALICIOUS_BODY})
+        first = await build_snapshot(client)
+        rule_verdict = first.skills["amb"].verdict  # SUSPICIOUS/CAUTION from rules
+
+        client2 = FakeClawHubClient({"amb": MALICIOUS_BODY})
+        backend = _RecordingBackend(
+            "hf", EscalationResult(backend="hf", flagged=True, verdict="SUSPICIOUS", authoritative=False)
+        )
+        snap = await build_snapshot(client2, escalation=backend)
+        # A narrow classifier is recorded but does not overwrite the verdict.
+        assert snap.skills["amb"].verdict == rule_verdict
+        assert snap.skills["amb"].escalation_verdict == "SUSPICIOUS"
+        assert snap.skills["amb"].llm_escalated is False
+
+    async def test_escalation_budget_caps_candidates(self):
+        # Two ambiguous skills, budget 1 -> only the most suspicious is escalated.
+        client = FakeClawHubClient({"a": MALICIOUS_BODY, "b": MALICIOUS_BODY})
+        backend = _RecordingBackend("hf", EscalationResult(backend="hf", flagged=True))
+        policy = EscalationPolicy(budget=1)
+        snap = await build_snapshot(client, escalation=backend, escalation_policy=policy)
+        assert len(backend.assessed) == 1
+        assert snap.escalated_count == 1
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +448,7 @@ class TestEndToEnd:
 
         # Day 1: two clean skills.
         client1 = FakeClawHubClient({"good": BENIGN_BODY, "helper": BENIGN_BODY})
-        day1 = await build_snapshot(client1, escalate=False)
+        day1 = await build_snapshot(client1)
         diff1 = diff_snapshots(store.load_latest(), day1)
         store.save(day1)
         assert diff1.is_first_run
@@ -387,7 +459,7 @@ class TestEndToEnd:
             {"good": BENIGN_BODY, "helper": MALICIOUS_BODY},
             versions={"good": "1.0.0", "helper": "1.1.0"},
         )
-        day2 = await build_snapshot(client2, escalate=False)
+        day2 = await build_snapshot(client2)
         diff2 = diff_snapshots(store.load_latest(), day2)
 
         assert [r.slug for r in diff2.newly_malicious] == ["helper"]

@@ -105,16 +105,29 @@ Sweep the registry, fast-scan skills (rule engine + threat intel, escalating fla
 
 **Budgeted, resumable baseline.** ClawHub is rate-limited (~120 req/min), so a full ~6k-skill registry can't be swept in one shot. `--max-scans N` caps how many skills are actually scanned per run; any overflow is recorded as an `UNKNOWN` placeholder and picked up on the next run. So the **first full baseline builds up over several runs** rather than dying to a timeout, and once complete, daily incremental runs only touch what changed. `scanned_count`/`reused_count`/`pending_count` on each snapshot show the split.
 
+**Targeted, tiered escalation.** The rules pass is confident at the two ends (obviously clean, obviously malicious) but there's an **ambiguous middle** where a sneaky skill hides — it scores just under the line. Rather than pay for a deep look at *every* flagged skill, an escalation **policy** selects only that middle band (rule risk ~8–74, below the confident-malicious line), ranks by suspicion, and caps it with `--escalate-budget`. A pluggable **backend** then gives those a second opinion:
+
+| `--escalate-backend` | What runs | Cost |
+|---|---|---|
+| `none` | nothing (policy still records candidates) | free |
+| `hf` | a free local Hugging Face classifier (CPU) — `pip install malwar[hf]` | free |
+| `anthropic` | the full LLM analyzer (rules + LLM + false-positive suppression) | paid API |
+| `tiered` | `hf` triages first; escalates to `anthropic` **only** on a hit | paid on the residual only |
+
+`tiered` is the money-saver: the free tier filters the band, and the LLM is spent only on what the free tier still finds suspicious. An `anthropic`/`tiered` result is *authoritative* — it can raise a sneaky skill or clear a rule-engine false positive; an `hf` result is recorded as a triage signal (`escalation_backend`/`escalation_verdict`/`escalation_score` on the snapshot) without overriding the rule verdict. `escalated_count` shows how many skills were sent to the backend.
+
+> **Note:** a "rule-clean but ML-anomalous" escalation path exists (`EscalationPolicy.ml_threshold`) but is **off by default** — the stock ML scorer saturates near 1.0 for both benign and malicious skills, so it can't discriminate yet. Enable it only once the model is recalibrated.
+
 ```bash
-malwar crawl monitor                     # incremental sweep -> snapshot -> diff
-malwar crawl monitor --full              # re-scan every skill (catches same-version tampering)
-malwar crawl monitor --digest            # also print a shareable digest + draft post
-malwar crawl monitor --publish           # post the digest to X when skills newly turn malicious
-malwar crawl monitor --fail-on-malicious # exit non-zero when newly-flagged skills are found (CI/cron)
-malwar crawl monitor --max 100 --no-escalate   # quick partial run, rules only
+malwar crawl monitor                          # incremental sweep -> snapshot -> diff (LLM on the ambiguous band)
+malwar crawl monitor --no-escalate            # rules only, no second opinion (fast, free)
+malwar crawl monitor --escalate-backend hf    # free local classifier on the ambiguous band
+malwar crawl monitor --escalate-backend tiered --escalate-budget 50  # hf triage -> LLM on hits, capped
+malwar crawl monitor --full                   # re-scan every skill (catches same-version tampering)
+malwar crawl monitor --fail-on-malicious      # exit non-zero when newly-flagged skills are found (CI/cron)
 ```
 
-**Options:** `--snapshot-dir`, `--full`, `--max-scans`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
+**Options:** `--snapshot-dir`, `--full`, `--max-scans`, `--max`, `--escalate-backend` (`none`|`hf`|`anthropic`|`tiered`), `--escalate-budget`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
 
 The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences: **daily incremental** and a **weekly `--full`** re-scan, committing each snapshot to the `registry-snapshots` branch. It runs **rules-only (`--no-escalate`)** so a whole-registry sweep stays fast and cheap — the rule engine alone catches every malicious sample in the benchmark; use `malwar crawl scan <slug>` for an LLM deep-dive on an individual flagged skill.
 
