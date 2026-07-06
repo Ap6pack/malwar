@@ -28,6 +28,12 @@ from pathlib import Path
 from typing import NamedTuple
 
 from malwar.crawl.client import ClawHubClient
+from malwar.monitor.escalation import (
+    EscalationBackend,
+    EscalationPolicy,
+    NoneBackend,
+    select_candidates,
+)
 from malwar.monitor.models import RegistrySnapshot, SkillRecord
 from malwar.sdk import scan
 
@@ -137,11 +143,16 @@ def _is_unchanged(prev: SkillRecord | None, version: str | None, updated_at: int
     return prev.version == version and prev.updated_at == updated_at
 
 
-async def _scan_slug(client: ClawHubClient, meta: SkillMeta, *, escalate: bool) -> SkillRecord:
-    """Fetch and scan a single skill, escalating to the LLM only if flagged.
+async def _scan_slug(
+    client: ClawHubClient, meta: SkillMeta
+) -> tuple[SkillRecord, str | None]:
+    """Fetch and rule-scan a single skill (the fast, free first pass).
 
     Metadata (version, updated_at, display name, installs) comes from the
     enumeration listing, so this makes just one request per skill — the file.
+    Returns the record and the fetched content (or ``None`` on error) so a
+    later escalation pass can re-analyze without re-fetching. Escalation itself
+    is a separate, targeted phase (see :mod:`malwar.monitor.escalation`).
     """
     record = SkillRecord(
         slug=meta.slug,
@@ -155,24 +166,22 @@ async def _scan_slug(client: ClawHubClient, meta: SkillMeta, *, escalate: bool) 
         content = await client.get_skill_file(meta.slug)
     except Exception as exc:  # ClawHubError, httpx timeouts, etc.
         record.error = f"file: {exc}"
-        return record
+        return record, None
 
     record.content_sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     file_name = f"{meta.slug}/SKILL.md"
     try:
         result = await scan(content, file_name=file_name, use_llm=False, use_urls=False)
-        if escalate and result.verdict != "CLEAN":
-            result = await scan(content, file_name=file_name, use_llm=True, use_urls=True)
-            record.llm_escalated = True
     except Exception as exc:  # a single bad skill must not kill the whole sweep
         record.error = f"scan: {exc}"
-        return record
+        return record, None
 
     record.verdict = result.verdict
     record.risk_score = result.risk_score
+    record.ml_risk_score = result.ml_risk_score
     record.finding_rule_ids = sorted({f.rule_id for f in result.findings})
-    return record
+    return record, content
 
 
 def _pending_record(meta: SkillMeta) -> SkillRecord:
@@ -199,12 +208,20 @@ async def build_snapshot(
     force_rescan: bool = False,
     max_skills: int | None = None,
     scan_budget: int | None = None,
-    escalate: bool = True,
+    escalation: EscalationBackend | None = None,
+    escalation_policy: EscalationPolicy | None = None,
     concurrency: int = 8,
     page_size: int = 50,
     on_progress: ProgressCallback | None = None,
 ) -> RegistrySnapshot:
     """Crawl and scan the registry into a :class:`RegistrySnapshot`.
+
+    The sweep has two phases. Phase 1 rule-scans every (changed) skill — fast,
+    free, one request each. Phase 2 gives a *targeted* second opinion: an
+    :class:`~malwar.monitor.escalation.EscalationPolicy` picks only the skills in
+    the ambiguous band (rules unsure, or rule-clean but ML-anomalous), and the
+    ``escalation`` backend re-analyzes just those — so deep (paid) analysis is
+    spent where it can change the verdict, not on every flagged skill.
 
     Parameters
     ----------
@@ -224,8 +241,12 @@ async def build_snapshot(
         is recorded as an UNKNOWN placeholder and picked up on the next run, so a
         registry too large to sweep within one run's time limit is built up over
         successive runs rather than lost to an all-or-nothing timeout.
-    escalate:
-        Re-scan flagged skills with the full LLM + URL pipeline.
+    escalation:
+        Second-opinion backend for the ambiguous band (``None`` / ``NoneBackend``
+        disables phase 2). See :func:`malwar.monitor.escalation.make_backend`.
+    escalation_policy:
+        Which first-pass records qualify for escalation; defaults to
+        :class:`~malwar.monitor.escalation.EscalationPolicy`.
     concurrency:
         Maximum number of skills scanned in parallel.
     on_progress:
@@ -268,6 +289,11 @@ async def build_snapshot(
         snapshot.pending_count,
     )
 
+    backend = escalation or NoneBackend()
+    keep_content = not isinstance(backend, NoneBackend)
+    contents: dict[str, str] = {}
+
+    # --- Phase 1: rule-scan every skill (fast, free, one request each) ---
     semaphore = asyncio.Semaphore(max(1, concurrency))
     done = len(snapshot.skills)
     lock = asyncio.Lock()
@@ -276,18 +302,58 @@ async def build_snapshot(
         nonlocal done
         async with semaphore:
             try:
-                record = await _scan_slug(client, meta, escalate=escalate)
+                record, content = await _scan_slug(client, meta)
             except Exception as exc:  # last-resort guard; never abort the sweep
                 record = SkillRecord(slug=meta.slug, verdict="UNKNOWN", error=f"worker: {exc}")
+                content = None
         async with lock:
             snapshot.skills[meta.slug] = record
             if record.error:
                 snapshot.errors[meta.slug] = record.error
+            if keep_content and content is not None:
+                contents[meta.slug] = content
             done += 1
             if on_progress is not None:
                 on_progress(done, total, meta.slug)
 
     await asyncio.gather(*(_worker(meta) for meta in to_scan))
+
+    # --- Phase 2: targeted second opinion on the ambiguous band ---
+    if keep_content and contents:
+        policy = escalation_policy or EscalationPolicy()
+        scanned = {slug: snapshot.skills[slug] for slug in contents}
+        candidates = select_candidates(scanned, policy)
+        snapshot.escalated_count = len(candidates)
+        logger.info(
+            "escalation: %d of %d scanned skills sent to '%s' backend",
+            len(candidates),
+            len(contents),
+            backend.name,
+        )
+
+        esc_sem = asyncio.Semaphore(max(1, concurrency))
+
+        async def _escalate(slug: str) -> None:
+            async with esc_sem:
+                try:
+                    res = await backend.assess(contents[slug], file_name=f"{slug}/SKILL.md")
+                except Exception as exc:  # a bad escalation must not abort the sweep
+                    logger.warning("escalation failed for %s: %s", slug, exc)
+                    return
+            rec = snapshot.skills[slug]
+            rec.escalation_backend = res.backend
+            rec.escalation_verdict = res.verdict
+            rec.escalation_score = res.score
+            rec.llm_escalated = res.authoritative
+            # A full-pipeline second opinion is authoritative — adopt its
+            # verdict (it may raise a sneaky-clean, or clear a false positive).
+            if res.authoritative and res.verdict:
+                rec.verdict = res.verdict
+                if res.score is not None:
+                    rec.risk_score = round(res.score * 100)
+
+        await asyncio.gather(*(_escalate(slug) for slug in candidates))
+
     return snapshot
 
 

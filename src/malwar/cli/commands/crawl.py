@@ -478,8 +478,24 @@ def crawl_monitor(
     ] = None,
     no_escalate: Annotated[
         bool,
-        typer.Option("--no-escalate", help="Never escalate flagged skills to the LLM"),
+        typer.Option("--no-escalate", help="Disable escalation (shorthand for --escalate-backend none)"),
     ] = False,
+    escalate_backend: Annotated[
+        str,
+        typer.Option(
+            "--escalate-backend",
+            help="Second-opinion backend for the ambiguous band: "
+            "none | hf (free local classifier) | anthropic (LLM) | "
+            "tiered (hf triage -> anthropic on hits)",
+        ),
+    ] = "anthropic",
+    escalate_budget: Annotated[
+        int | None,
+        typer.Option(
+            "--escalate-budget",
+            help="Cap how many skills are escalated per run (most-suspicious first)",
+        ),
+    ] = None,
     concurrency: Annotated[
         int, typer.Option("--concurrency", help="Skills scanned in parallel")
     ] = 8,
@@ -547,7 +563,8 @@ def crawl_monitor(
         _async_monitor(
             snapshot_dir=snapshot_dir,
             max_skills=max_skills,
-            escalate=not no_escalate,
+            escalate_backend="none" if no_escalate else escalate_backend,
+            escalate_budget=escalate_budget,
             concurrency=concurrency,
             fmt=fmt,
             output=output,
@@ -566,7 +583,8 @@ async def _async_monitor(
     *,
     snapshot_dir: Path,
     max_skills: int | None,
-    escalate: bool,
+    escalate_backend: str,
+    escalate_budget: int | None,
     concurrency: int,
     fmt: CrawlFormat,
     output: Path | None,
@@ -579,10 +597,23 @@ async def _async_monitor(
 ) -> int:
     from rich.progress import BarColumn, Progress, TextColumn
 
-    from malwar.monitor import SnapshotStore, build_snapshot, diff_snapshots
+    from malwar.monitor import (
+        EscalationPolicy,
+        SnapshotStore,
+        build_snapshot,
+        diff_snapshots,
+        make_backend,
+    )
 
     store = SnapshotStore(snapshot_dir)
     previous = store.load_latest()
+
+    try:
+        backend = make_backend(escalate_backend)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 2
+    policy = EscalationPolicy(budget=escalate_budget)
 
     mode = "full re-scan" if full else ("incremental" if previous else "first run")
     scope = f" (max {max_skills})" if max_skills else ""
@@ -607,7 +638,8 @@ async def _async_monitor(
             force_rescan=full,
             max_skills=max_skills,
             scan_budget=max_scans,
-            escalate=escalate,
+            escalation=backend,
+            escalation_policy=policy,
             concurrency=concurrency,
             on_progress=_on_progress,
         )
@@ -622,6 +654,8 @@ async def _async_monitor(
     )
     if snapshot.pending_count:
         summary += f", deferred {snapshot.pending_count} to next run"
+    if snapshot.escalated_count:
+        summary += f", escalated {snapshot.escalated_count} to '{backend.name}'"
     console.print(summary + ".[/dim]")
 
     diff = diff_snapshots(previous, snapshot)
