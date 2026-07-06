@@ -142,6 +142,18 @@ class TestBuildSnapshot:
         assert snap.skills["good"].verdict == "CLEAN"
         assert snap.skills["bad"].error is not None
 
+    async def test_enumeration_timeout_does_not_crash(self):
+        # A raw timeout while listing the registry must not abort the run.
+        client = FakeClawHubClient({"a": BENIGN_BODY})
+
+        async def _boom(limit=20, cursor=None):
+            raise TimeoutError("connect timeout")
+
+        client.list_skills = _boom  # type: ignore[assignment]
+        # search fallback returns [] in the fake → empty snapshot, no exception.
+        snap = await build_snapshot(client, escalate=False)
+        assert snap.skill_count == 0
+
 
 class TestIncrementalSweep:
     async def test_unchanged_skills_are_not_refetched(self):
