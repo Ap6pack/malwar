@@ -2,14 +2,14 @@
 #
 # Runs `malwar crawl monitor` once a day: crawls the whole registry, fast-scans
 # every skill (escalating flagged ones to the LLM), diffs against the previous
-# snapshot, and commits the new snapshot + diff to the `registry-monitor` branch
-# so `git log -p registry-monitor` is a permanent, auditable record of what
-# changed day over day.
+# snapshot, and commits the new snapshot + diff to the `registry-snapshots`
+# branch so `git log -p registry-snapshots` is a permanent, auditable record of
+# what changed day over day.
 #
 # Why a dedicated branch and not `main`? `main` is protected (PR + required
 # checks), so a scheduled bot cannot push to it. The snapshot history therefore
-# lives on its own long-running `registry-monitor` branch, created automatically
-# on the first run.
+# lives on its own long-running `registry-snapshots` branch, created
+# automatically on the first run.
 #
 # The LLM escalation needs an Anthropic API key. Add it as a *repository* secret
 # named MALWAR_ANTHROPIC_API_KEY (Settings -> Secrets and variables -> Actions ->
@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write # push snapshots to the registry-monitor branch
+  contents: write # push snapshots to the registry-snapshots branch
 
 jobs:
   monitor:
@@ -58,11 +58,11 @@ jobs:
           rm -f data/registry-snapshots/latest.json
           # Only write the baseline when the data branch AND the file both exist
           # (checked before the redirect, so we never create an empty file).
-          if git fetch origin registry-monitor 2>/dev/null \
-            && git cat-file -e origin/registry-monitor:data/registry-snapshots/latest.json 2>/dev/null; then
-            git show origin/registry-monitor:data/registry-snapshots/latest.json \
+          if git fetch origin registry-snapshots 2>/dev/null \
+            && git cat-file -e origin/registry-snapshots:data/registry-snapshots/latest.json 2>/dev/null; then
+            git show origin/registry-snapshots:data/registry-snapshots/latest.json \
               > data/registry-snapshots/latest.json
-            echo "Restored baseline from registry-monitor branch."
+            echo "Restored baseline from registry-snapshots branch."
           else
             echo "No baseline yet — first run (cold start, diff against nothing)."
           fi
@@ -86,10 +86,10 @@ jobs:
           cp -a data/registry-snapshots/. "$tmp/"
 
           # Move onto the data branch (create an orphan branch on the first run).
-          if git rev-parse --verify origin/registry-monitor >/dev/null 2>&1; then
-            git checkout -B registry-monitor origin/registry-monitor
+          if git rev-parse --verify origin/registry-snapshots >/dev/null 2>&1; then
+            git checkout -B registry-snapshots origin/registry-snapshots
           else
-            git checkout --orphan registry-monitor
+            git checkout --orphan registry-snapshots
             git reset # unstage main's tree; commit only the snapshots below
           fi
 
@@ -102,5 +102,5 @@ jobs:
             echo "No registry changes today — nothing to commit."
           else
             git commit -m "chore(monitor): registry snapshot $(date -u +%Y-%m-%d)"
-            git push origin registry-monitor
+            git push origin registry-snapshots
           fi
