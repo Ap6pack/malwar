@@ -197,7 +197,7 @@ class TestAnthropicBackend:
             risk_score = 55
 
         async def fake_scan(content, *, file_name, use_llm, use_urls):
-            assert use_llm and use_urls
+            assert use_llm and not use_urls  # LLM on, live URL crawl off
             return _Result()
 
         monkeypatch.setattr("malwar.sdk.scan", fake_scan)
