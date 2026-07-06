@@ -40,10 +40,19 @@ class FakeClawHubClient:
 
     base_url = "https://clawhub.test"
 
-    def __init__(self, skills: dict[str, str], *, versions: dict[str, str] | None = None):
+    def __init__(
+        self,
+        skills: dict[str, str],
+        *,
+        versions: dict[str, str] | None = None,
+        updated_ats: dict[str, int] | None = None,
+    ):
         # slug -> SKILL.md content
         self._skills = skills
         self._versions = versions or dict.fromkeys(skills, "1.0.0")
+        self._updated_ats = updated_ats or dict.fromkeys(skills, 1000)
+        # Slugs whose file was actually fetched — lets tests prove reuse.
+        self.file_fetches: list[str] = []
 
     async def list_skills(self, limit: int = 20, cursor: str | None = None):
         items = [
@@ -51,6 +60,7 @@ class FakeClawHubClient:
                 slug=slug,
                 displayName=slug.replace("-", " ").title(),
                 latestVersion=VersionInfo(version=self._versions[slug]),
+                updatedAt=self._updated_ats.get(slug),
             )
             for slug in self._skills
         ]
@@ -67,6 +77,7 @@ class FakeClawHubClient:
             displayName=slug.replace("-", " ").title(),
             stats=SkillStats(installsAllTime=1234),
             latestVersion=VersionInfo(version=self._versions[slug]),
+            updatedAt=self._updated_ats.get(slug),
             owner=OwnerInfo(username="publisher"),
             moderation=ModerationInfo(),
         )
@@ -74,6 +85,7 @@ class FakeClawHubClient:
     async def get_skill_file(self, slug: str, path: str = "SKILL.md", version=None) -> str:
         if slug not in self._skills:
             raise ClawHubError(f"not found: {slug}", status_code=404)
+        self.file_fetches.append(slug)
         return self._skills[slug]
 
 
@@ -114,6 +126,99 @@ class TestBuildSnapshot:
         snap = await build_snapshot(client, escalate=False)
         assert snap.skills["good"].error is not None
         assert "good" in snap.errors
+
+    async def test_non_clawhub_exception_does_not_abort_sweep(self):
+        # A raw (non-ClawHubError) exception on one skill must be contained.
+        client = FakeClawHubClient({"good": BENIGN_BODY, "bad": BENIGN_BODY})
+
+        async def _boom(slug, path="SKILL.md", version=None):
+            if slug == "bad":
+                raise TimeoutError("connect timeout")
+            return BENIGN_BODY
+
+        client.get_skill_file = _boom  # type: ignore[assignment]
+        snap = await build_snapshot(client, escalate=False)
+        assert snap.skill_count == 2
+        assert snap.skills["good"].verdict == "CLEAN"
+        assert snap.skills["bad"].error is not None
+
+
+class TestIncrementalSweep:
+    async def test_unchanged_skills_are_not_refetched(self):
+        client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        day1 = await build_snapshot(client1, escalate=False)
+        assert day1.scanned_count == 2
+        assert day1.reused_count == 0
+
+        client2 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        # Nothing changed → nothing re-fetched, everything carried forward.
+        assert client2.file_fetches == []
+        assert day2.scanned_count == 0
+        assert day2.reused_count == 2
+        assert day2.skill_count == 2
+
+    async def test_version_bump_triggers_rescan(self):
+        client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        day1 = await build_snapshot(client1, escalate=False)
+
+        client2 = FakeClawHubClient(
+            {"a": BENIGN_BODY, "b": BENIGN_BODY},
+            versions={"a": "2.0.0", "b": "1.0.0"},
+        )
+        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        # Only the version-bumped skill is re-fetched.
+        assert client2.file_fetches == ["a"]
+        assert day2.scanned_count == 1
+        assert day2.reused_count == 1
+
+    async def test_updated_at_change_triggers_rescan(self):
+        client1 = FakeClawHubClient({"a": BENIGN_BODY}, updated_ats={"a": 1000})
+        day1 = await build_snapshot(client1, escalate=False)
+
+        client2 = FakeClawHubClient({"a": BENIGN_BODY}, updated_ats={"a": 2000})
+        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        assert client2.file_fetches == ["a"]
+        assert day2.scanned_count == 1
+
+    async def test_new_skill_is_scanned_others_reused(self):
+        client1 = FakeClawHubClient({"a": BENIGN_BODY})
+        day1 = await build_snapshot(client1, escalate=False)
+
+        client2 = FakeClawHubClient({"a": BENIGN_BODY, "new": MALICIOUS_BODY})
+        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        assert client2.file_fetches == ["new"]
+        assert day2.scanned_count == 1
+        assert day2.reused_count == 1
+        assert day2.skills["new"].is_flagged
+
+    async def test_force_rescan_scans_everything(self):
+        client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        day1 = await build_snapshot(client1, escalate=False)
+
+        client2 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        day2 = await build_snapshot(client2, previous=day1, force_rescan=True, escalate=False)
+        assert sorted(client2.file_fetches) == ["a", "b"]
+        assert day2.scanned_count == 2
+        assert day2.reused_count == 0
+
+    async def test_previously_errored_skill_is_retried(self):
+        # Day 1: the file fetch fails, so the record carries an error.
+        client1 = FakeClawHubClient({"a": BENIGN_BODY})
+
+        async def _boom(slug, path="SKILL.md", version=None):
+            raise ClawHubError("boom")
+
+        client1.get_skill_file = _boom  # type: ignore[assignment]
+        day1 = await build_snapshot(client1, escalate=False)
+        assert day1.skills["a"].error is not None
+
+        # Day 2: same version, but the errored record must be retried (not reused).
+        client2 = FakeClawHubClient({"a": BENIGN_BODY})
+        day2 = await build_snapshot(client2, previous=day1, escalate=False)
+        assert client2.file_fetches == ["a"]
+        assert day2.skills["a"].error is None
+        assert day2.skills["a"].verdict == "CLEAN"
 
 
 # ---------------------------------------------------------------------------

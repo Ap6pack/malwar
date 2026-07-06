@@ -97,17 +97,22 @@ malwar crawl url https://raw.githubusercontent.com/user/repo/main/SKILL.md --for
 
 ### crawl monitor
 
-Sweep the **entire** registry, fast-scan every skill (rule engine + threat intel, escalating flagged ones to the LLM), and diff the result against the previous snapshot to surface what changed -- newly published skills, removed skills, trojanized updates (content changed under the same version), and verdict regressions, with a headline list of skills that newly turned malicious. Snapshots persist under `data/registry-snapshots/` (`latest.json` is the diff baseline, plus a dated archive per run), so committing that directory makes `git diff` a permanent day-over-day record. Designed to run on a schedule.
+Sweep the registry, fast-scan skills (rule engine + threat intel, escalating flagged ones to the LLM), and diff the result against the previous snapshot to surface what changed -- newly published skills, removed skills, trojanized updates (content changed under the same version), and verdict regressions, with a headline list of skills that newly turned malicious. Snapshots persist under `data/registry-snapshots/` (`latest.json` is the diff baseline, plus a dated archive per run), so committing that directory makes `git diff` a permanent day-over-day record. Designed to run on a schedule.
+
+**Incremental by default.** The monitor only re-fetches and re-scans skills whose `version`/`updated_at` changed since the last snapshot; unchanged skills are carried forward untouched. The **first run scans everything**; every run after only pays for what actually changed — so a daily sweep is fast and cheap. Because incremental detection trusts the registry's version metadata, run a periodic **`--full`** sweep (e.g. weekly) to also catch *silent same-version content swaps* — trojanized updates that keep the same version number. Each snapshot records `scanned_count` vs `reused_count` so you can see how much a run actually did.
 
 ```bash
-malwar crawl monitor                     # full sweep -> snapshot -> diff
+malwar crawl monitor                     # incremental sweep -> snapshot -> diff
+malwar crawl monitor --full              # re-scan every skill (catches same-version tampering)
 malwar crawl monitor --digest            # also print a shareable digest + draft post
 malwar crawl monitor --publish           # post the digest to X when skills newly turn malicious
 malwar crawl monitor --fail-on-malicious # exit non-zero when newly-flagged skills are found (CI/cron)
 malwar crawl monitor --max 100 --no-escalate   # quick partial run, rules only
 ```
 
-**Options:** `--snapshot-dir`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
+**Options:** `--snapshot-dir`, `--full`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
+
+The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences: **daily incremental** and a **weekly `--full`** re-scan, committing each snapshot to the `registry-snapshots` branch.
 
 ---
 

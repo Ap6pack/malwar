@@ -1,10 +1,17 @@
-# Daily ClawHub registry sweep.
+# ClawHub registry monitor.
 #
-# Runs `malwar crawl monitor` once a day: crawls the whole registry, fast-scans
-# every skill (escalating flagged ones to the LLM), diffs against the previous
-# snapshot, and commits the new snapshot + diff to the `registry-snapshots`
-# branch so `git log -p registry-snapshots` is a permanent, auditable record of
-# what changed day over day.
+# Runs `malwar crawl monitor` on a schedule and commits the snapshot + diff to
+# the `registry-snapshots` branch so `git log -p registry-snapshots` is a
+# permanent, auditable record of what changed day over day.
+#
+# Two cadences:
+#   * Daily (06:00 UTC) — INCREMENTAL. Only skills whose version/updated_at
+#     changed since the last snapshot are re-fetched, re-scanned, and (if
+#     flagged) escalated to the LLM. The first run scans everything; every run
+#     after is cheap and fast.
+#   * Weekly (Sunday 07:00 UTC) — FULL (`--full`). Re-scans every skill to catch
+#     silent same-version content swaps (trojanized updates that keep the same
+#     version number), which incremental detection would otherwise miss.
 #
 # Why a dedicated branch and not `main`? `main` is protected (PR + required
 # checks), so a scheduled bot cannot push to it. The snapshot history therefore
@@ -20,8 +27,14 @@ name: Registry Monitor
 
 on:
   schedule:
-    - cron: "0 6 * * *" # 06:00 UTC daily
+    - cron: "0 6 * * *" # daily 06:00 UTC — incremental
+    - cron: "0 7 * * 0" # Sunday 07:00 UTC — full re-scan
   workflow_dispatch: # manual "run now" from the Actions tab
+    inputs:
+      full:
+        description: "Force a full re-scan of every skill"
+        type: boolean
+        default: false
 
 # Never let two sweeps race on the snapshot history / the push.
 concurrency:
@@ -35,7 +48,9 @@ jobs:
   monitor:
     name: Sweep registry and commit report
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The weekly full re-scan is the long pole; incremental daily runs finish
+    # far sooner once the baseline exists.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -70,11 +85,23 @@ jobs:
       - name: Sweep registry and diff against baseline
         env:
           MALWAR_ANTHROPIC_API_KEY: ${{ secrets.MALWAR_ANTHROPIC_API_KEY }}
+          # Full re-scan on the weekly cron or when manually requested;
+          # incremental otherwise.
+          IS_WEEKLY: ${{ github.event.schedule == '0 7 * * 0' }}
+          DISPATCH_FULL: ${{ github.event.inputs.full }}
         run: |
+          FULL=""
+          if [ "$IS_WEEKLY" = "true" ] || [ "$DISPATCH_FULL" = "true" ]; then
+            FULL="--full"
+            echo "Mode: FULL re-scan (every skill)."
+          else
+            echo "Mode: incremental (only changed skills)."
+          fi
           malwar crawl monitor \
             --snapshot-dir data/registry-snapshots \
             --format json \
-            --output data/registry-snapshots/latest-diff.json
+            --output data/registry-snapshots/latest-diff.json \
+            $FULL
 
       - name: Publish snapshot to data branch
         run: |

@@ -5,6 +5,16 @@ rule engine + threat intel only (fast, free, deterministic). A skill is only
 escalated to the (paid, slower) LLM analyzer when the fast pass already flags
 it — so cost scales with the number of *suspicious* skills, not the size of
 the registry.
+
+It is also **incremental**: given the previous snapshot, a skill is only
+re-fetched and re-scanned when the registry reports a new ``version`` or
+``updated_at`` for it; unchanged skills are carried forward untouched. The
+first run (or an explicit ``force_rescan``) scans everything; day-to-day runs
+only pay for what actually changed.
+
+Incremental detection trusts the registry's version/updated_at metadata, so a
+*silent* same-version content swap would be missed — run a periodic full sweep
+(``force_rescan=True``) to defend against that.
 """
 
 from __future__ import annotations
@@ -29,20 +39,26 @@ _SEED_TERMS: tuple[str, ...] = tuple("abcdefghijklmnopqrstuvwxyz0123456789")
 
 ProgressCallback = Callable[[int, int, str], None]
 
+# A lightweight (slug, version, updated_at) reference gathered from the cheap
+# list/search endpoints — enough to decide whether a skill needs re-scanning
+# without fetching its file.
+SkillRef = tuple[str, str | None, int | None]
 
-async def _enumerate_slugs(
+
+async def _enumerate_skills(
     client: ClawHubClient,
     *,
     max_skills: int | None,
     page_size: int,
-) -> list[str]:
-    """Return the full set of skill slugs known to the registry.
+) -> list[SkillRef]:
+    """Return ``(slug, version, updated_at)`` for every skill in the registry.
 
     Pages through the list endpoint; if that yields nothing (the endpoint is
     known to return empty at times), falls back to fanning search queries out
-    across seed terms and de-duplicating.
+    across seed terms and de-duplicating. The version/updated_at metadata comes
+    free with the listing, so change detection needs no per-skill fetch.
     """
-    slugs: list[str] = []
+    refs: list[SkillRef] = []
     seen: set[str] = set()
 
     cursor: str | None = None
@@ -55,14 +71,15 @@ async def _enumerate_slugs(
         for item in items:
             if item.slug not in seen:
                 seen.add(item.slug)
-                slugs.append(item.slug)
-        if max_skills is not None and len(slugs) >= max_skills:
-            return slugs[:max_skills]
+                version = item.latest_version.version if item.latest_version else None
+                refs.append((item.slug, version, item.updated_at))
+        if max_skills is not None and len(refs) >= max_skills:
+            return refs[:max_skills]
         if not cursor:
             break
 
-    if slugs:
-        return slugs
+    if refs:
+        return refs
 
     # Fallback: broad search fan-out.
     for term in _SEED_TERMS:
@@ -74,18 +91,30 @@ async def _enumerate_slugs(
         for r in results:
             if r.slug not in seen:
                 seen.add(r.slug)
-                slugs.append(r.slug)
-        if max_skills is not None and len(slugs) >= max_skills:
-            return slugs[:max_skills]
+                refs.append((r.slug, r.version, r.updated_at))
+        if max_skills is not None and len(refs) >= max_skills:
+            return refs[:max_skills]
 
-    return slugs
+    return refs
+
+
+def _is_unchanged(prev: SkillRecord | None, version: str | None, updated_at: int | None) -> bool:
+    """True when a prior, cleanly-scanned record still matches the registry.
+
+    A previously errored/unknown record is treated as changed so it gets
+    retried; otherwise we skip re-scanning when both version and updated_at
+    match what the registry now reports.
+    """
+    if prev is None or prev.error is not None or prev.verdict == "UNKNOWN":
+        return False
+    return prev.version == version and prev.updated_at == updated_at
 
 
 async def _scan_slug(client: ClawHubClient, slug: str, *, escalate: bool) -> SkillRecord:
     """Fetch and scan a single skill, escalating to the LLM only if flagged."""
     try:
         detail = await client.get_skill(slug)
-    except ClawHubError as exc:
+    except Exception as exc:  # ClawHubError, httpx timeouts, etc.
         return SkillRecord(slug=slug, verdict="UNKNOWN", error=f"detail: {exc}")
 
     record = SkillRecord(
@@ -101,7 +130,7 @@ async def _scan_slug(client: ClawHubClient, slug: str, *, escalate: bool) -> Ski
 
     try:
         content = await client.get_skill_file(slug)
-    except ClawHubError as exc:
+    except Exception as exc:  # ClawHubError, httpx timeouts, etc.
         record.error = f"file: {exc}"
         return record
 
@@ -126,18 +155,27 @@ async def _scan_slug(client: ClawHubClient, slug: str, *, escalate: bool) -> Ski
 async def build_snapshot(
     client: ClawHubClient | None = None,
     *,
+    previous: RegistrySnapshot | None = None,
+    force_rescan: bool = False,
     max_skills: int | None = None,
     escalate: bool = True,
     concurrency: int = 8,
     page_size: int = 50,
     on_progress: ProgressCallback | None = None,
 ) -> RegistrySnapshot:
-    """Crawl and scan the entire registry into a :class:`RegistrySnapshot`.
+    """Crawl and scan the registry into a :class:`RegistrySnapshot`.
 
     Parameters
     ----------
     client:
         A :class:`ClawHubClient`; a default one is created if omitted.
+    previous:
+        The last snapshot. When supplied (and ``force_rescan`` is False), skills
+        whose version/updated_at are unchanged are carried forward without being
+        re-fetched or re-scanned — so a daily run only pays for what changed.
+    force_rescan:
+        Ignore ``previous`` and re-scan every skill (a full sweep). Use this on
+        a periodic cadence to catch silent same-version content swaps.
     max_skills:
         Cap the number of skills scanned (for testing / partial runs).
     escalate:
@@ -148,21 +186,44 @@ async def build_snapshot(
         Optional callback ``(done, total, slug)`` for progress reporting.
     """
     client = client or ClawHubClient()
-    slugs = await _enumerate_slugs(client, max_skills=max_skills, page_size=page_size)
+    refs = await _enumerate_skills(client, max_skills=max_skills, page_size=page_size)
 
     snapshot = RegistrySnapshot(registry=client.base_url)
-    total = len(slugs)
+    total = len(refs)
     if total == 0:
         return snapshot
 
+    prev_skills = previous.skills if (previous is not None and not force_rescan) else {}
+
+    # Split the registry into "carry forward unchanged" and "must re-scan".
+    to_scan: list[str] = []
+    for slug, version, updated_at in refs:
+        prev = prev_skills.get(slug)
+        if _is_unchanged(prev, version, updated_at):
+            snapshot.skills[slug] = prev.model_copy(deep=True)  # type: ignore[union-attr]
+        else:
+            to_scan.append(slug)
+
+    snapshot.reused_count = len(snapshot.skills)
+    snapshot.scanned_count = len(to_scan)
+    logger.info(
+        "incremental sweep: %d skills total, %d changed/new to scan, %d reused unchanged",
+        total,
+        snapshot.scanned_count,
+        snapshot.reused_count,
+    )
+
     semaphore = asyncio.Semaphore(max(1, concurrency))
-    done = 0
+    done = len(snapshot.skills)
     lock = asyncio.Lock()
 
     async def _worker(slug: str) -> None:
         nonlocal done
         async with semaphore:
-            record = await _scan_slug(client, slug, escalate=escalate)
+            try:
+                record = await _scan_slug(client, slug, escalate=escalate)
+            except Exception as exc:  # last-resort guard; never abort the sweep
+                record = SkillRecord(slug=slug, verdict="UNKNOWN", error=f"worker: {exc}")
         async with lock:
             snapshot.skills[slug] = record
             if record.error:
@@ -171,7 +232,7 @@ async def build_snapshot(
             if on_progress is not None:
                 on_progress(done, total, slug)
 
-    await asyncio.gather(*(_worker(slug) for slug in slugs))
+    await asyncio.gather(*(_worker(slug) for slug in to_scan))
     return snapshot
 
 
