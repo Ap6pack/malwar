@@ -107,22 +107,38 @@ React 19 &middot; TypeScript &middot; Vite &middot; Tailwind CSS 4 &middot; Rech
 ## Continuous Monitoring
 
 Catching one malicious skill is good; catching the *next* campaign while it's
-still spreading is the point. `malwar crawl monitor` scans every skill in the
-registry, saves a snapshot, and diffs it against the previous run:
+still spreading is the point. `malwar crawl monitor` sweeps the registry,
+saves a snapshot, and diffs it against the previous run:
 
 ```bash
-malwar crawl monitor                    # full sweep → snapshot → diff
+malwar crawl monitor                    # incremental sweep → snapshot → diff
+malwar crawl monitor --full             # re-scan everything (catches same-version tampering)
 malwar crawl monitor --fail-on-malicious   # non-zero exit when skills newly turn malicious
 ```
 
 It surfaces exactly what changed since yesterday — **newly published**,
 **removed**, **trojanized updates** (content changed under the same version),
 and **verdict regressions** (a skill that was clean is now flagged). The sweep
-is cheap: rule engine + threat intel on everything, LLM escalation only on
-hits. Snapshots live in [`data/registry-snapshots/`](data/registry-snapshots/),
-so committing them turns `git diff` into a permanent, auditable record of the
-registry's daily threat surface. Run it on a schedule (cron, CI, or a Claude
-Code trigger) for ongoing, hands-off security research.
+is built to be cheap at real registry scale — ClawHub currently holds
+**66,512 skills** by our monitor's own enumeration, far more than the figures
+usually cited:
+
+- **Incremental** — only skills whose version/updated_at changed get
+  re-fetched and re-scanned; everything else is carried forward.
+- **Resumable** — `--max-scans` caps each run and defers the overflow, so the
+  first full baseline builds up across runs instead of dying to a timeout.
+- **Targeted escalation** — the rule engine decides everything it can for
+  free; only the *ambiguous middle* (flagged, but short of a confident
+  verdict) goes to a deeper second opinion: `--escalate-backend
+  none|hf|anthropic|tiered`. `hf` is a free local classifier
+  (`pip install malwar[hf]`), `tiered` spends the LLM only on what the free
+  tier can't clear.
+
+A bundled GitHub Actions workflow runs this daily (plus a weekly `--full`
+pass) and commits every snapshot to the
+[`registry-snapshots`](https://github.com/Ap6pack/malwar/tree/registry-snapshots)
+branch — `git log -p` on that branch is a permanent, auditable record of the
+registry's daily threat surface.
 
 ## Docker
 
@@ -149,7 +165,7 @@ All settings via environment variables with `MALWAR_` prefix or `.env` file. Key
 ## Development
 
 ```bash
-pytest                                # 1,596 tests
+pytest                                # 1,639 tests
 ruff check src/ tests/                # lint
 mypy src/                             # type check
 ```
@@ -172,23 +188,21 @@ Full dev guide: **[Development](docs/development.md)**
 
 ---
 
-## What's New in v0.3.1
+## What's New in v0.4.0
 
-**Extensibility** — YAML DSL for custom rules, rule testing framework, plugin system, ML-based risk scoring.
+**MIT license** — the move from BSL-1.1 to MIT is complete. Free for any use, including commercial.
 
-**Infrastructure** — PostgreSQL backend support, Redis caching layer, GitLab CI and Azure DevOps templates.
+**Emerging Agentic Threats** — Detection for the threat classes Unit 42 disclosed in June 2026: agentic affiliate injection and pump-and-dump / front-running (`MALWAR-FRAUD-*`), scanner-evasion via file-size inflation (`MALWAR-EVADE-001`), and PowerShell download cradles (`MALWAR-OBF-004`) — techniques that bypassed ClawScan and VirusTotal.
 
-**Security & Compliance** — Immutable audit logging, role-based access control (RBAC), CI security scanning with SBOM.
+**LLM false-positive suppression** — the LLM layer can demote rule-engine findings it identifies as false positives, excluding them from the risk score while keeping them visible in the results.
 
-**Operations** — Scheduled background scanning, multi-channel notifications (Slack, email, webhooks), git diff scanning.
+**Detection accuracy** — on the labeled benchmark (rule engine + threat intel only, no LLM): 100% accuracy, precision, recall, and F1 — every malicious sample detected, zero benign samples flagged. Full report: [Accuracy Report](docs/guide/accuracy-report.md).
 
-**User Experience** — Dashboard analytics with trend charts, Rich TUI for interactive terminal usage.
+**Continuous registry monitoring** — `malwar crawl monitor` with day-over-day diffing, shareable threat digests, and opt-in X publishing.
 
-**Registry Integration** — `malwar crawl` command to browse, search, and scan skills directly from ClawHub. Also supports scanning any remote SKILL.md by URL.
+**Since 0.4.0, on `main`** — the monitor grew up to real registry scale: incremental sweeps, a resumable budgeted baseline, transient-failure retries, and targeted tiered escalation (`none|hf|anthropic|tiered`) that spends deep analysis only on the ambiguous middle. A scheduled workflow now scans ClawHub daily and commits snapshots to the [`registry-snapshots`](https://github.com/Ap6pack/malwar/tree/registry-snapshots) branch.
 
-**Emerging Agentic Threats** — Detection for the threat classes Unit 42 disclosed in June 2026: agentic affiliate injection and pump-and-dump / front-running (`MALWAR-FRAUD-*`), plus scanner-evasion via file-size inflation (`MALWAR-EVADE-*`) — the techniques that bypassed ClawScan and VirusTotal. Both the rule engine and the ML risk scorer were extended to cover them.
-
-1,596 tests | 30 detection rules | 82% coverage
+1,639 tests | 30 detection rules | 13 threat categories
 
 ---
 
