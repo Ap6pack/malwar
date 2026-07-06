@@ -229,6 +229,35 @@ class TestIncrementalSweep:
         assert day2.scanned_count == 2
         assert day2.reused_count == 0
 
+    async def test_scan_budget_defers_overflow(self):
+        client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(5)})
+        snap = await build_snapshot(client, escalate=False, scan_budget=2)
+        # Only 2 scanned this run; the other 3 recorded as UNKNOWN placeholders.
+        assert snap.skill_count == 5
+        assert snap.scanned_count == 2
+        assert snap.pending_count == 3
+        assert len(client.file_fetches) == 2
+        unknown = [s for s, r in snap.skills.items() if r.verdict == "UNKNOWN"]
+        assert len(unknown) == 3
+        assert all(snap.skills[s].error is None for s in unknown)
+
+    async def test_budgeted_baseline_converges_over_runs(self):
+        skills = {f"s{i}": BENIGN_BODY for i in range(5)}
+        prev = None
+        # Three runs of budget 2 must fully cover a 5-skill registry.
+        for _ in range(3):
+            client = FakeClawHubClient(skills)
+            prev = await build_snapshot(client, previous=prev, escalate=False, scan_budget=2)
+        assert prev is not None
+        assert prev.pending_count == 0
+        assert all(r.verdict == "CLEAN" for r in prev.skills.values())
+
+    async def test_no_budget_scans_all(self):
+        client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(4)})
+        snap = await build_snapshot(client, escalate=False)
+        assert snap.scanned_count == 4
+        assert snap.pending_count == 0
+
     async def test_previously_errored_skill_is_retried(self):
         # Day 1: the file fetch fails, so the record carries an error.
         client1 = FakeClawHubClient({"a": BENIGN_BODY})

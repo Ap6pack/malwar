@@ -523,6 +523,15 @@ def crawl_monitor(
             "(defends against silent same-version content swaps)",
         ),
     ] = False,
+    max_scans: Annotated[
+        int | None,
+        typer.Option(
+            "--max-scans",
+            help="Cap skills scanned per run; the overflow is deferred and "
+            "picked up next run. Lets a large registry build up over runs "
+            "instead of timing out.",
+        ),
+    ] = None,
 ) -> None:
     """Scan the registry incrementally and diff against the last snapshot.
 
@@ -547,6 +556,7 @@ def crawl_monitor(
             publish=publish,
             fail_on_malicious=fail_on_malicious,
             full=full,
+            max_scans=max_scans,
         )
     )
     raise typer.Exit(exit_code)
@@ -565,6 +575,7 @@ async def _async_monitor(
     publish: bool,
     fail_on_malicious: bool,
     full: bool = False,
+    max_scans: int | None = None,
 ) -> int:
     from rich.progress import BarColumn, Progress, TextColumn
 
@@ -595,6 +606,7 @@ async def _async_monitor(
             previous=previous,
             force_rescan=full,
             max_skills=max_skills,
+            scan_budget=max_scans,
             escalate=escalate,
             concurrency=concurrency,
             on_progress=_on_progress,
@@ -604,10 +616,13 @@ async def _async_monitor(
         console.print("[yellow]No skills found in the registry.[/yellow]")
         return 0
 
-    console.print(
+    summary = (
         f"[dim]Scanned {snapshot.scanned_count} changed/new, "
-        f"reused {snapshot.reused_count} unchanged.[/dim]"
+        f"reused {snapshot.reused_count} unchanged"
     )
+    if snapshot.pending_count:
+        summary += f", deferred {snapshot.pending_count} to next run"
+    console.print(summary + ".[/dim]")
 
     diff = diff_snapshots(previous, snapshot)
 

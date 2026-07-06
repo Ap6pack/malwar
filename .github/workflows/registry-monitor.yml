@@ -97,10 +97,15 @@ jobs:
           else
             echo "Mode: incremental (only changed skills)."
           fi
+          # ClawHub is rate-limited (~2 req/s), so a full ~6k-skill registry
+          # can't be swept in one CI run. Cap scans per run; the overflow is
+          # deferred and picked up on subsequent runs, so the baseline builds
+          # up over a few days and then daily runs only touch what changed.
           malwar crawl monitor \
             --snapshot-dir data/registry-snapshots \
             --format json \
             --output data/registry-snapshots/latest-diff.json \
+            --max-scans 1500 \
             $FULL
 
       - name: Publish snapshot to data branch
