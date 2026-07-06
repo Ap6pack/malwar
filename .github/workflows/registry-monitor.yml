@@ -1,0 +1,102 @@
+# Daily ClawHub registry sweep.
+#
+# Runs `malwar crawl monitor` once a day: crawls the whole registry, fast-scans
+# every skill (escalating flagged ones to the LLM), diffs against the previous
+# snapshot, and commits the new snapshot + diff to the `registry-monitor` branch
+# so `git log -p registry-monitor` is a permanent, auditable record of what
+# changed day over day.
+#
+# Why a dedicated branch and not `main`? `main` is protected (PR + required
+# checks), so a scheduled bot cannot push to it. The snapshot history therefore
+# lives on its own long-running `registry-monitor` branch, created automatically
+# on the first run.
+#
+# The LLM escalation needs an Anthropic API key. Add it as a *repository* secret
+# named MALWAR_ANTHROPIC_API_KEY (Settings -> Secrets and variables -> Actions ->
+# New repository secret). Without it the sweep still runs on the rule engine +
+# threat intel; only the LLM second opinion on flagged skills is skipped.
+
+name: Registry Monitor
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC daily
+  workflow_dispatch: # manual "run now" from the Actions tab
+
+# Never let two sweeps race on the snapshot history / the push.
+concurrency:
+  group: registry-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push snapshots to the registry-monitor branch
+
+jobs:
+  monitor:
+    name: Sweep registry and commit report
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install malwar
+        run: pip install -e "."
+
+      - name: Restore snapshot baseline from data branch
+        run: |
+          mkdir -p data/registry-snapshots
+          if git fetch origin registry-monitor 2>/dev/null; then
+            git show origin/registry-monitor:data/registry-snapshots/latest.json \
+              > data/registry-snapshots/latest.json 2>/dev/null \
+              && echo "Restored baseline from registry-monitor branch." \
+              || echo "Data branch exists but has no baseline yet."
+          else
+            echo "No data branch yet — this is the first run."
+          fi
+
+      - name: Sweep registry and diff against baseline
+        env:
+          MALWAR_ANTHROPIC_API_KEY: ${{ secrets.MALWAR_ANTHROPIC_API_KEY }}
+        run: |
+          malwar crawl monitor \
+            --snapshot-dir data/registry-snapshots \
+            --format json \
+            --output data/registry-snapshots/latest-diff.json
+
+      - name: Publish snapshot to data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Preserve the freshly generated snapshot files across the branch switch.
+          tmp="$(mktemp -d)"
+          cp -a data/registry-snapshots/. "$tmp/"
+
+          # Move onto the data branch (create an orphan branch on the first run).
+          if git rev-parse --verify origin/registry-monitor >/dev/null 2>&1; then
+            git checkout -B registry-monitor origin/registry-monitor
+          else
+            git checkout --orphan registry-monitor
+            git reset # unstage main's tree; commit only the snapshots below
+          fi
+
+          # Layer the fresh files on top of the branch's accumulated history.
+          mkdir -p data/registry-snapshots
+          cp -a "$tmp/." data/registry-snapshots/
+
+          git add data/registry-snapshots
+          if git diff --cached --quiet; then
+            echo "No registry changes today — nothing to commit."
+          else
+            git commit -m "chore(monitor): registry snapshot $(date -u +%Y-%m-%d)"
+            git push origin registry-monitor
+          fi
