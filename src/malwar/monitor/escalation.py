@@ -142,7 +142,10 @@ class AnthropicBackend:
     async def assess(self, content: str, *, file_name: str) -> EscalationResult:
         from malwar.sdk import scan
 
-        result = await scan(content, file_name=file_name, use_llm=True, use_urls=True)
+        # LLM semantic analysis + rules + threat intel. Live URL crawling is
+        # left off: it adds latency and external-fetch flakiness at escalation
+        # scale, and the deep dive's value here is the LLM's read of intent.
+        result = await scan(content, file_name=file_name, use_llm=True, use_urls=False)
         return EscalationResult(
             backend=self.name,
             flagged=result.verdict != "CLEAN",

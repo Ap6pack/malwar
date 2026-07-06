@@ -129,7 +129,7 @@ malwar crawl monitor --fail-on-malicious      # exit non-zero when newly-flagged
 
 **Options:** `--snapshot-dir`, `--full`, `--max-scans`, `--max`, `--escalate-backend` (`none`|`hf`|`anthropic`|`tiered`), `--escalate-budget`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
 
-The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences: **daily incremental** and a **weekly `--full`** re-scan, committing each snapshot to the `registry-snapshots` branch. It runs **rules-only (`--no-escalate`)** so a whole-registry sweep stays fast and cheap — the rule engine alone catches every malicious sample in the benchmark; use `malwar crawl scan <slug>` for an LLM deep-dive on an individual flagged skill.
+The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences — **daily incremental** and a **weekly `--full`** re-scan — committing each snapshot to the `registry-snapshots` branch. The whole-registry sweep is rules + threat-intel; only the **ambiguous band** is escalated to the **Anthropic** LLM (`--escalate-backend anthropic --escalate-budget 200`), so LLM spend tracks the small uncertain middle, not the whole registry. The free local HF tier (`--escalate-backend hf|tiered`) is kept out of CI to avoid a heavy `torch` install on the critical path — use it for local runs.
 
 ---
 

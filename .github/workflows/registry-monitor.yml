@@ -4,10 +4,11 @@
 # the `registry-snapshots` branch so `git log -p registry-snapshots` is a
 # permanent, auditable record of what changed day over day.
 #
-# Scans with the rule engine + threat intel only (no per-skill LLM calls) so a
-# whole-registry sweep is fast and cheap; the rule engine alone catches 100% of
-# malicious samples in the benchmark. Use `malwar crawl scan <slug>` for an LLM
-# deep-dive on an individual flagged skill.
+# Scans the whole registry with the rule engine + threat intel (fast, free, 100%
+# recall on the benchmark), and escalates ONLY the ambiguous band — skills the
+# rules flagged short of a confident verdict — to the Anthropic LLM for a
+# budget-capped deep-dive second opinion. Confident-clean and confident-malicious
+# skills are never escalated, so LLM spend tracks the small uncertain middle.
 #
 # Two cadences:
 #   * Daily (06:00 UTC) — INCREMENTAL. Only skills whose version/updated_at
@@ -97,23 +98,27 @@ jobs:
           else
             echo "Mode: incremental (only changed skills)."
           fi
-          # Rules + threat-intel only (--no-escalate): the rule engine alone
-          # detects 100% of malicious samples in the benchmark, and skipping
-          # per-skill LLM calls keeps a whole-registry sweep fast and cheap.
-          # (Run `malwar crawl scan <slug>` for an LLM deep-dive on any one
-          # flagged skill.)
+          # The whole-registry sweep runs the rule engine + threat intel (fast,
+          # free, 100% recall on the benchmark). Only the AMBIGUOUS band — skills
+          # the rules flagged short of a confident verdict — is escalated to the
+          # Anthropic LLM for a deep-dive second opinion (which can raise a sneaky
+          # skill or clear a false positive). Confident-clean and confident-
+          # malicious skills are never escalated, and --escalate-budget caps the
+          # per-run LLM spend. The free local HF classifier tier is available for
+          # local runs (`--escalate-backend hf|tiered`, needs the [hf] extra) but
+          # is kept out of CI to avoid a heavy torch install on the critical path.
           #
-          # ClawHub is rate-limited (~2 req/s), so even so a full ~6k-skill
-          # registry can't be swept in one CI run. Cap scans per run; the
-          # overflow is deferred and picked up on subsequent runs, so the
-          # baseline builds up over a couple of runs and then daily runs only
-          # touch what changed.
+          # ClawHub is rate-limited (~2 req/s) and the registry is ~66k skills, so
+          # a full sweep can't run in one CI window. --max-scans caps scans per
+          # run; the overflow is deferred and picked up next run, so the baseline
+          # builds up over successive runs, then daily runs only touch what changed.
           malwar crawl monitor \
             --snapshot-dir data/registry-snapshots \
             --format json \
             --output data/registry-snapshots/latest-diff.json \
-            --no-escalate \
-            --max-scans 3000 \
+            --escalate-backend anthropic \
+            --escalate-budget 200 \
+            --max-scans 4000 \
             $FULL
 
       - name: Publish snapshot to data branch
