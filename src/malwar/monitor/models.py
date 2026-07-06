@@ -64,6 +64,10 @@ class RegistrySnapshot(BaseModel):
     skills: dict[str, SkillRecord] = Field(default_factory=dict)
     # Slugs the crawl knew about but failed to fetch/scan, for transparency.
     errors: dict[str, str] = Field(default_factory=dict)
+    # How this snapshot was built: skills actually fetched + scanned this run
+    # vs. carried forward unchanged from the previous snapshot (incremental).
+    scanned_count: int = 0
+    reused_count: int = 0
 
     @property
     def skill_count(self) -> int:

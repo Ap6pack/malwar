@@ -515,13 +515,24 @@ def crawl_monitor(
             help="Exit non-zero when newly-flagged skills are found",
         ),
     ] = False,
+    full: Annotated[
+        bool,
+        typer.Option(
+            "--full",
+            help="Re-scan every skill instead of only changed ones "
+            "(defends against silent same-version content swaps)",
+        ),
+    ] = False,
 ) -> None:
-    """Scan every skill in the registry and diff against the last snapshot.
+    """Scan the registry incrementally and diff against the last snapshot.
 
-    Designed to run on a schedule (e.g. daily): it crawls the whole registry,
-    fast-scans each skill (escalating flagged ones to the LLM), diffs the
-    result against the previous snapshot, and reports what changed — with a
-    headline list of skills that newly turned malicious.
+    Designed to run on a schedule (e.g. daily): it crawls the whole registry
+    but only re-fetches and re-scans skills whose version changed since the last
+    snapshot (escalating flagged ones to the LLM), diffs the result, and reports
+    what changed — with a headline list of skills that newly turned malicious.
+
+    The first run scans everything. Pass ``--full`` on a periodic cadence (e.g.
+    weekly) to re-scan every skill and catch silent same-version tampering.
     """
     exit_code = asyncio.run(
         _async_monitor(
@@ -535,6 +546,7 @@ def crawl_monitor(
             digest=digest,
             publish=publish,
             fail_on_malicious=fail_on_malicious,
+            full=full,
         )
     )
     raise typer.Exit(exit_code)
@@ -552,6 +564,7 @@ async def _async_monitor(
     digest: bool,
     publish: bool,
     fail_on_malicious: bool,
+    full: bool = False,
 ) -> int:
     from rich.progress import BarColumn, Progress, TextColumn
 
@@ -560,8 +573,9 @@ async def _async_monitor(
     store = SnapshotStore(snapshot_dir)
     previous = store.load_latest()
 
+    mode = "full re-scan" if full else ("incremental" if previous else "first run")
     scope = f" (max {max_skills})" if max_skills else ""
-    console.print(f"Crawling ClawHub registry{scope}...", style="dim")
+    console.print(f"Crawling ClawHub registry{scope} [{mode}]...", style="dim")
 
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -578,6 +592,8 @@ async def _async_monitor(
             )
 
         snapshot = await build_snapshot(
+            previous=previous,
+            force_rescan=full,
             max_skills=max_skills,
             escalate=escalate,
             concurrency=concurrency,
@@ -587,6 +603,11 @@ async def _async_monitor(
     if snapshot.skill_count == 0:
         console.print("[yellow]No skills found in the registry.[/yellow]")
         return 0
+
+    console.print(
+        f"[dim]Scanned {snapshot.scanned_count} changed/new, "
+        f"reused {snapshot.reused_count} unchanged.[/dim]"
+    )
 
     diff = diff_snapshots(previous, snapshot)
 
