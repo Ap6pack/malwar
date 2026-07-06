@@ -126,9 +126,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Preserve the freshly generated snapshot files across the branch switch.
+          # Save the freshly generated snapshot files, then clear them from the
+          # working tree. Once the data branch exists, `git checkout` refuses to
+          # switch when untracked files here would be overwritten by the branch's
+          # tracked versions — so we stash to $tmp and remove them first, then
+          # overlay them back after the switch.
           tmp="$(mktemp -d)"
           cp -a data/registry-snapshots/. "$tmp/"
+          rm -rf data/registry-snapshots
 
           # Move onto the data branch (create an orphan branch on the first run).
           if git rev-parse --verify origin/registry-snapshots >/dev/null 2>&1; then
