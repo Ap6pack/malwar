@@ -53,6 +53,9 @@ class FakeClawHubClient:
         self._updated_ats = updated_ats or dict.fromkeys(skills, 1000)
         # Slugs whose file was actually fetched — lets tests prove reuse.
         self.file_fetches: list[str] = []
+        # Slugs whose per-skill detail endpoint was hit — should stay empty,
+        # since the sweep now derives metadata from the listing.
+        self.detail_fetches: list[str] = []
 
     async def list_skills(self, limit: int = 20, cursor: str | None = None):
         items = [
@@ -61,6 +64,7 @@ class FakeClawHubClient:
                 displayName=slug.replace("-", " ").title(),
                 latestVersion=VersionInfo(version=self._versions[slug]),
                 updatedAt=self._updated_ats.get(slug),
+                stats=SkillStats(installsAllTime=1234),
             )
             for slug in self._skills
         ]
@@ -70,6 +74,7 @@ class FakeClawHubClient:
         return []
 
     async def get_skill(self, slug: str) -> SkillDetail:
+        self.detail_fetches.append(slug)
         if slug not in self._skills:
             raise ClawHubError(f"not found: {slug}", status_code=404)
         return SkillDetail(
@@ -111,6 +116,16 @@ class TestBuildSnapshot:
         assert rec.content_sha256 and len(rec.content_sha256) == 64
         assert rec.version == "1.0.0"
         assert rec.installs == 1234
+
+    async def test_one_request_per_skill_no_detail_fetch(self):
+        # Metadata comes from the listing, so a scanned skill costs a single
+        # request (the file) — the per-skill detail endpoint is never hit.
+        client = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        snap = await build_snapshot(client, escalate=False)
+        assert snap.skill_count == 2
+        assert client.detail_fetches == []
+        assert sorted(client.file_fetches) == ["a", "b"]
+        assert snap.skills["a"].display_name == "A"
 
     async def test_max_skills_cap(self):
         client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(10)})
