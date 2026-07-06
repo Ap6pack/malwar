@@ -54,13 +54,17 @@ jobs:
       - name: Restore snapshot baseline from data branch
         run: |
           mkdir -p data/registry-snapshots
-          if git fetch origin registry-monitor 2>/dev/null; then
+          # Start clean so a stale/empty baseline can never reach the monitor.
+          rm -f data/registry-snapshots/latest.json
+          # Only write the baseline when the data branch AND the file both exist
+          # (checked before the redirect, so we never create an empty file).
+          if git fetch origin registry-monitor 2>/dev/null \
+            && git cat-file -e origin/registry-monitor:data/registry-snapshots/latest.json 2>/dev/null; then
             git show origin/registry-monitor:data/registry-snapshots/latest.json \
-              > data/registry-snapshots/latest.json 2>/dev/null \
-              && echo "Restored baseline from registry-monitor branch." \
-              || echo "Data branch exists but has no baseline yet."
+              > data/registry-snapshots/latest.json
+            echo "Restored baseline from registry-monitor branch."
           else
-            echo "No data branch yet — this is the first run."
+            echo "No baseline yet — first run (cold start, diff against nothing)."
           fi
 
       - name: Sweep registry and diff against baseline
