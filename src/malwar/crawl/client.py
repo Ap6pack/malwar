@@ -18,6 +18,10 @@ logger = logging.getLogger("malwar.crawl.client")
 
 BASE_URL = "https://clawhub.ai/api/v1"
 _TIMEOUT = 15.0
+# Transient connection failures (ConnectTimeout/ConnectError) are common when
+# sweeping thousands of skills from CI; retry them at the transport level so a
+# single blip does not abort a long registry crawl.
+_RETRIES = 3
 _USER_AGENT = f"malwar/{__version__}"
 
 
@@ -76,13 +80,18 @@ class ClawHubClient:
         self,
         base_url: str = BASE_URL,
         timeout: float = _TIMEOUT,
+        retries: int = _RETRIES,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.retries = retries
 
     def _client(self) -> httpx.AsyncClient:
+        # AsyncHTTPTransport retries connection-level failures — ConnectError
+        # and ConnectTimeout (a subclass) — with exponential backoff.
         return httpx.AsyncClient(
             timeout=httpx.Timeout(self.timeout),
+            transport=httpx.AsyncHTTPTransport(retries=self.retries),
             headers={"User-Agent": _USER_AGENT},
         )
 

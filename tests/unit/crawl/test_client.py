@@ -266,3 +266,18 @@ class TestFetchUrl:
         with patch("malwar.crawl.client.httpx.AsyncClient", return_value=mc), \
              pytest.raises(ClawHubError):
             await fetch_url("https://example.com/missing.md")
+
+
+class TestConnectionResilience:
+    """The client retries transient connection failures at the transport level."""
+
+    def test_defaults_to_retrying_transport(self):
+        client = ClawHubClient()
+        assert client.retries == 3
+        # _client() wires the retrying transport without error.
+        real = client._client()
+        assert isinstance(real, httpx.AsyncClient)
+
+    def test_retries_configurable(self):
+        assert ClawHubClient(retries=0).retries == 0
+        assert ClawHubClient(retries=5).retries == 5

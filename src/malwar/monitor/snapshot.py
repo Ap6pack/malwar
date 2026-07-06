@@ -26,7 +26,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from malwar.crawl.client import ClawHubClient, ClawHubError
+from malwar.crawl.client import ClawHubClient
 from malwar.monitor.models import RegistrySnapshot, SkillRecord
 from malwar.sdk import scan
 
@@ -65,7 +65,7 @@ async def _enumerate_skills(
     while True:
         try:
             items, cursor = await client.list_skills(limit=page_size, cursor=cursor)
-        except ClawHubError as exc:
+        except Exception as exc:  # ClawHubError, httpx timeouts after retries, etc.
             logger.warning("list_skills failed: %s", exc)
             break
         for item in items:
@@ -85,7 +85,7 @@ async def _enumerate_skills(
     for term in _SEED_TERMS:
         try:
             results = await client.search(term, limit=page_size)
-        except ClawHubError as exc:
+        except Exception as exc:  # ClawHubError, httpx timeouts after retries, etc.
             logger.warning("search %r failed: %s", term, exc)
             continue
         for r in results:
