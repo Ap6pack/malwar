@@ -116,7 +116,7 @@ malwar crawl monitor --max 100 --no-escalate   # quick partial run, rules only
 
 **Options:** `--snapshot-dir`, `--full`, `--max-scans`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
 
-The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences: **daily incremental** and a **weekly `--full`** re-scan, committing each snapshot to the `registry-snapshots` branch.
+The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences: **daily incremental** and a **weekly `--full`** re-scan, committing each snapshot to the `registry-snapshots` branch. It runs **rules-only (`--no-escalate`)** so a whole-registry sweep stays fast and cheap — the rule engine alone catches every malicious sample in the benchmark; use `malwar crawl scan <slug>` for an LLM deep-dive on an individual flagged skill.
 
 ---
 
