@@ -101,6 +101,8 @@ Sweep the registry, fast-scan skills (rule engine + threat intel, escalating fla
 
 **Incremental by default.** The monitor only re-fetches and re-scans skills whose `version`/`updated_at` changed since the last snapshot; unchanged skills are carried forward untouched. The **first run scans everything**; every run after only pays for what actually changed — so a daily sweep is fast and cheap. Because incremental detection trusts the registry's version metadata, run a periodic **`--full`** sweep (e.g. weekly) to also catch *silent same-version content swaps* — trojanized updates that keep the same version number. Each snapshot records `scanned_count` vs `reused_count` so you can see how much a run actually did.
 
+**One request per skill.** Skill metadata (version, updated_at, display name, install count) is taken from the enumeration listing, so scanning a skill costs a single request — the `SKILL.md` file — rather than a separate detail lookup. This roughly halves crawl time and keeps a full sweep within the ClawHub rate limit (120 req/min). The trade-off: per-skill publisher and moderation flags aren't captured by the sweep (the scan verdict, version, and installs are).
+
 ```bash
 malwar crawl monitor                     # incremental sweep -> snapshot -> diff
 malwar crawl monitor --full              # re-scan every skill (catches same-version tampering)
