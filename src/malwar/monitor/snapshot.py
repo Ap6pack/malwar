@@ -175,12 +175,30 @@ async def _scan_slug(client: ClawHubClient, meta: SkillMeta, *, escalate: bool) 
     return record
 
 
+def _pending_record(meta: SkillMeta) -> SkillRecord:
+    """A metadata-only placeholder for a skill deferred to a later run.
+
+    Verdict is UNKNOWN with no error, so ``_is_unchanged`` returns False and the
+    next run re-scans it — this is how a budgeted baseline converges over
+    successive runs.
+    """
+    return SkillRecord(
+        slug=meta.slug,
+        display_name=meta.display_name,
+        version=meta.version,
+        updated_at=meta.updated_at,
+        installs=meta.installs,
+        verdict="UNKNOWN",
+    )
+
+
 async def build_snapshot(
     client: ClawHubClient | None = None,
     *,
     previous: RegistrySnapshot | None = None,
     force_rescan: bool = False,
     max_skills: int | None = None,
+    scan_budget: int | None = None,
     escalate: bool = True,
     concurrency: int = 8,
     page_size: int = 50,
@@ -200,7 +218,12 @@ async def build_snapshot(
         Ignore ``previous`` and re-scan every skill (a full sweep). Use this on
         a periodic cadence to catch silent same-version content swaps.
     max_skills:
-        Cap the number of skills scanned (for testing / partial runs).
+        Cap the number of skills enumerated (for testing / partial runs).
+    scan_budget:
+        Cap how many skills are actually fetched + scanned this run. Any excess
+        is recorded as an UNKNOWN placeholder and picked up on the next run, so a
+        registry too large to sweep within one run's time limit is built up over
+        successive runs rather than lost to an all-or-nothing timeout.
     escalate:
         Re-scan flagged skills with the full LLM + URL pipeline.
     concurrency:
@@ -227,13 +250,22 @@ async def build_snapshot(
         else:
             to_scan.append(meta)
 
-    snapshot.reused_count = len(snapshot.skills)
+    # Enforce the per-run scan budget: defer the overflow to a later run.
+    pending: list[SkillMeta] = []
+    if scan_budget is not None and len(to_scan) > scan_budget:
+        to_scan, pending = to_scan[:scan_budget], to_scan[scan_budget:]
+        for meta in pending:
+            snapshot.skills[meta.slug] = _pending_record(meta)
+
+    snapshot.reused_count = total - len(to_scan) - len(pending)
     snapshot.scanned_count = len(to_scan)
+    snapshot.pending_count = len(pending)
     logger.info(
-        "incremental sweep: %d skills total, %d changed/new to scan, %d reused unchanged",
+        "sweep: %d skills total, %d to scan, %d reused unchanged, %d deferred (budget)",
         total,
         snapshot.scanned_count,
         snapshot.reused_count,
+        snapshot.pending_count,
     )
 
     semaphore = asyncio.Semaphore(max(1, concurrency))

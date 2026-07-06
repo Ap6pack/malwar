@@ -101,7 +101,9 @@ Sweep the registry, fast-scan skills (rule engine + threat intel, escalating fla
 
 **Incremental by default.** The monitor only re-fetches and re-scans skills whose `version`/`updated_at` changed since the last snapshot; unchanged skills are carried forward untouched. The **first run scans everything**; every run after only pays for what actually changed — so a daily sweep is fast and cheap. Because incremental detection trusts the registry's version metadata, run a periodic **`--full`** sweep (e.g. weekly) to also catch *silent same-version content swaps* — trojanized updates that keep the same version number. Each snapshot records `scanned_count` vs `reused_count` so you can see how much a run actually did.
 
-**One request per skill.** Skill metadata (version, updated_at, display name, install count) is taken from the enumeration listing, so scanning a skill costs a single request — the `SKILL.md` file — rather than a separate detail lookup. This roughly halves crawl time and keeps a full sweep within the ClawHub rate limit (120 req/min). The trade-off: per-skill publisher and moderation flags aren't captured by the sweep (the scan verdict, version, and installs are).
+**One request per skill.** Skill metadata (version, updated_at, display name, install count) is taken from the enumeration listing, so scanning a skill costs a single request — the `SKILL.md` file — rather than a separate detail lookup. This roughly halves crawl time. The trade-off: per-skill publisher and moderation flags aren't captured by the sweep (the scan verdict, version, and installs are).
+
+**Budgeted, resumable baseline.** ClawHub is rate-limited (~120 req/min), so a full ~6k-skill registry can't be swept in one shot. `--max-scans N` caps how many skills are actually scanned per run; any overflow is recorded as an `UNKNOWN` placeholder and picked up on the next run. So the **first full baseline builds up over several runs** rather than dying to a timeout, and once complete, daily incremental runs only touch what changed. `scanned_count`/`reused_count`/`pending_count` on each snapshot show the split.
 
 ```bash
 malwar crawl monitor                     # incremental sweep -> snapshot -> diff
@@ -112,7 +114,7 @@ malwar crawl monitor --fail-on-malicious # exit non-zero when newly-flagged skil
 malwar crawl monitor --max 100 --no-escalate   # quick partial run, rules only
 ```
 
-**Options:** `--snapshot-dir`, `--full`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
+**Options:** `--snapshot-dir`, `--full`, `--max-scans`, `--max`, `--no-escalate`, `--concurrency`, `--format`/`-f` (`console`|`json`), `--output`/`-o`, `--no-save`, `--digest`, `--publish`, `--fail-on-malicious`. Publishing to X requires the `MALWAR_X_*` credentials (see [Configuration](deployment/configuration.md#x-twitter-publishing)).
 
 The bundled GitHub Actions workflow (`.github/workflows/registry-monitor.yml`) runs this on two cadences: **daily incremental** and a **weekly `--full`** re-scan, committing each snapshot to the `registry-snapshots` branch.
 
