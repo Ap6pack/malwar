@@ -32,12 +32,18 @@ from malwar.monitor.escalation import (
     EscalationBackend,
     EscalationPolicy,
     NoneBackend,
+    is_fragile_malicious,
     select_candidates,
 )
 from malwar.monitor.models import RegistrySnapshot, SkillRecord
 from malwar.sdk import scan
 
 logger = logging.getLogger("malwar.monitor")
+
+# Risk score assigned when a fragile MALICIOUS verdict is downgraded: kept in the
+# SUSPICIOUS band (40-74) and just under the MALICIOUS line so it still reads as
+# high-suspicion, pending verification.
+_FRAGILE_DOWNGRADE_RISK = 74
 
 # Seed terms used to enumerate the registry when the /skills list endpoint
 # returns empty (the same fallback the `crawl list` command relies on). Single
@@ -353,6 +359,30 @@ async def build_snapshot(
                     rec.risk_score = round(res.score * 100)
 
         await asyncio.gather(*(_escalate(slug) for slug in candidates))
+
+    # --- Fail-safe: downgrade unverified fragile-MALICIOUS verdicts ---
+    # A MALICIOUS verdict resting on a single high-false-positive rule (see
+    # is_fragile_malicious) is only kept if an authoritative second opinion
+    # confirmed it. Otherwise — no backend ran, the backend was non-authoritative,
+    # or it didn't reach this skill — we downgrade to SUSPICIOUS rather than
+    # publish a conviction we cannot stand behind. This always runs, including
+    # when escalation is disabled, so a rules-only sweep never over-convicts.
+    downgraded = 0
+    for meta in to_scan:
+        rec = snapshot.skills.get(meta.slug)
+        if rec is None or not is_fragile_malicious(rec):
+            continue
+        confirmed = rec.llm_escalated and rec.escalation_verdict == "MALICIOUS"
+        if not confirmed:
+            rec.verdict = "SUSPICIOUS"
+            rec.risk_score = min(rec.risk_score, _FRAGILE_DOWNGRADE_RISK)
+            downgraded += 1
+    if downgraded:
+        logger.info(
+            "downgraded %d unverified single-rule MALICIOUS verdicts to SUSPICIOUS",
+            downgraded,
+        )
+    snapshot.downgraded_count = downgraded
 
     return snapshot
 
