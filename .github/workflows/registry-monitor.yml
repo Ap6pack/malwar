@@ -36,6 +36,10 @@ on:
         description: "Force a full re-scan of every skill"
         type: boolean
         default: false
+      escalate_budget:
+        description: "Max skills to LLM-verify this run (per-run API cap)"
+        type: string
+        default: "200"
 
 # Never let two sweeps race on the snapshot history / the push.
 concurrency:
@@ -90,6 +94,9 @@ jobs:
           # incremental otherwise.
           IS_WEEKLY: ${{ github.event.schedule == '0 7 * * 0' }}
           DISPATCH_FULL: ${{ github.event.inputs.full }}
+          # Manual dispatch may raise the per-run LLM verification cap; scheduled
+          # runs use the steady-state default (200).
+          ESCALATE_BUDGET: ${{ github.event.inputs.escalate_budget || '200' }}
         run: |
           FULL=""
           if [ "$IS_WEEKLY" = "true" ] || [ "$DISPATCH_FULL" = "true" ]; then
@@ -98,6 +105,7 @@ jobs:
           else
             echo "Mode: incremental (only changed skills)."
           fi
+          echo "Escalation budget: ${ESCALATE_BUDGET}"
           # The whole-registry sweep runs the rule engine + threat intel (fast,
           # free, 100% recall on the benchmark). Only the AMBIGUOUS band — skills
           # the rules flagged short of a confident verdict — is escalated to the
@@ -117,7 +125,7 @@ jobs:
             --format json \
             --output data/registry-snapshots/latest-diff.json \
             --escalate-backend anthropic \
-            --escalate-budget 200 \
+            --escalate-budget "$ESCALATE_BUDGET" \
             --max-scans 4000 \
             $FULL
 
