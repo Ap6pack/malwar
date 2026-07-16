@@ -1,0 +1,90 @@
+# Threat intelligence researchers and organizations to notify
+# Used for coordinated disclosure and amplification of findings
+
+researchers:
+  - name: "Unit 42 (Palo Alto Networks)"
+    email: "psirt@paloaltonetworks.com"
+    focus: "Supply chain, AI supply chain security"
+    reach: "Very high (influential threat intel source)"
+    notes: "First to document OpenClaw threats; will amplify research"
+
+  - name: "Bitdefender Labs"
+    email: "threatintel@bitdefender.com"
+    focus: "Malware families, supply chain"
+    reach: "Very high"
+    notes: "Published early OpenClaw statistics; will cite"
+
+  - name: "Mandiant (Google Cloud)"
+    email: "mandiantinquiries@mandiant.com"
+    focus: "APT, supply chain threats"
+    reach: "Very high"
+    notes: "Threat intel authority"
+
+  - name: "CrowdStrike Intelligence"
+    email: "intelligence@crowdstrike.com"
+    focus: "Threat actors, campaigns, supply chain"
+    reach: "Very high"
+    notes: "Tracks threat campaigns globally"
+
+  - name: "SANS Internet Storm Center"
+    email: "isc@sans.org"
+    focus: "Daily threat summaries, zero-days"
+    reach: "High (security practitioner audience)"
+
+  - name: "Shodan (John Mattson)"
+    email: "john@shodan.io"
+    focus: "Internet scanning, exposed systems"
+    reach: "Very high (security community)"
+
+  - name: "Bleeping Computer"
+    email: "news@bleepingcomputer.com"
+    focus: "Security news, vulnerabilities, threats"
+    reach: "High (broad security audience)"
+
+  - name: "The Hacker News"
+    email: "editorial@thehackernews.com"
+    focus: "Security threats, exploits, research"
+    reach: "High (broad security audience)"
+
+  - name: "SecurityWeek"
+    email: "editorial@securityweek.com"
+    focus: "Enterprise security, supply chain"
+    reach: "High (enterprise CISO audience)"
+
+  - name: "Dark Reading"
+    email: "editorial@darkreading.com"
+    focus: "Enterprise security, threats, research"
+    reach: "High (CISO/enterprise audience)"
+
+openai_safety:
+  - name: "OpenAI Safety & Policy"
+    email: "security@openai.com"
+    note: "Alert if findings impact LLM supply chains"
+
+academic:
+  - name: "arXiv Cybersecurity Feed"
+    url: "https://arxiv.org/list/cs.CR/new"
+    note: "Post research summaries to academic community"
+
+  - name: "IEEE Security & Privacy"
+    email: "spmag@computer.org"
+    note: "Submit for academic journal consideration"
+
+platforms:
+  - name: "ClawHub Security Team"
+    email: "security@clawhub.ai"
+    embargo_hours: 72
+    note: "Responsible disclosure recipient; 3-day embargo"
+
+community:
+  - name: "Reddit r/netsec"
+    url: "https://reddit.com/r/netsec"
+    note: "Share findings with security community"
+
+  - name: "Hacker News"
+    url: "https://news.ycombinator.com"
+    note: "Post article link (high reach with technical audience)"
+
+  - name: "Twitter/X Security Community"
+    handle: "@malwar_research"
+    note: "Announce findings to security Twitter"

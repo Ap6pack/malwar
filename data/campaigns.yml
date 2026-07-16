@@ -1,0 +1,55 @@
+# Known threat campaigns database
+# Used to track and avoid duplicate reports of same campaign patterns
+
+campaigns:
+  - name: "Campaign-OO-APITROJ"
+    pattern: "oo-*"
+    count: 242
+    verdict_distribution:
+      MALICIOUS: 242
+      SUSPICIOUS: 0
+    top_rules:
+      - "MALWAR-CMD-001"
+    first_detected: "2026-07-16"
+    description: "Systematic API trojan campaign: fake integrations for major services (HubSpot, Stripe, Shopify, etc.)"
+    published: true
+    published_date: "2026-07-16"
+    published_url: "https://ap6pack.github.io/malwar/blog/oo-campaign-zero-day/"
+
+  - name: "Campaign-LINKFOX"
+    pattern: "linkfox-*"
+    count: 15
+    verdict_distribution:
+      MALICIOUS: 2
+      SUSPICIOUS: 13
+    top_rules:
+      - "MALWAR-FRAUD-001"
+      - "MALWAR-PERSIST-002"
+    first_detected: "2026-07-06"
+    description: "E-commerce scraping and fraud campaign targeting TikTok, Amazon, Walmart integrations"
+    published: false
+
+  - name: "Campaign-TIANAPI"
+    pattern: "tianapi-*"
+    count: 30
+    verdict_distribution:
+      MALICIOUS: 0
+      SUSPICIOUS: 30
+    top_rules:
+      - "MALWAR-ENV-001"
+    first_detected: "2026-07-06"
+    description: "Chinese data aggregation API wrapper campaign with credential harvesting"
+    published: false
+
+  - name: "Campaign-UPKUAJING"
+    pattern: "upkuajing-*"
+    count: 5
+    verdict_distribution:
+      MALICIOUS: 0
+      SUSPICIOUS: 5
+    top_rules:
+      - "MALWAR-ENV-001"
+      - "MALWAR-EXFIL-001"
+    first_detected: "2026-07-06"
+    description: "SMS and contact data fraud campaign targeting international bulk communication"
+    published: false
