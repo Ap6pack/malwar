@@ -12,6 +12,7 @@ from malwar.monitor.escalation import (
     NoneBackend,
     TieredBackend,
     _parse_classifier_output,
+    is_fragile_malicious,
     make_backend,
     select_candidates,
 )
@@ -20,6 +21,35 @@ from malwar.monitor.models import SkillRecord
 
 def rec(risk: int, *, ml: float | None = None, verdict: str = "CLEAN", error: str | None = None):
     return SkillRecord(slug=f"s{risk}", risk_score=risk, ml_risk_score=ml, verdict=verdict, error=error)
+
+
+def mrec(rules: list[str], *, verdict: str = "MALICIOUS", risk: int = 92):
+    return SkillRecord(slug="m", risk_score=risk, verdict=verdict, finding_rule_ids=rules)
+
+
+class TestFragileMalicious:
+    def test_single_high_fp_rule_is_fragile(self):
+        assert is_fragile_malicious(mrec(["MALWAR-CMD-001"]))
+        assert is_fragile_malicious(mrec(["MALWAR-ENV-001"]))
+
+    def test_corroborated_two_rules_not_fragile(self):
+        assert not is_fragile_malicious(mrec(["MALWAR-CMD-001", "MALWAR-PERSIST-002"]))
+
+    def test_single_low_fp_rule_not_fragile(self):
+        # A single non-high-FP rule (e.g. exfiltration) is evidence-based; keep it.
+        assert not is_fragile_malicious(mrec(["MALWAR-EXFIL-001"]))
+
+    def test_non_malicious_verdict_not_fragile(self):
+        assert not is_fragile_malicious(mrec(["MALWAR-CMD-001"], verdict="SUSPICIOUS", risk=40))
+
+    def test_fragile_malicious_qualifies_for_escalation(self):
+        # Even though risk >= malicious_risk, a fragile verdict must be verified.
+        assert EscalationPolicy().qualifies(mrec(["MALWAR-CMD-001"]))
+
+    def test_corroborated_malicious_skips_escalation(self):
+        assert not EscalationPolicy().qualifies(
+            mrec(["MALWAR-CMD-001", "MALWAR-PERSIST-002"], risk=100)
+        )
 
 
 class TestEscalationPolicy:

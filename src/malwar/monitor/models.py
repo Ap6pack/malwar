@@ -82,6 +82,9 @@ class RegistrySnapshot(BaseModel):
     pending_count: int = 0
     # Skills sent to a second-opinion escalation backend this run.
     escalated_count: int = 0
+    # Fragile single-rule MALICIOUS verdicts downgraded to SUSPICIOUS this run
+    # because no authoritative second opinion confirmed them.
+    downgraded_count: int = 0
 
     @property
     def skill_count(self) -> int:

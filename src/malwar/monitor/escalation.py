@@ -40,6 +40,31 @@ logger = logging.getLogger("malwar.monitor.escalation")
 # MALICIOUS threshold in ScanResult.verdict.)
 _MALICIOUS_RISK = 75
 
+# Rules that, on a single line match, are known to over-flag legitimate content:
+#   * MALWAR-CMD-001 fires on any ``curl … | sh`` — the documented install path
+#     for a large share of legitimate dev tools (installer-host allowlisting in
+#     the rule handles the dedicated-domain cases; multi-tenant hosts remain).
+#   * MALWAR-ENV-001's broad pattern matches ordinary prose ("…the key you need
+#     to set", "…by running env").
+# A MALICIOUS verdict resting on a *single* one of these rules is fragile: it
+# has never been corroborated by a second rule or a semantic pass. Such verdicts
+# are re-checked (escalated) and, if not authoritatively confirmed, downgraded
+# to SUSPICIOUS rather than published as a confident conviction.
+HIGH_FP_RULES: frozenset[str] = frozenset({"MALWAR-CMD-001", "MALWAR-ENV-001"})
+
+
+def is_fragile_malicious(record: SkillRecord) -> bool:
+    """True when a MALICIOUS verdict rests on a single high-false-positive rule.
+
+    These are the verdicts most likely to be wrong: one line, one high-FP rule,
+    auto-scored CRITICAL, no corroboration. They warrant verification before we
+    stand behind the MALICIOUS label.
+    """
+    if record.verdict != "MALICIOUS":
+        return False
+    rules = record.finding_rule_ids
+    return len(rules) == 1 and rules[0] in HIGH_FP_RULES
+
 
 @dataclass(frozen=True)
 class EscalationPolicy:
@@ -72,8 +97,12 @@ class EscalationPolicy:
         """True if this first-pass record sits in the ambiguous band."""
         if record.error is not None or record.verdict == "UNKNOWN":
             return False  # not scanned yet / failed — nothing to second-guess
+        # A MALICIOUS verdict built on a single high-FP rule is *not* confident —
+        # verify it before publishing the conviction (see is_fragile_malicious).
+        if is_fragile_malicious(record):
+            return True
         if record.risk_score >= self.malicious_risk:
-            return False  # already a confident detection
+            return False  # already a confident (corroborated) detection
         if record.risk_score >= self.min_rule_risk:
             return True  # rules saw something short of a verdict
         # Rules were quiet — escalate only if the ML model is suspicious.
