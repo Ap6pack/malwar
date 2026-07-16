@@ -41,7 +41,7 @@ from malwar.sdk import scan
 logger = logging.getLogger("malwar.monitor")
 
 # Risk score assigned when a fragile MALICIOUS verdict is downgraded: kept in the
-# SUSPICIOUS band (40–74) and just under the MALICIOUS line so it still reads as
+# SUSPICIOUS band (40-74) and just under the MALICIOUS line so it still reads as
 # high-suspicion, pending verification.
 _FRAGILE_DOWNGRADE_RISK = 74
 

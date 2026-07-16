@@ -41,7 +41,7 @@ logger = logging.getLogger("malwar.monitor.escalation")
 _MALICIOUS_RISK = 75
 
 # Rules that, on a single line match, are known to over-flag legitimate content:
-#   * MALWAR-CMD-001 fires on any ``curl … | sh`` — the documented install path
+#   * MALWAR-CMD-001 fires on any ``curl ... | sh`` -- the documented install path
 #     for a large share of legitimate dev tools (installer-host allowlisting in
 #     the rule handles the dedicated-domain cases; multi-tenant hosts remain).
 #   * MALWAR-ENV-001's broad pattern matches ordinary prose ("…the key you need
