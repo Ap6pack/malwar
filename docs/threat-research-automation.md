@@ -109,8 +109,8 @@ mkdir -p docs/blog/_posts
 
 ## Running the Pipeline
 
-### Automatic (Weekly)
-The workflow runs every Monday at 2am UTC automatically.
+### Automatic (Daily)
+The workflow runs every day at 2am UTC automatically, checking for new/changed skills since the last run.
 
 ### Manual (On-demand)
 To trigger manually:
