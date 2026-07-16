@@ -2,8 +2,8 @@ name: Weekly Threat Research & Intelligence
 
 on:
   schedule:
-    # Every Monday at 2am UTC
-    - cron: "0 2 * * 1"
+    # Every day at 2am UTC (checks incremental diff)
+    - cron: "0 2 * * *"
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
