@@ -69,13 +69,20 @@ class SkillMeta(NamedTuple):
     installs: int = 0
 
 
-# How many times to retry a single failed listing page before giving up on the
-# enumeration. The registry rate-limits, so a long (~66k skill) sweep will hit a
-# transient 429/5xx mid-listing; retrying the page keeps one hiccup from
-# truncating the whole enumeration.
-_PAGE_RETRIES = 4
-# Backoff (seconds) between page retries, indexed by attempt. Capped and finite.
-_PAGE_BACKOFF = (2, 4, 8, 16)
+# Enumerating the full ~66k-skill registry is ~1,300 listing requests. The
+# registry throttles sustained listing, so firing those pages as fast as
+# possible trips the limit partway and truncates the enumeration. We therefore
+# (a) pace the pages to stay under the throttle, and (b) retry a page that still
+# fails, with a backoff long enough to outlast a throttle window.
+#
+# _PAGE_DELAY paces successive pages (~2 req/s, matching the registry's observed
+# limit); the full listing then costs ~11 min, well within the run's time box.
+_PAGE_DELAY = 0.5
+# How many times to retry a single failed listing page before giving up.
+_PAGE_RETRIES = 6
+# Backoff (seconds) between page retries — extends past a typical throttle
+# window so a rate-limited page recovers instead of aborting the sweep.
+_PAGE_BACKOFF = (2, 5, 10, 20, 40, 60)
 
 
 async def _enumerate_skills(
@@ -143,6 +150,9 @@ async def _enumerate_skills(
             return metas[:max_skills], True
         if not cursor:
             return metas, True  # reached the natural end with every page ok
+        # Pace the next page so sustained listing stays under the throttle.
+        if _PAGE_DELAY:
+            await asyncio.sleep(_PAGE_DELAY)
 
     # (unreachable: every branch above returns)
 

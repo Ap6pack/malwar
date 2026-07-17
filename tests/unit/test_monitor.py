@@ -30,8 +30,9 @@ from malwar.monitor.report import TWEET_LIMIT
 
 @pytest.fixture(autouse=True)
 def _instant_enumeration_backoff(monkeypatch):
-    """Zero the page-retry backoff so enumeration-failure tests don't sleep."""
-    monkeypatch.setattr("malwar.monitor.snapshot._PAGE_BACKOFF", (0, 0, 0, 0))
+    """Zero the page pacing/retry backoff so enumeration tests don't sleep."""
+    monkeypatch.setattr("malwar.monitor.snapshot._PAGE_BACKOFF", (0, 0, 0, 0, 0, 0))
+    monkeypatch.setattr("malwar.monitor.snapshot._PAGE_DELAY", 0)
 
 # A skill body that trips MALWAR-FRAUD-001 (agentic affiliate injection).
 MALICIOUS_BODY = (
