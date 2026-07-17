@@ -69,29 +69,63 @@ class SkillMeta(NamedTuple):
     installs: int = 0
 
 
+# How many times to retry a single failed listing page before giving up on the
+# enumeration. The registry rate-limits, so a long (~66k skill) sweep will hit a
+# transient 429/5xx mid-listing; retrying the page keeps one hiccup from
+# truncating the whole enumeration.
+_PAGE_RETRIES = 4
+# Backoff (seconds) between page retries, indexed by attempt. Capped and finite.
+_PAGE_BACKOFF = (2, 4, 8, 16)
+
+
 async def _enumerate_skills(
     client: ClawHubClient,
     *,
     max_skills: int | None,
     page_size: int,
-) -> list[SkillMeta]:
-    """Return :class:`SkillMeta` for every skill in the registry.
+) -> tuple[list[SkillMeta], bool]:
+    """Return ``(skills, complete)`` for the registry listing.
 
-    Pages through the list endpoint; if that yields nothing (the endpoint is
-    known to return empty at times), falls back to fanning search queries out
-    across seed terms and de-duplicating. The metadata comes free with the
-    listing, so change detection and record population need no per-skill fetch.
+    Pages through the list endpoint, retrying each page across transient
+    failures (the registry rate-limits, so a long sweep will hit a 429/5xx
+    mid-listing). ``complete`` is True only when paging reached the natural end
+    with every page succeeding; it is False when a page still failed after
+    retries, so the caller knows the list is partial and must not treat absent
+    skills as removed. If the listing yields nothing at all, falls back to
+    fanning search queries across seed terms (best-effort, always ``complete``
+    False since it can't guarantee coverage).
     """
     metas: list[SkillMeta] = []
     seen: set[str] = set()
 
     cursor: str | None = None
     while True:
-        try:
-            items, cursor = await client.list_skills(limit=page_size, cursor=cursor)
-        except Exception as exc:  # ClawHubError, httpx timeouts after retries, etc.
-            logger.warning("list_skills failed: %s", exc)
-            break
+        items = None
+        for attempt in range(_PAGE_RETRIES):
+            try:
+                items, cursor = await client.list_skills(limit=page_size, cursor=cursor)
+                break
+            except Exception as exc:  # ClawHubError, httpx timeouts after retries, etc.
+                logger.warning(
+                    "list_skills page failed (attempt %d/%d): %s",
+                    attempt + 1,
+                    _PAGE_RETRIES,
+                    exc,
+                )
+                if attempt + 1 < _PAGE_RETRIES:
+                    await asyncio.sleep(_PAGE_BACKOFF[min(attempt, len(_PAGE_BACKOFF) - 1)])
+        if items is None:
+            # Page still failing after retries: stop, but report the list as
+            # PARTIAL so the caller preserves the baseline instead of dropping
+            # everything we couldn't re-list this run.
+            logger.error(
+                "enumeration aborted after %d failed attempts on one page; "
+                "returning a PARTIAL list of %d skills (baseline will be "
+                "carried forward)",
+                _PAGE_RETRIES,
+                len(metas),
+            )
+            return metas, False
         for item in items:
             if item.slug not in seen:
                 seen.add(item.slug)
@@ -106,14 +140,22 @@ async def _enumerate_skills(
                     )
                 )
         if max_skills is not None and len(metas) >= max_skills:
-            return metas[:max_skills]
+            return metas[:max_skills], True
         if not cursor:
-            break
+            return metas, True  # reached the natural end with every page ok
 
-    if metas:
-        return metas
+    # (unreachable: every branch above returns)
 
-    # Fallback: broad search fan-out (search results carry no install stats).
+
+async def _enumerate_via_search(
+    client: ClawHubClient,
+    *,
+    max_skills: int | None,
+    page_size: int,
+    seen: set[str],
+) -> list[SkillMeta]:
+    """Best-effort fallback: fan search queries across seed terms, de-duplicated."""
+    metas: list[SkillMeta] = []
     for term in _SEED_TERMS:
         try:
             results = await client.search(term, limit=page_size)
@@ -133,7 +175,6 @@ async def _enumerate_skills(
                 )
         if max_skills is not None and len(metas) >= max_skills:
             return metas[:max_skills]
-
     return metas
 
 
@@ -259,11 +300,43 @@ async def build_snapshot(
         Optional callback ``(done, total, slug)`` for progress reporting.
     """
     client = client or ClawHubClient()
-    metas = await _enumerate_skills(client, max_skills=max_skills, page_size=page_size)
+    metas, complete = await _enumerate_skills(client, max_skills=max_skills, page_size=page_size)
+    if not metas:
+        # Listing returned nothing at all — try the search fan-out (best-effort,
+        # cannot guarantee coverage, so the result stays "incomplete").
+        metas = await _enumerate_via_search(
+            client, max_skills=max_skills, page_size=page_size, seen=set()
+        )
+        complete = False
 
     snapshot = RegistrySnapshot(registry=client.base_url)
+    snapshot.enumerated_count = len(metas)
+    snapshot.enumeration_complete = complete
+
+    # Carry-forward guard: when the listing is incomplete, a previously-known
+    # skill that simply wasn't re-listed this run must NOT be treated as removed.
+    # Preserve its last record so one transient listing failure can't shrink the
+    # baseline (this is the bug that collapsed 66k -> a few hundred after 07-06).
+    enumerated_slugs = {m.slug for m in metas}
+    if previous is not None and not complete:
+        carried = 0
+        for slug, rec in previous.skills.items():
+            if slug not in enumerated_slugs:
+                snapshot.skills[slug] = rec.model_copy(deep=True)
+                carried += 1
+        snapshot.carried_forward_count = carried
+        if carried:
+            logger.warning(
+                "enumeration INCOMPLETE (%d listed vs %d previously known): "
+                "carried forward %d skills to protect the baseline",
+                len(metas),
+                len(previous.skills),
+                carried,
+            )
+
     total = len(metas)
     if total == 0:
+        # Nothing listed; any carried-forward baseline above still stands.
         return snapshot
 
     prev_skills = previous.skills if (previous is not None and not force_rescan) else {}
@@ -288,11 +361,14 @@ async def build_snapshot(
     snapshot.scanned_count = len(to_scan)
     snapshot.pending_count = len(pending)
     logger.info(
-        "sweep: %d skills total, %d to scan, %d reused unchanged, %d deferred (budget)",
+        "sweep: %d listed (complete=%s), %d to scan, %d reused unchanged, "
+        "%d deferred (budget), %d carried forward",
         total,
+        complete,
         snapshot.scanned_count,
         snapshot.reused_count,
         snapshot.pending_count,
+        snapshot.carried_forward_count,
     )
 
     backend = escalation or NoneBackend()
@@ -369,13 +445,13 @@ async def build_snapshot(
     # when escalation is disabled, so a rules-only sweep never over-convicts.
     downgraded = 0
     for meta in to_scan:
-        rec = snapshot.skills.get(meta.slug)
-        if rec is None or not is_fragile_malicious(rec):
+        record = snapshot.skills.get(meta.slug)
+        if record is None or not is_fragile_malicious(record):
             continue
-        confirmed = rec.llm_escalated and rec.escalation_verdict == "MALICIOUS"
+        confirmed = record.llm_escalated and record.escalation_verdict == "MALICIOUS"
         if not confirmed:
-            rec.verdict = "SUSPICIOUS"
-            rec.risk_score = min(rec.risk_score, _FRAGILE_DOWNGRADE_RISK)
+            record.verdict = "SUSPICIOUS"
+            record.risk_score = min(record.risk_score, _FRAGILE_DOWNGRADE_RISK)
             downgraded += 1
     if downgraded:
         logger.info(
