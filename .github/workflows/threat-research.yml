@@ -1,10 +1,15 @@
 name: Weekly Threat Research & Intelligence
 
 on:
-  schedule:
-    # Every day at 2am UTC (checks incremental diff)
-    - cron: "0 2 * * *"
-  workflow_dispatch:  # Allow manual trigger
+  # PAUSED (2026-07-16): the automatic daily schedule is disabled while the
+  # detect -> verify -> publish path is re-validated. The 2026-07-16 audit found
+  # the rules-only pass over-convicted (single `curl | sh` / env-mention lines
+  # became MALICIOUS), which would have driven false disclosures to ClawHub and
+  # researchers. Re-enable the cron only once verdicts are trustworthy end-to-end
+  # and a human is comfortable with autonomous external disclosure.
+  # schedule:
+  #   - cron: "0 2 * * *"  # daily 2am UTC (paused)
+  workflow_dispatch:  # manual, human-reviewed runs only for now
 
 jobs:
   threat-detection:

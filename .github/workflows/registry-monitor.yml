@@ -129,6 +129,52 @@ jobs:
             --max-scans 4000 \
             $FULL
 
+      - name: Post scan summary to Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          # Report verdict counts for this sweep. Never fatal: a missing secret
+          # or a Discord hiccup must not fail the run or block the publish.
+          if [ -z "${DISCORD_WEBHOOK:-}" ]; then
+            echo "No DISCORD_WEBHOOK secret set - skipping Discord summary."
+            exit 0
+          fi
+          SNAP=data/registry-snapshots/latest.json
+          if [ ! -f "$SNAP" ]; then
+            echo "No snapshot to report - skipping."
+            exit 0
+          fi
+          MAL=$(jq '[.skills[].verdict|select(.=="MALICIOUS")]|length' "$SNAP")
+          SUS=$(jq '[.skills[].verdict|select(.=="SUSPICIOUS")]|length' "$SNAP")
+          CAU=$(jq '[.skills[].verdict|select(.=="CAUTION")]|length' "$SNAP")
+          CLN=$(jq '[.skills[].verdict|select(.=="CLEAN")]|length' "$SNAP")
+          UNK=$(jq '[.skills[].verdict|select(.=="UNKNOWN")]|length' "$SNAP")
+          TOTAL=$(jq '.skills|length' "$SNAP")
+          SCANNED=$(jq '.scanned_count // 0' "$SNAP")
+          ESC=$(jq '.escalated_count // 0' "$SNAP")
+          DOWN=$(jq '.downgraded_count // 0' "$SNAP")
+          DESC="Scanned ${SCANNED} this run - LLM-verified ${ESC} - downgraded ${DOWN}. MALICIOUS counts are corroborated/verified, not raw single-rule hits."
+          PAYLOAD=$(jq -n \
+            --arg title "malwar registry sweep $(date -u +%Y-%m-%d)" \
+            --arg desc "$DESC" \
+            --argjson mal "$MAL" --argjson sus "$SUS" --argjson cau "$CAU" \
+            --argjson cln "$CLN" --argjson unk "$UNK" --argjson total "$TOTAL" \
+            '{embeds:[{title:$title, description:$desc, color:3447003, fields:[
+              {name:"MALICIOUS",     value:($mal|tostring),   inline:true},
+              {name:"SUSPICIOUS",    value:($sus|tostring),   inline:true},
+              {name:"CAUTION",       value:($cau|tostring),   inline:true},
+              {name:"CLEAN",         value:($cln|tostring),   inline:true},
+              {name:"UNKNOWN",       value:($unk|tostring),   inline:true},
+              {name:"Total tracked", value:($total|tostring), inline:true}
+            ]}]}')
+          if curl -sS -X POST -H "Content-Type: application/json" \
+               -d "$PAYLOAD" "$DISCORD_WEBHOOK" >/dev/null; then
+            echo "Posted sweep summary to Discord."
+          else
+            echo "Discord post failed (non-fatal)."
+          fi
+
       - name: Publish snapshot to data branch
         run: |
           git config user.name "github-actions[bot]"
