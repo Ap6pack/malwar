@@ -1,4 +1,4 @@
-name: Weekly Threat Research & Intelligence
+name: Threat Research & Intelligence (paused; manual dispatch only)
 
 on:
   # PAUSED (2026-07-16): the automatic daily schedule is disabled while the
@@ -290,7 +290,7 @@ jobs:
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: ${{ job.status }}
-          title: "Weekly Threat Research Summary"
+          title: "Threat Research Summary (manual run)"
           description: |
             Novel campaigns detected: ${{ needs.threat-detection.outputs.article-count }}
             Blog articles published: ✓
