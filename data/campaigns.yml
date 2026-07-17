@@ -1,55 +1,74 @@
-# Known threat campaigns database
-# Used to track and avoid duplicate reports of same campaign patterns
+# Known threat-cluster database (name-prefix clusters seen in ClawHub).
+#
+# IMPORTANT: these are name-prefix clusters, NOT confirmed malicious campaigns.
+# Verdict counts below are the VERIFIED numbers from the 2026-07-16 full re-scan
+# (installer-host allowlist + LLM verification of the ambiguous/fragile band),
+# which superseded an earlier rules-only pass that badly over-counted MALICIOUS
+# (it converted single `curl | sh` / env-mention lines into convictions).
+#
+# None of these currently qualifies as a publishable malicious campaign: the
+# malicious share is small and the clusters are dominated by legitimate,
+# similarly-named API-integration skills. `published: false` keeps the
+# automation from drafting or disclosing threat intel off these clusters until a
+# cluster is independently re-verified and a human approves publication.
+
+verified_scan: "2026-07-16 full re-scan (allowlist + LLM verification)"
 
 campaigns:
-  - name: "Campaign-OO-APITROJ"
+  - name: "Cluster-OO"
     pattern: "oo-*"
-    count: 242
-    verdict_distribution:
-      MALICIOUS: 242
-      SUSPICIOUS: 0
-    top_rules:
-      - "MALWAR-CMD-001"
-    first_detected: "2026-07-16"
-    description: "Systematic API trojan campaign: fake integrations for major services (HubSpot, Stripe, Shopify, etc.)"
-    published: true
-    published_date: "2026-07-16"
-    published_url: "https://ap6pack.github.io/malwar/blog/oo-campaign-zero-day/"
+    total_in_cluster: 242
+    verified_verdicts:
+      MALICIOUS: 16    # was over-counted as 242 by the rules-only pass
+      SUSPICIOUS: 24
+      CAUTION: 124
+      CLEAN: 77
+      UNKNOWN: 1
+    description: >-
+      API-integration skills (oo-hubspot, oo-stripe, ...). The earlier
+      "242-skill API trojan campaign" was a false positive: MALWAR-CMD-001 fired
+      on legitimate `curl | sh` install lines shared across the template. Only 16
+      survive verification as MALICIOUS; 77 are outright CLEAN.
+    published: false
 
-  - name: "Campaign-LINKFOX"
+  - name: "Cluster-LINKFOX"
     pattern: "linkfox-*"
-    count: 15
-    verdict_distribution:
-      MALICIOUS: 2
-      SUSPICIOUS: 13
-    top_rules:
-      - "MALWAR-FRAUD-001"
-      - "MALWAR-PERSIST-002"
-    first_detected: "2026-07-06"
-    description: "E-commerce scraping and fraud campaign targeting TikTok, Amazon, Walmart integrations"
+    total_in_cluster: 201
+    verified_verdicts:
+      MALICIOUS: 3
+      SUSPICIOUS: 8
+      CAUTION: 1
+      CLEAN: 185
+      UNKNOWN: 4
+    description: >-
+      E-commerce data/scraping skills. Overwhelmingly CLEAN after verification
+      (185/201); 3 verified MALICIOUS.
     published: false
 
-  - name: "Campaign-TIANAPI"
+  - name: "Cluster-TIANAPI"
     pattern: "tianapi-*"
-    count: 30
-    verdict_distribution:
+    total_in_cluster: 20
+    verified_verdicts:
       MALICIOUS: 0
-      SUSPICIOUS: 30
-    top_rules:
-      - "MALWAR-ENV-001"
-    first_detected: "2026-07-06"
-    description: "Chinese data aggregation API wrapper campaign with credential harvesting"
+      SUSPICIOUS: 0
+      CAUTION: 0
+      CLEAN: 20
+      UNKNOWN: 0
+    description: >-
+      Chinese data-aggregation API wrappers. Zero malicious after verification
+      (all 20 CLEAN); the earlier flags were false positives.
     published: false
 
-  - name: "Campaign-UPKUAJING"
+  - name: "Cluster-UPKUAJING"
     pattern: "upkuajing-*"
-    count: 5
-    verdict_distribution:
-      MALICIOUS: 0
-      SUSPICIOUS: 5
-    top_rules:
-      - "MALWAR-ENV-001"
-      - "MALWAR-EXFIL-001"
-    first_detected: "2026-07-06"
-    description: "SMS and contact data fraud campaign targeting international bulk communication"
+    total_in_cluster: 12
+    verified_verdicts:
+      MALICIOUS: 4
+      SUSPICIOUS: 0
+      CAUTION: 1
+      CLEAN: 7
+      UNKNOWN: 0
+    description: >-
+      SMS / contact-data skills. 4 of 12 verified MALICIOUS - the highest
+      malicious share of the tracked clusters, but still small; not a campaign.
     published: false
