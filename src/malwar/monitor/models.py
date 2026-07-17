@@ -85,6 +85,14 @@ class RegistrySnapshot(BaseModel):
     # Fragile single-rule MALICIOUS verdicts downgraded to SUSPICIOUS this run
     # because no authoritative second opinion confirmed them.
     downgraded_count: int = 0
+    # Registry enumeration health. ``enumerated_count`` is how many skills the
+    # listing returned this run; ``enumeration_complete`` is False when paging
+    # aborted early (e.g. a rate-limit/5xx mid-listing). On an incomplete
+    # enumeration, previously-known skills are carried forward instead of being
+    # dropped, so a transient listing failure can't silently shrink the baseline.
+    enumerated_count: int = 0
+    enumeration_complete: bool = True
+    carried_forward_count: int = 0
 
     @property
     def skill_count(self) -> int:

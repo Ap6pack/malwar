@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from malwar.crawl.client import ClawHubError
 from malwar.crawl.models import (
     ModerationInfo,
@@ -24,6 +26,12 @@ from malwar.monitor import (
     render_tweet,
 )
 from malwar.monitor.report import TWEET_LIMIT
+
+
+@pytest.fixture(autouse=True)
+def _instant_enumeration_backoff(monkeypatch):
+    """Zero the page-retry backoff so enumeration-failure tests don't sleep."""
+    monkeypatch.setattr("malwar.monitor.snapshot._PAGE_BACKOFF", (0, 0, 0, 0))
 
 # A skill body that trips MALWAR-FRAUD-001 (agentic affiliate injection).
 MALICIOUS_BODY = (
@@ -170,6 +178,7 @@ class TestBuildSnapshot:
         # search fallback returns [] in the fake → empty snapshot, no exception.
         snap = await build_snapshot(client)
         assert snap.skill_count == 0
+        assert snap.enumeration_complete is False
 
 
 class TestIncrementalSweep:
@@ -634,3 +643,112 @@ class TestFragileDowngrade:
         rec = snap.skills["evil"]
         assert rec.verdict == "CLEAN"  # authoritatively cleared
         assert snap.downgraded_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Enumeration resilience: retry pages, mark partial, carry forward baseline
+# ---------------------------------------------------------------------------
+
+class PaginatedClient(FakeClawHubClient):
+    """Serves skills across pages; can fail a chosen page to test retry/partial.
+
+    ``fail_page`` (0-indexed) fails its first ``fail_times`` attempts; set
+    ``fail_times`` high to fail permanently.
+    """
+
+    def __init__(self, skills, *, page_size=2, fail_page=None, fail_times=99, **kw):
+        super().__init__(skills, **kw)
+        self._order = list(skills)
+        self._psize = page_size
+        self._fail_page = fail_page
+        self._fail_times = fail_times
+        self._attempts: dict[int, int] = {}
+
+    async def list_skills(self, limit: int = 20, cursor: str | None = None):
+        page = int(cursor) if cursor else 0
+        if page == self._fail_page:
+            n = self._attempts.get(page, 0)
+            if n < self._fail_times:
+                self._attempts[page] = n + 1
+                raise ClawHubError("page boom", status_code=503)
+        start = page * self._psize
+        chunk = self._order[start:start + self._psize]
+        items = [
+            SkillSummary(
+                slug=s,
+                displayName=s,
+                latestVersion=VersionInfo(version=self._versions[s]),
+                updatedAt=self._updated_ats.get(s),
+                stats=SkillStats(installsAllTime=1),
+            )
+            for s in chunk
+        ]
+        nxt = str(page + 1) if start + self._psize < len(self._order) else None
+        return items, nxt
+
+
+def _prev_snapshot(slugs):
+    snap = RegistrySnapshot(registry="https://clawhub.test")
+    for s in slugs:
+        snap.skills[s] = SkillRecord(slug=s, verdict="CLEAN", version="1.0.0", updated_at=1000)
+    return snap
+
+
+class TestEnumerationResilience:
+    async def test_transient_page_failure_is_retried_then_completes(self):
+        # Page 1 fails twice, succeeds on the third attempt (< _PAGE_RETRIES).
+        client = PaginatedClient(
+            {"a": BENIGN_BODY, "b": BENIGN_BODY, "c": BENIGN_BODY, "d": BENIGN_BODY},
+            page_size=2, fail_page=1, fail_times=2,
+        )
+        snap = await build_snapshot(client)
+        assert snap.enumeration_complete is True
+        assert snap.enumerated_count == 4
+        assert set(snap.skills) == {"a", "b", "c", "d"}
+
+    async def test_persistent_page_failure_marks_incomplete(self):
+        client = PaginatedClient(
+            {"a": BENIGN_BODY, "b": BENIGN_BODY, "z": BENIGN_BODY, "y": BENIGN_BODY},
+            page_size=2, fail_page=1, fail_times=99,
+        )
+        snap = await build_snapshot(client)
+        assert snap.enumeration_complete is False
+        # Only page 0 (a, b) was listed before the permanent failure.
+        assert snap.enumerated_count == 2
+
+    async def test_incomplete_enumeration_carries_forward_baseline(self):
+        # Previous run knew a, b, c. This run only lists a (page 1 dies), so b and
+        # c must be carried forward, not dropped.
+        prev = _prev_snapshot(["a", "b", "c"])
+        client = PaginatedClient(
+            {"a": BENIGN_BODY, "z": BENIGN_BODY},
+            page_size=1, fail_page=1, fail_times=99,
+        )
+        snap = await build_snapshot(client, previous=prev)
+        assert snap.enumeration_complete is False
+        assert snap.carried_forward_count == 2
+        assert {"a", "b", "c"}.issubset(set(snap.skills))  # baseline preserved
+
+    async def test_complete_enumeration_allows_genuine_removal(self):
+        # When enumeration is complete, a skill absent from the listing is
+        # genuinely gone and must NOT be carried forward.
+        prev = _prev_snapshot(["a", "b", "gone"])
+        client = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})  # single full page
+        snap = await build_snapshot(client, previous=prev)
+        assert snap.enumeration_complete is True
+        assert snap.carried_forward_count == 0
+        assert "gone" not in snap.skills
+
+    async def test_empty_listing_with_previous_preserves_baseline(self):
+        prev = _prev_snapshot(["a", "b", "c"])
+
+        async def _empty(limit=20, cursor=None):
+            return [], None
+
+        client = FakeClawHubClient({"a": BENIGN_BODY})
+        client.list_skills = _empty  # type: ignore[assignment]
+        snap = await build_snapshot(client, previous=prev)
+        # Search fallback also yields nothing in the fake -> incomplete, but the
+        # previous baseline is carried forward rather than wiped.
+        assert snap.enumeration_complete is False
+        assert {"a", "b", "c"}.issubset(set(snap.skills))
