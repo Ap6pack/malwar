@@ -31,6 +31,16 @@ class TestFragileMalicious:
     def test_single_high_fp_rule_is_fragile(self):
         assert is_fragile_malicious(mrec(["MALWAR-CMD-001"]))
         assert is_fragile_malicious(mrec(["MALWAR-ENV-001"]))
+        # Added after auditing the residual single-rule MALICIOUS tier: these
+        # two over-flag legitimate content (self-referential SKILL.md file ops;
+        # benign "without showing output" prose).
+        assert is_fragile_malicious(mrec(["MALWAR-PERSIST-002"]))
+        assert is_fragile_malicious(mrec(["MALWAR-MULTI-001"]))
+
+    def test_tight_persistence_rule_stays_confident(self):
+        # MALWAR-PERSIST-001 (cron/systemd/.bashrc) did not over-flag in testing;
+        # a single hit remains a confident verdict, not fragile.
+        assert not is_fragile_malicious(mrec(["MALWAR-PERSIST-001"]))
 
     def test_corroborated_two_rules_not_fragile(self):
         assert not is_fragile_malicious(mrec(["MALWAR-CMD-001", "MALWAR-PERSIST-002"]))
