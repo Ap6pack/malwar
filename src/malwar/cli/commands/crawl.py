@@ -548,6 +548,15 @@ def crawl_monitor(
             "instead of timing out.",
         ),
     ] = None,
+    page_size: Annotated[
+        int,
+        typer.Option(
+            "--page-size",
+            help="Skills requested per registry listing page. Larger pages mean "
+            "fewer requests to enumerate the whole registry (the API returns its "
+            "own maximum if this exceeds it).",
+        ),
+    ] = 100,
 ) -> None:
     """Scan the registry incrementally and diff against the last snapshot.
 
@@ -574,6 +583,7 @@ def crawl_monitor(
             fail_on_malicious=fail_on_malicious,
             full=full,
             max_scans=max_scans,
+            page_size=page_size,
         )
     )
     raise typer.Exit(exit_code)
@@ -594,6 +604,7 @@ async def _async_monitor(
     fail_on_malicious: bool,
     full: bool = False,
     max_scans: int | None = None,
+    page_size: int = 100,
 ) -> int:
     from rich.progress import BarColumn, Progress, TextColumn
 
@@ -641,6 +652,7 @@ async def _async_monitor(
             escalation=backend,
             escalation_policy=policy,
             concurrency=concurrency,
+            page_size=page_size,
             on_progress=_on_progress,
         )
 
