@@ -40,17 +40,30 @@ logger = logging.getLogger("malwar.monitor.escalation")
 # MALICIOUS threshold in ScanResult.verdict.)
 _MALICIOUS_RISK = 75
 
-# Rules that, on a single line match, are known to over-flag legitimate content:
+# Rules that, on a single line match, are known to over-flag legitimate content
+# (each confirmed by running the rule against real benign inputs):
 #   * MALWAR-CMD-001 fires on any ``curl ... | sh`` -- the documented install path
 #     for a large share of legitimate dev tools (installer-host allowlisting in
 #     the rule handles the dedicated-domain cases; multi-tenant hosts remain).
-#   * MALWAR-ENV-001's broad pattern matches ordinary prose ("…the key you need
-#     to set", "…by running env").
+#   * MALWAR-ENV-001's broad pattern matches ordinary prose ("the key you need
+#     to set", "by running env").
+#   * MALWAR-PERSIST-002 matches self-referential file ops on SKILL.md/CLAUDE.md/
+#     .claude/, including *reads* ("cat SKILL.md | grep") and legitimate
+#     skill-authoring tools that write a CLAUDE.md.
+#   * MALWAR-MULTI-001 matches benign prose about deferred/quiet execution
+#     ("applies the patch without showing the full diff").
 # A MALICIOUS verdict resting on a *single* one of these rules is fragile: it
 # has never been corroborated by a second rule or a semantic pass. Such verdicts
 # are re-checked (escalated) and, if not authoritatively confirmed, downgraded
-# to SUSPICIOUS rather than published as a confident conviction.
-HIGH_FP_RULES: frozenset[str] = frozenset({"MALWAR-CMD-001", "MALWAR-ENV-001"})
+# to SUSPICIOUS rather than published as a confident conviction. Tighter,
+# lower-FP rules (e.g. MALWAR-PERSIST-001 for cron/systemd/.bashrc persistence)
+# are deliberately NOT listed: a single hit from them stays a confident verdict.
+HIGH_FP_RULES: frozenset[str] = frozenset({
+    "MALWAR-CMD-001",
+    "MALWAR-ENV-001",
+    "MALWAR-PERSIST-002",
+    "MALWAR-MULTI-001",
+})
 
 
 def is_fragile_malicious(record: SkillRecord) -> bool:
