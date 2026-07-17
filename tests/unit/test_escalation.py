@@ -29,25 +29,35 @@ def mrec(rules: list[str], *, verdict: str = "MALICIOUS", risk: int = 92):
 
 class TestFragileMalicious:
     def test_single_high_fp_rule_is_fragile(self):
-        assert is_fragile_malicious(mrec(["MALWAR-CMD-001"]))
-        assert is_fragile_malicious(mrec(["MALWAR-ENV-001"]))
-        # Added after auditing the residual single-rule MALICIOUS tier: these
-        # two over-flag legitimate content (self-referential SKILL.md file ops;
-        # benign "without showing output" prose).
-        assert is_fragile_malicious(mrec(["MALWAR-PERSIST-002"]))
-        assert is_fragile_malicious(mrec(["MALWAR-MULTI-001"]))
+        # Every rule confirmed to over-flag legitimate content in the issue #30
+        # residual-verdict audit is treated as fragile on a single-rule hit.
+        for rid in (
+            "MALWAR-CMD-001",
+            "MALWAR-ENV-001",
+            "MALWAR-PERSIST-002",
+            "MALWAR-MULTI-001",
+            "MALWAR-CMD-002",
+            "MALWAR-CRED-002",
+            "MALWAR-EXFIL-001",
+            "MALWAR-EXFIL-003",
+            "MALWAR-PI-001",
+            "MALWAR-HIJACK-001",
+        ):
+            assert is_fragile_malicious(mrec([rid])), rid
 
-    def test_tight_persistence_rule_stays_confident(self):
-        # MALWAR-PERSIST-001 (cron/systemd/.bashrc) did not over-flag in testing;
-        # a single hit remains a confident verdict, not fragile.
-        assert not is_fragile_malicious(mrec(["MALWAR-PERSIST-001"]))
+    def test_tight_rules_stay_confident(self):
+        # These did not over-flag in testing; a single hit remains a confident
+        # verdict, not fragile.
+        for rid in ("MALWAR-PERSIST-001", "MALWAR-EXFIL-002", "MALWAR-FRAUD-002"):
+            assert not is_fragile_malicious(mrec([rid])), rid
 
     def test_corroborated_two_rules_not_fragile(self):
         assert not is_fragile_malicious(mrec(["MALWAR-CMD-001", "MALWAR-PERSIST-002"]))
 
     def test_single_low_fp_rule_not_fragile(self):
-        # A single non-high-FP rule (e.g. exfiltration) is evidence-based; keep it.
-        assert not is_fragile_malicious(mrec(["MALWAR-EXFIL-001"]))
+        # A single low-FP rule (e.g. crypto-wallet exfiltration) is evidence-based;
+        # keep it a confident verdict.
+        assert not is_fragile_malicious(mrec(["MALWAR-EXFIL-002"]))
 
     def test_non_malicious_verdict_not_fragile(self):
         assert not is_fragile_malicious(mrec(["MALWAR-CMD-001"], verdict="SUSPICIOUS", risk=40))
