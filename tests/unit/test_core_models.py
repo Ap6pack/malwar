@@ -7,6 +7,7 @@ import logging
 from datetime import UTC, datetime
 
 from malwar.core.constants import (
+    FRAGILE_MAX_RISK,
     DetectorLayer,
     Severity,
     ThreatCategory,
@@ -918,3 +919,79 @@ class TestCampaign:
         assert restored.id == campaign.id
         assert restored.iocs == campaign.iocs
         assert restored.first_seen == campaign.first_seen
+
+
+class TestFragileDetectionCalibration:
+    """A lone high-false-positive rule must not reach a MALICIOUS verdict.
+
+    These rules were each shown to fire on legitimate content (official
+    `curl | sh` installers, `npx -y`, onboarding prose, roleplay skills...).
+    Uncorroborated, they are a lead, not a conviction -- so scoring caps them
+    into the SUSPICIOUS band. Corroboration by a second rule removes the cap.
+    """
+
+    def _f(self, rule_id, severity=Severity.CRITICAL, confidence=0.92):
+        return Finding(
+            id=f"{rule_id}-L1",
+            rule_id=rule_id,
+            title="t",
+            description="d",
+            severity=severity,
+            confidence=confidence,
+            category=ThreatCategory.SUSPICIOUS_COMMAND,
+            detector_layer=DetectorLayer.RULE_ENGINE,
+        )
+
+    def test_single_high_fp_rule_is_capped_below_malicious(self):
+        score = compute_risk_score([self._f("MALWAR-CMD-001")])
+        assert score == FRAGILE_MAX_RISK
+        assert compute_verdict(score) == "SUSPICIOUS"
+
+    def test_repeat_hits_from_same_rule_do_not_corroborate(self):
+        # Three `npx -y` lines are still just "this doc installs packages".
+        findings = [self._f("MALWAR-CMD-002") for _ in range(3)]
+        assert compute_risk_score(findings) == FRAGILE_MAX_RISK
+
+    def test_second_independent_rule_removes_the_cap(self):
+        findings = [self._f("MALWAR-CMD-001"), self._f("MALWAR-PERSIST-001")]
+        score = compute_risk_score(findings)
+        assert score > FRAGILE_MAX_RISK
+        assert compute_verdict(score) == "MALICIOUS"
+
+    def test_single_low_fp_rule_still_convicts(self):
+        # PERSIST-001 (cron/systemd) showed no false positives, so a lone hit
+        # stays a confident verdict.
+        score = compute_risk_score([self._f("MALWAR-PERSIST-001")])
+        assert score > FRAGILE_MAX_RISK
+        assert compute_verdict(score) == "MALICIOUS"
+
+    def test_cap_never_raises_a_low_score(self):
+        # A fragile rule that only scored 30 must stay 30, not be lifted to 74.
+        score = compute_risk_score(
+            [self._f("MALWAR-CMD-002", severity=Severity.MEDIUM, confidence=0.6)]
+        )
+        assert score == 30
+
+    def test_suppressed_findings_are_excluded_from_fragility(self):
+        # If the LLM layer suppresses the corroborating rule, what remains is a
+        # lone high-FP hit -- and must be capped accordingly.
+        corroborating = self._f("MALWAR-PERSIST-001")
+        corroborating.suppressed = True
+        assert compute_risk_score([self._f("MALWAR-CMD-001"), corroborating]) == FRAGILE_MAX_RISK
+
+    def test_scan_result_and_helper_agree(self):
+        # ScanResult delegates to compute_risk_score, so CLI/SDK/API and the
+        # registry monitor can never diverge on scoring again.
+        findings = [self._f("MALWAR-CRED-002")]
+        result = ScanResult(scan_id="t", target="t.md", findings=findings)
+        assert result.risk_score == compute_risk_score(findings) == FRAGILE_MAX_RISK
+        assert result.verdict == "SUSPICIOUS"
+        assert result.fragile_detection is True
+
+    def test_corroborated_scan_result_is_not_fragile(self):
+        result = ScanResult(
+            scan_id="t", target="t.md",
+            findings=[self._f("MALWAR-CMD-001"), self._f("MALWAR-PERSIST-001")],
+        )
+        assert result.fragile_detection is False
+        assert result.verdict == "MALICIOUS"

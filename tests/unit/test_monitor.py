@@ -611,9 +611,13 @@ class TestFragileDowngrade:
         snap = await build_snapshot(client)  # NoneBackend by default
         rec = snap.skills["evil"]
         assert rec.finding_rule_ids == ["MALWAR-CMD-001"]
-        assert rec.verdict == "SUSPICIOUS"  # downgraded, not MALICIOUS
+        assert rec.verdict == "SUSPICIOUS"  # capped, not MALICIOUS
         assert rec.risk_score == 74
-        assert snap.downgraded_count == 1
+        # downgraded_count is 0 because the cap is now applied during scoring
+        # (compute_risk_score), so every surface -- CLI, SDK, API, this sweep --
+        # gets it. The monitor's own downgrade pass is now a fail-safe that
+        # only fires if something upstream let a fragile MALICIOUS through.
+        assert snap.downgraded_count == 0
 
     async def test_installer_allowlist_yields_clean(self):
         client = FakeClawHubClient({"rustup": _RUSTUP_INSTALL})
@@ -842,3 +846,47 @@ class TestStaleCarryForward:
         assert all(
             snap.skills[s].verdict != "UNKNOWN" for s in ("evil", "ok1", "ok2")
         )
+
+
+# ---------------------------------------------------------------------------
+# Budgeted runs must rotate through the registry, not re-scan the same head
+# ---------------------------------------------------------------------------
+
+class TestScanRotation:
+    async def test_full_rescans_rotate_instead_of_repeating_the_head(self):
+        # Enumeration order is stable, so taking to_scan[:budget] every time
+        # re-scanned the same first N forever and never reached the tail.
+        skills = {f"s{i:02d}": BENIGN_BODY for i in range(10)}
+        prev, covered = None, set()
+        for _ in range(5):
+            client = FakeClawHubClient(skills)
+            snap = await build_snapshot(
+                client, previous=prev, force_rescan=True, scan_budget=2
+            )
+            covered |= set(client.file_fetches)
+            prev = snap
+        assert covered == set(skills), "full re-scans must eventually reach every skill"
+
+    async def test_changed_skill_outranks_enumeration_order(self):
+        # A skill the registry reports as changed is the highest-value scan
+        # target (it may have just become malicious), so it must win the budget
+        # over an unchanged skill that merely happens to be listed first.
+        client1 = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY, "c": BENIGN_BODY})
+        day1 = await build_snapshot(client1)
+
+        client2 = FakeClawHubClient(
+            {"a": BENIGN_BODY, "b": BENIGN_BODY, "c": BENIGN_BODY},
+            versions={"a": "1.0.0", "b": "1.0.0", "c": "2.0.0"},  # only c changed
+        )
+        await build_snapshot(client2, previous=day1, force_rescan=True, scan_budget=1)
+        assert client2.file_fetches == ["c"]
+
+    async def test_never_scanned_outranks_already_scanned(self):
+        # Coverage first: a skill with no verdict yet beats re-verifying one we
+        # already have a result for.
+        client1 = FakeClawHubClient({"known": BENIGN_BODY})
+        day1 = await build_snapshot(client1)
+
+        client2 = FakeClawHubClient({"known": BENIGN_BODY, "brand-new": BENIGN_BODY})
+        await build_snapshot(client2, previous=day1, force_rescan=True, scan_budget=1)
+        assert client2.file_fetches == ["brand-new"]

@@ -6,7 +6,12 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field, computed_field
 
-from malwar.core.constants import SEVERITY_WEIGHTS, ScanStatus, Severity
+from malwar.core.constants import (
+    SEVERITY_WEIGHTS,
+    ScanStatus,
+    Severity,
+    is_fragile_rule_set,
+)
 from malwar.models.finding import Finding
 
 
@@ -45,13 +50,23 @@ class ScanResult(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def risk_score(self) -> int:
+        # Delegates to the single calibrated implementation so the CLI, SDK,
+        # API and registry monitor can never diverge on scoring.
+        from malwar.scanner.severity import compute_risk_score
+
+        return compute_risk_score(self.findings)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def fragile_detection(self) -> bool:
+        """True when the verdict rests on a single high-false-positive rule.
+
+        Surfaced so callers (reports, the registry monitor, API consumers) can
+        tell "capped pending verification" apart from a genuinely mid-range
+        score, and can prioritise these for a second opinion.
+        """
         active = [f for f in self.findings if not f.suppressed]
-        if not active:
-            return 0
-        return min(
-            100,
-            sum(int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in active),
-        )
+        return bool(active) and is_fragile_rule_set({f.rule_id for f in active})
 
     @computed_field  # type: ignore[prop-decorator]
     @property
