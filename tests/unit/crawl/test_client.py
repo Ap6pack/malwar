@@ -92,6 +92,46 @@ class TestListSkills:
         assert skills == []
         assert cursor is None
 
+    @pytest.mark.asyncio
+    async def test_null_summary_and_display_name_are_tolerated(self):
+        # Root cause of the enumeration-truncation bug: the live registry
+        # sends "summary": null for some entries. Pydantic rejects None
+        # against `str` even with a "" default (the default only applies when
+        # the key is absent), so this used to raise and drop the whole page.
+        api_data = {
+            "items": [
+                {"slug": "a", "displayName": "A", "summary": None},
+                {"slug": "b", "displayName": None, "summary": None},
+            ],
+            "nextCursor": None,
+        }
+        client = ClawHubClient()
+        with patch.object(client, "_client", return_value=_mock_client(_json_response(api_data))):
+            skills, _ = await client.list_skills()
+
+        assert len(skills) == 2
+        assert skills[0].summary == ""
+        assert skills[1].display_name == "" and skills[1].summary == ""
+
+    @pytest.mark.asyncio
+    async def test_one_malformed_item_does_not_drop_the_whole_page(self):
+        # A record that's still invalid after the null-tolerance fix (e.g.
+        # missing the required "slug") must be skipped, not abort parsing of
+        # the other 249 (or however many) valid items on the same page.
+        api_data = {
+            "items": [
+                {"slug": "good1", "displayName": "Good 1"},
+                {"displayName": "Missing slug"},  # slug is required -> invalid
+                {"slug": "good2", "displayName": "Good 2"},
+            ],
+            "nextCursor": None,
+        }
+        client = ClawHubClient()
+        with patch.object(client, "_client", return_value=_mock_client(_json_response(api_data))):
+            skills, _cursor = await client.list_skills()
+
+        assert [s.slug for s in skills] == ["good1", "good2"]
+
 
 class TestSearch:
     """Tests for ClawHubClient.search()."""
@@ -128,6 +168,22 @@ class TestSearch:
             results = await client.search("nonexistent")
 
         assert results == []
+
+    @pytest.mark.asyncio
+    async def test_null_text_fields_and_malformed_item_handled(self):
+        api_data = {
+            "results": [
+                {"slug": "a", "displayName": None, "summary": None},
+                {"displayName": "Missing slug"},  # invalid, must be skipped
+                {"slug": "b", "displayName": "B", "summary": "ok"},
+            ],
+        }
+        client = ClawHubClient()
+        with patch.object(client, "_client", return_value=_mock_client(_json_response(api_data))):
+            results = await client.search("q")
+
+        assert [r.slug for r in results] == ["a", "b"]
+        assert results[0].display_name == "" and results[0].summary == ""
 
 
 class TestGetSkill:
