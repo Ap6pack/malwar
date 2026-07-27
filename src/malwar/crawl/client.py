@@ -121,7 +121,15 @@ class ClawHubClient:
             skill_data = item.get("skill", item) if isinstance(item, dict) else item
             if isinstance(item, dict) and "latestVersion" in item and "latestVersion" not in skill_data:
                 skill_data["latestVersion"] = item["latestVersion"]
-            items.append(SkillSummary.model_validate(skill_data))
+            # A single malformed record (unexpected null/shape in live registry
+            # data) must not sink the whole page — that previously aborted
+            # enumeration of up to `limit` skills and, upstream, truncated the
+            # whole registry sweep. Skip and log; the other records still land.
+            try:
+                items.append(SkillSummary.model_validate(skill_data))
+            except Exception as exc:
+                slug = skill_data.get("slug", "?") if isinstance(skill_data, dict) else "?"
+                logger.warning("skipping malformed list_skills item %r: %s", slug, exc)
 
         return items, data.get("nextCursor")
 
@@ -140,10 +148,16 @@ class ClawHubClient:
         _check_response(resp, f"search '{query}'")
         data = resp.json()
 
-        return [
-            SearchResult.model_validate(r)
-            for r in data.get("results", [])
-        ]
+        results = []
+        for r in data.get("results", []):
+            # Same rationale as list_skills: one malformed record must not
+            # discard the whole page of search results.
+            try:
+                results.append(SearchResult.model_validate(r))
+            except Exception as exc:
+                slug = r.get("slug", "?") if isinstance(r, dict) else "?"
+                logger.warning("skipping malformed search result %r: %s", slug, exc)
+        return results
 
     async def get_skill(self, slug: str) -> SkillDetail:
         """Get full details for a skill by slug."""
