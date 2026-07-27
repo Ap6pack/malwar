@@ -245,6 +245,34 @@ async def _scan_slug(
     return record, content
 
 
+def _scan_priority(meta: SkillMeta, prior: SkillRecord | None) -> tuple[int, str]:
+    """Sort key deciding which skills a budgeted run spends its scans on.
+
+    Without this the run simply took the first ``scan_budget`` skills in
+    enumeration order, which is stable — so a full re-scan re-scanned the *same*
+    head of the registry every time and never reached the tail. On a registry
+    many times larger than the budget that means most skills are never
+    re-verified at all.
+
+    Ordering, most urgent first:
+
+    0. The registry reports the skill changed (new version/updated_at) since we
+       last scanned it. Highest value: a skill that just changed is the one that
+       might have *become* malicious.
+    1. Never scanned. Builds first-pass coverage over the registry.
+    2. Everything else, least-recently-scanned first, so re-verification
+       rotates through the registry instead of starving its tail.
+    """
+    never_scanned = prior is None or prior.verdict == "UNKNOWN"
+    if not never_scanned and (
+        prior.version != meta.version or prior.updated_at != meta.updated_at  # type: ignore[union-attr]
+    ):
+        return (0, "")
+    if never_scanned:
+        return (1, "")
+    return (2, prior.scanned_at or "")  # type: ignore[union-attr]
+
+
 def _pending_record(meta: SkillMeta, *, prior: SkillRecord | None = None) -> SkillRecord:
     """A placeholder for a skill deferred to a later run.
 
@@ -400,8 +428,14 @@ async def build_snapshot(
             to_scan.append(meta)
 
     # Enforce the per-run scan budget: defer the overflow to a later run.
+    # Spend the budget on what most needs scanning (changed > never-scanned >
+    # least-recently-scanned) rather than on whatever the registry happened to
+    # list first, so successive runs rotate through the whole registry instead
+    # of re-scanning the same head every time. Python's sort is stable, so
+    # enumeration order still breaks ties.
     pending: list[SkillMeta] = []
     if scan_budget is not None and len(to_scan) > scan_budget:
+        to_scan.sort(key=lambda m: _scan_priority(m, last_known_skills.get(m.slug)))
         to_scan, pending = to_scan[:scan_budget], to_scan[scan_budget:]
         for meta in pending:
             snapshot.skills[meta.slug] = _pending_record(
