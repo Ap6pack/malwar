@@ -34,12 +34,9 @@ class ScanContext:
 
     @property
     def current_risk_score(self) -> int:
-        from malwar.core.constants import SEVERITY_WEIGHTS
+        # Same calibrated scoring the final ScanResult uses, so the pipeline's
+        # mid-run decisions (e.g. whether to skip the LLM layer) match the
+        # score the caller ultimately sees.
+        from malwar.scanner.severity import compute_risk_score
 
-        active = [f for f in self.findings if not f.suppressed]
-        if not active:
-            return 0
-        return min(
-            100,
-            sum(int(SEVERITY_WEIGHTS[f.severity] * f.confidence) for f in active),
-        )
+        return compute_risk_score(self.findings)

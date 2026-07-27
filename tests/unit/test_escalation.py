@@ -59,8 +59,16 @@ class TestFragileMalicious:
         # keep it a confident verdict.
         assert not is_fragile_malicious(mrec(["MALWAR-EXFIL-002"]))
 
-    def test_non_malicious_verdict_not_fragile(self):
-        assert not is_fragile_malicious(mrec(["MALWAR-CMD-001"], verdict="SUSPICIOUS", risk=40))
+    def test_fragility_is_about_evidence_not_current_verdict(self):
+        # Fragility describes the *evidence* (one high-FP rule, uncorroborated),
+        # independent of the verdict it currently carries. It has to be, because
+        # scoring now caps such a detection into the SUSPICIOUS band before it
+        # ever reaches a SkillRecord -- keying off verdict == "MALICIOUS" would
+        # find none of them and they'd never be sent for a second opinion.
+        assert is_fragile_malicious(mrec(["MALWAR-CMD-001"], verdict="SUSPICIOUS", risk=74))
+        assert EscalationPolicy().qualifies(
+            mrec(["MALWAR-CMD-001"], verdict="SUSPICIOUS", risk=74)
+        )
 
     def test_fragile_malicious_qualifies_for_escalation(self):
         # Even though risk >= malicious_risk, a fragile verdict must be verified.

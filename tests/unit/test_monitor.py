@@ -611,9 +611,13 @@ class TestFragileDowngrade:
         snap = await build_snapshot(client)  # NoneBackend by default
         rec = snap.skills["evil"]
         assert rec.finding_rule_ids == ["MALWAR-CMD-001"]
-        assert rec.verdict == "SUSPICIOUS"  # downgraded, not MALICIOUS
+        assert rec.verdict == "SUSPICIOUS"  # capped, not MALICIOUS
         assert rec.risk_score == 74
-        assert snap.downgraded_count == 1
+        # downgraded_count is 0 because the cap is now applied during scoring
+        # (compute_risk_score), so every surface -- CLI, SDK, API, this sweep --
+        # gets it. The monitor's own downgrade pass is now a fail-safe that
+        # only fires if something upstream let a fragile MALICIOUS through.
+        assert snap.downgraded_count == 0
 
     async def test_installer_allowlist_yields_clean(self):
         client = FakeClawHubClient({"rustup": _RUSTUP_INSTALL})

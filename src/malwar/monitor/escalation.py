@@ -31,6 +31,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, Field
 
+from malwar.core.constants import HIGH_FP_RULES, is_fragile_rule_set
 from malwar.monitor.models import SkillRecord
 
 logger = logging.getLogger("malwar.monitor.escalation")
@@ -40,56 +41,37 @@ logger = logging.getLogger("malwar.monitor.escalation")
 # MALICIOUS threshold in ScanResult.verdict.)
 _MALICIOUS_RISK = 75
 
-# Rules that, on a single line match, are known to over-flag legitimate content.
-# Each was confirmed by running the rule against real benign inputs (see the
-# residual-verdict audit in issue #30):
-#   * MALWAR-CMD-001    ``curl ... | sh`` -- the documented install path for a
-#     large share of legitimate dev tools (installer-host allowlisting handles
-#     dedicated-domain cases; multi-tenant hosts remain).
-#   * MALWAR-ENV-001    ordinary prose ("the key you need to set", "run env").
-#   * MALWAR-PERSIST-002 self-referential SKILL.md/CLAUDE.md/.claude file ops,
-#     including reads ("cat SKILL.md | grep") and legit skill-authoring tools.
-#   * MALWAR-MULTI-001  benign prose about deferred/quiet execution
-#     ("applies the patch without showing the full diff").
-#   * MALWAR-CMD-002    ``npx -y <pkg>`` -- the standard way to run MCP servers
-#     and CLI tools; a few in one skill push it over the MALICIOUS line.
-#   * MALWAR-CRED-002   onboarding prose ("enter your API key", "paste your token").
-#   * MALWAR-EXFIL-001  reads of ~/.claude/ and .cursor/ that skill-tooling does.
-#   * MALWAR-EXFIL-003  ``curl -X POST -d "$(cat file)"`` -- a normal API upload.
-#   * MALWAR-PI-001     security/detection skills that quote injection phrases.
-#   * MALWAR-HIJACK-001 roleplay/persona skills ("you are now...", "your new role is").
-# A MALICIOUS verdict resting on a *single* one of these rules is fragile: one
-# regex, no corroboration, no semantic read. Such verdicts are re-checked
-# (escalated) and, if not authoritatively confirmed, downgraded to SUSPICIOUS
-# rather than published as a conviction. Tighter, low-FP rules are deliberately
-# NOT listed and stay confident on a single hit: e.g. MALWAR-PERSIST-001
-# (cron/systemd/.bashrc), MALWAR-EXFIL-002 (crypto-wallet access) and
-# MALWAR-FRAUD-002 (agentic front-running).
-HIGH_FP_RULES: frozenset[str] = frozenset({
-    "MALWAR-CMD-001",
-    "MALWAR-ENV-001",
-    "MALWAR-PERSIST-002",
-    "MALWAR-MULTI-001",
-    "MALWAR-CMD-002",
-    "MALWAR-CRED-002",
-    "MALWAR-EXFIL-001",
-    "MALWAR-EXFIL-003",
-    "MALWAR-PI-001",
-    "MALWAR-HIJACK-001",
-})
+# The high-false-positive rule set now lives in malwar.core.constants, because
+# the same calibration must apply to every surface (CLI, SDK, API, this
+# monitor) -- it is applied during scoring in scanner.severity.compute_risk_score,
+# not just here. Re-exported for backwards compatibility with callers that
+# imported it from this module.
+__all__ = [
+    "HIGH_FP_RULES",
+    "is_fragile_detection",
+    "is_fragile_malicious",
+]
+
+
+def is_fragile_detection(record: SkillRecord) -> bool:
+    """True when a detection rests on a single high-false-positive rule.
+
+    Independent of the current verdict, because scoring now caps such a
+    detection at :data:`~malwar.core.constants.FRAGILE_MAX_RISK` (SUSPICIOUS)
+    before it ever reaches a ``SkillRecord`` -- so keying off "verdict is
+    MALICIOUS" would no longer find them. These are exactly the records worth
+    spending a second opinion on: one regex, no corroboration.
+    """
+    return is_fragile_rule_set(set(record.finding_rule_ids))
 
 
 def is_fragile_malicious(record: SkillRecord) -> bool:
-    """True when a MALICIOUS verdict rests on a single high-false-positive rule.
+    """Deprecated alias for :func:`is_fragile_detection`.
 
-    These are the verdicts most likely to be wrong: one line, one high-FP rule,
-    auto-scored CRITICAL, no corroboration. They warrant verification before we
-    stand behind the MALICIOUS label.
+    Kept so the monitor's fail-safe downgrade pass still reads naturally; it is
+    now a no-op safety net, since scoring caps fragile detections upstream.
     """
-    if record.verdict != "MALICIOUS":
-        return False
-    rules = record.finding_rule_ids
-    return len(rules) == 1 and rules[0] in HIGH_FP_RULES
+    return is_fragile_detection(record)
 
 
 @dataclass(frozen=True)
@@ -123,9 +105,12 @@ class EscalationPolicy:
         """True if this first-pass record sits in the ambiguous band."""
         if record.error is not None or record.verdict == "UNKNOWN":
             return False  # not scanned yet / failed — nothing to second-guess
-        # A MALICIOUS verdict built on a single high-FP rule is *not* confident —
-        # verify it before publishing the conviction (see is_fragile_malicious).
-        if is_fragile_malicious(record):
+        # A detection built on a single high-FP rule is *not* confident. Scoring
+        # already capped it into the SUSPICIOUS band, but say so explicitly:
+        # these are precisely what a second opinion should resolve, and this
+        # must not depend on where the cap happens to land relative to the
+        # thresholds below.
+        if is_fragile_detection(record):
             return True
         if record.risk_score >= self.malicious_risk:
             return False  # already a confident (corroborated) detection

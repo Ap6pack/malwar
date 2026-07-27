@@ -32,7 +32,7 @@ from malwar.monitor.escalation import (
     EscalationBackend,
     EscalationPolicy,
     NoneBackend,
-    is_fragile_malicious,
+    is_fragile_detection,
     select_candidates,
 )
 from malwar.monitor.models import RegistrySnapshot, SkillRecord
@@ -497,7 +497,14 @@ async def build_snapshot(
     downgraded = 0
     for meta in to_scan:
         record = snapshot.skills.get(meta.slug)
-        if record is None or not is_fragile_malicious(record):
+        if record is None or not is_fragile_detection(record):
+            continue
+        # Only ever downgrade: never touch a record that is already at or below
+        # the fragile ceiling. Without this, a second opinion that
+        # authoritatively *cleared* a skill (verdict CLEAN) would be dragged
+        # back up to SUSPICIOUS here, since clearing it also means it was never
+        # "confirmed MALICIOUS".
+        if record.verdict != "MALICIOUS":
             continue
         confirmed = record.llm_escalated and record.escalation_verdict == "MALICIOUS"
         if not confirmed:
