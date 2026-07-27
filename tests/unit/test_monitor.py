@@ -753,3 +753,92 @@ class TestEnumerationResilience:
         # previous baseline is carried forward rather than wiped.
         assert snap.enumeration_complete is False
         assert {"a", "b", "c"}.issubset(set(snap.skills))
+
+
+# ---------------------------------------------------------------------------
+# Full re-scan + budget cap must not erase known verdicts (stale carry-forward)
+# ---------------------------------------------------------------------------
+
+class TestStaleCarryForward:
+    async def test_full_rescan_over_budget_keeps_prior_verdict_as_stale(self):
+        # Previously-confirmed MALICIOUS skill that the budget can't reach on
+        # a --full re-scan must NOT be reset to UNKNOWN and lost. "other" comes
+        # first (dict/enumeration order) so it fills the budget of 1, leaving
+        # "evil" as the one deferred.
+        prev = RegistrySnapshot(registry="https://clawhub.test")
+        prev.skills["evil"] = SkillRecord(
+            slug="evil", verdict="MALICIOUS", risk_score=92,
+            finding_rule_ids=["MALWAR-CMD-001"], version="1.0.0", updated_at=1000,
+        )
+        client = FakeClawHubClient({"other": BENIGN_BODY, "evil": MALICIOUS_BODY})
+
+        snap = await build_snapshot(client, previous=prev, force_rescan=True, scan_budget=1)
+
+        # "evil" didn't fit in the budget of 1 -> deferred, but keeps its
+        # verdict (not UNKNOWN) and is marked stale.
+        rec = snap.skills["evil"]
+        assert rec.verdict == "MALICIOUS"  # carried forward, not wiped
+        assert rec.stale is True
+        assert rec.is_flagged  # still counts as flagged in aggregates
+        assert snap.stale_count == 1
+        assert client.file_fetches == ["other"]  # "evil" was never re-fetched
+
+    async def test_never_before_seen_skill_over_budget_is_unknown_not_stale(self):
+        # No prior record exists, so the deferred placeholder has nothing to
+        # carry forward -- it's the original UNKNOWN-placeholder behavior.
+        client = FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY})
+        snap = await build_snapshot(client, scan_budget=1)
+
+        deferred = [s for s in snap.skills.values() if s.verdict == "UNKNOWN"]
+        assert len(deferred) == 1
+        assert deferred[0].stale is False
+        assert snap.stale_count == 0
+
+    async def test_stale_record_is_rescanned_on_next_incremental_run(self):
+        # A stale carried-forward record must not be mistaken for "confirmed
+        # unchanged" just because version/updated_at match -- it was never
+        # actually re-scanned, so the next (incremental) run must retry it.
+        # _CORROBORATED reliably scores MALICIOUS (two independent rules) so
+        # the fresh scan's verdict is unambiguous.
+        stale_prev = RegistrySnapshot(registry="https://clawhub.test")
+        stale_prev.skills["evil"] = SkillRecord(
+            slug="evil", verdict="MALICIOUS", risk_score=92,
+            finding_rule_ids=["MALWAR-CMD-001"], version="1.0.0", updated_at=1000,
+            stale=True,
+        )
+        client = FakeClawHubClient({"evil": _CORROBORATED}, versions={"evil": "1.0.0"},
+                                    updated_ats={"evil": 1000})
+
+        snap = await build_snapshot(client, previous=stale_prev)  # incremental, not full
+
+        assert client.file_fetches == ["evil"]  # re-fetched despite matching version
+        assert snap.skills["evil"].stale is False  # fresh scan clears the flag
+        assert snap.skills["evil"].verdict == "MALICIOUS"
+
+    async def test_full_rescan_budget_overflow_across_many_skills(self):
+        # End-to-end: 3 previously-known skills (1 malicious), budget covers 1.
+        # The 2 deferred must keep their real verdicts, not become UNKNOWN.
+        prev = RegistrySnapshot(registry="https://clawhub.test")
+        prev.skills["evil"] = SkillRecord(
+            slug="evil", verdict="MALICIOUS", risk_score=92,
+            finding_rule_ids=["MALWAR-CMD-001"], version="1.0.0", updated_at=1000,
+        )
+        prev.skills["ok1"] = SkillRecord(
+            slug="ok1", verdict="CLEAN", version="1.0.0", updated_at=1000,
+        )
+        prev.skills["ok2"] = SkillRecord(
+            slug="ok2", verdict="CLEAN", version="1.0.0", updated_at=1000,
+        )
+        client = FakeClawHubClient(
+            {"evil": MALICIOUS_BODY, "ok1": BENIGN_BODY, "ok2": BENIGN_BODY}
+        )
+
+        snap = await build_snapshot(client, previous=prev, force_rescan=True, scan_budget=1)
+
+        assert snap.scanned_count == 1
+        assert snap.pending_count == 2
+        assert snap.stale_count == 2
+        # Whichever 2 got deferred, none of them regressed to UNKNOWN.
+        assert all(
+            snap.skills[s].verdict != "UNKNOWN" for s in ("evil", "ok1", "ok2")
+        )
