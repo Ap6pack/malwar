@@ -191,11 +191,15 @@ async def _enumerate_via_search(
 def _is_unchanged(prev: SkillRecord | None, version: str | None, updated_at: int | None) -> bool:
     """True when a prior, cleanly-scanned record still matches the registry.
 
-    A previously errored/unknown record is treated as changed so it gets
+    A previously errored/unknown/stale record is treated as changed so it gets
     retried; otherwise we skip re-scanning when both version and updated_at
-    match what the registry now reports.
+    match what the registry now reports. ``stale`` (a verdict carried forward
+    because a prior run's budget couldn't reach it) must keep failing this
+    check even though version/updated_at match — otherwise it would be
+    mistaken for "confirmed unchanged" without ever having actually been
+    re-scanned, and never converge to a fresh result.
     """
-    if prev is None or prev.error is not None or prev.verdict == "UNKNOWN":
+    if prev is None or prev.error is not None or prev.verdict == "UNKNOWN" or prev.stale:
         return False
     return prev.version == version and prev.updated_at == updated_at
 
@@ -241,13 +245,32 @@ async def _scan_slug(
     return record, content
 
 
-def _pending_record(meta: SkillMeta) -> SkillRecord:
-    """A metadata-only placeholder for a skill deferred to a later run.
+def _pending_record(meta: SkillMeta, *, prior: SkillRecord | None = None) -> SkillRecord:
+    """A placeholder for a skill deferred to a later run.
 
-    Verdict is UNKNOWN with no error, so ``_is_unchanged`` returns False and the
-    next run re-scans it — this is how a budgeted baseline converges over
-    successive runs.
+    When ``prior`` holds a real prior scan result, it is carried forward
+    (marked ``stale=True``) instead of being replaced with an UNKNOWN
+    placeholder. This matters most for a full re-scan (``force_rescan``) on a
+    registry too large to cover in one run's budget: without this, every skill
+    outside this run's budget slice would have its last-known verdict wiped to
+    UNKNOWN — silently erasing, for example, a previously-confirmed MALICIOUS
+    finding just because a weekly full sweep didn't reach it yet. With no
+    prior (first time seeing this skill), the placeholder is metadata-only
+    with verdict UNKNOWN, as before.
+
+    Either way ``_is_unchanged`` returns False for this record (verdict
+    UNKNOWN, or the stale flag), so a later run re-scans it for real — this is
+    how a budgeted baseline converges over successive runs without regressing
+    in between.
     """
+    if prior is not None:
+        record = prior.model_copy(deep=True)
+        record.display_name = meta.display_name
+        record.version = meta.version
+        record.updated_at = meta.updated_at
+        record.installs = meta.installs
+        record.stale = True
+        return record
     return SkillRecord(
         slug=meta.slug,
         display_name=meta.display_name,
@@ -289,15 +312,24 @@ async def build_snapshot(
         whose version/updated_at are unchanged are carried forward without being
         re-fetched or re-scanned — so a daily run only pays for what changed.
     force_rescan:
-        Ignore ``previous`` and re-scan every skill (a full sweep). Use this on
-        a periodic cadence to catch silent same-version content swaps.
+        Ignore the "unchanged, skip re-scanning" fast path and attempt every
+        skill (a full sweep). Use this on a periodic cadence to catch silent
+        same-version content swaps. On a registry too large to fully re-scan
+        within one run's ``scan_budget``, the skills it can't reach keep their
+        last-known verdict (marked ``stale``, see ``scan_budget`` below)
+        rather than losing it — a full sweep never regresses what's already
+        known, it just may take several runs to fully refresh.
     max_skills:
         Cap the number of skills enumerated (for testing / partial runs).
     scan_budget:
         Cap how many skills are actually fetched + scanned this run. Any excess
-        is recorded as an UNKNOWN placeholder and picked up on the next run, so a
-        registry too large to sweep within one run's time limit is built up over
-        successive runs rather than lost to an all-or-nothing timeout.
+        is deferred to a later run: a skill scanned before keeps its last-known
+        verdict (``stale=True``, still counted as flagged if it was) instead of
+        being reset to UNKNOWN; a skill never scanned before gets an UNKNOWN
+        placeholder. Either way it's picked up again on a subsequent run — so a
+        registry too large to sweep within one run's time limit builds up (and
+        stays current) over successive runs rather than being lost to, or
+        wiped by, an all-or-nothing timeout.
     escalation:
         Second-opinion backend for the ambiguous band (``None`` / ``NoneBackend``
         disables phase 2). See :func:`malwar.monitor.escalation.make_backend`.
@@ -349,6 +381,13 @@ async def build_snapshot(
         # Nothing listed; any carried-forward baseline above still stands.
         return snapshot
 
+    # last_known_skills is the true prior state regardless of force_rescan —
+    # used only to seed deferred/pending placeholders (see _pending_record) so
+    # a full re-scan's budget cap can never erase what we already knew about a
+    # skill it didn't reach this run. prev_skills (below) governs the separate
+    # "skip re-scanning, it's unchanged" fast path, which force_rescan is
+    # meant to bypass — those two purposes must not share one dict.
+    last_known_skills = previous.skills if previous is not None else {}
     prev_skills = previous.skills if (previous is not None and not force_rescan) else {}
 
     # Split the registry into "carry forward unchanged" and "must re-scan".
@@ -365,7 +404,9 @@ async def build_snapshot(
     if scan_budget is not None and len(to_scan) > scan_budget:
         to_scan, pending = to_scan[:scan_budget], to_scan[scan_budget:]
         for meta in pending:
-            snapshot.skills[meta.slug] = _pending_record(meta)
+            snapshot.skills[meta.slug] = _pending_record(
+                meta, prior=last_known_skills.get(meta.slug)
+            )
 
     snapshot.reused_count = total - len(to_scan) - len(pending)
     snapshot.scanned_count = len(to_scan)

@@ -59,6 +59,14 @@ class SkillRecord(BaseModel):
         default_factory=lambda: datetime.now(UTC).isoformat()
     )
     error: str | None = None
+    # True when this record's verdict was carried forward from a prior scan
+    # because the current run's budget couldn't reach it (e.g. a full re-scan
+    # of a registry too large to cover in one run). The verdict is real — it
+    # came from an actual scan — but it may now be outdated, and the skill is
+    # due for a fresh look on a subsequent run. Kept distinct from verdict
+    # "UNKNOWN" so a previously-confirmed MALICIOUS finding is never silently
+    # dropped just because this run didn't get to it.
+    stale: bool = False
 
     @property
     def is_flagged(self) -> bool:
@@ -101,6 +109,11 @@ class RegistrySnapshot(BaseModel):
     @property
     def flagged_count(self) -> int:
         return sum(1 for r in self.skills.values() if r.is_flagged)
+
+    @property
+    def stale_count(self) -> int:
+        """Skills whose verdict is carried forward and due for a fresh scan."""
+        return sum(1 for r in self.skills.values() if r.stale)
 
 
 class SkillChange(BaseModel):
