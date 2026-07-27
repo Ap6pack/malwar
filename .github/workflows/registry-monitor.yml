@@ -154,28 +154,68 @@ jobs:
             echo "No snapshot to report - skipping."
             exit 0
           fi
-          MAL=$(jq '[.skills[].verdict|select(.=="MALICIOUS")]|length' "$SNAP")
-          SUS=$(jq '[.skills[].verdict|select(.=="SUSPICIOUS")]|length' "$SNAP")
-          CAU=$(jq '[.skills[].verdict|select(.=="CAUTION")]|length' "$SNAP")
-          CLN=$(jq '[.skills[].verdict|select(.=="CLEAN")]|length' "$SNAP")
-          UNK=$(jq '[.skills[].verdict|select(.=="UNKNOWN")]|length' "$SNAP")
+          MAL=$(jq '[.skills[]|select(.verdict=="MALICIOUS")]|length' "$SNAP")
+          SUS=$(jq '[.skills[]|select(.verdict=="SUSPICIOUS")]|length' "$SNAP")
+          CAU=$(jq '[.skills[]|select(.verdict=="CAUTION")]|length' "$SNAP")
+          CLN=$(jq '[.skills[]|select(.verdict=="CLEAN")]|length' "$SNAP")
+          UNK=$(jq '[.skills[]|select(.verdict=="UNKNOWN")]|length' "$SNAP")
           TOTAL=$(jq '.skills|length' "$SNAP")
           SCANNED=$(jq '.scanned_count // 0' "$SNAP")
           ESC=$(jq '.escalated_count // 0' "$SNAP")
-          DOWN=$(jq '.downgraded_count // 0' "$SNAP")
-          DESC="Scanned ${SCANNED} this run - LLM-verified ${ESC} - downgraded ${DOWN}. MALICIOUS counts are corroborated/verified, not raw single-rule hits."
+          STALE=$(jq '[.skills[]|select(.stale==true)]|length' "$SNAP")
+          ENUM=$(jq '.enumerated_count // 0' "$SNAP")
+          COMPLETE=$(jq '.enumeration_complete' "$SNAP")
+          CARRIED=$(jq '.carried_forward_count // 0' "$SNAP")
+
+          # Coverage against the registry we actually enumerated. Verdict counts
+          # alone are NOT a health signal: during the 2026-07 enumeration outage
+          # this summary would have reported a few thousand happy-looking skills
+          # while silently seeing 5% of the registry. Lead with enumeration
+          # health so that failure mode is impossible to miss again.
+          VERDICTED=$((TOTAL - UNK))
+          if [ "$ENUM" -gt 0 ]; then
+            REG="$ENUM"
+            PCT=$(( VERDICTED * 100 / REG ))
+            COVERAGE="**${VERDICTED}/${REG} (${PCT}%)** have a verdict"
+          else
+            # Snapshot predates enumeration-health tracking: registry size is
+            # unknown, so do NOT infer a percentage from tracked skills -- that
+            # reads as healthy precisely when enumeration is broken.
+            REG=0; PCT=0
+            COVERAGE="**${VERDICTED}** have a verdict (registry size unknown)"
+          fi
+
+          if [ "$ENUM" -eq 0 ]; then
+            COLOR=15158332   # red
+            HEALTH="⚠️ ENUMERATION HEALTH UNKNOWN - snapshot reports no enumerated_count; coverage cannot be verified"
+          elif [ "$COMPLETE" != "true" ]; then
+            COLOR=15158332   # red - counts below cover only part of the registry
+            HEALTH="⚠️ ENUMERATION INCOMPLETE - listed only ${ENUM}; counts below cover part of the registry"
+          elif [ "$PCT" -lt 50 ]; then
+            COLOR=16098851   # amber - enumeration fine, verdict coverage building
+            HEALTH="Enumeration complete (${REG} skills). Verdict coverage still building."
+          else
+            COLOR=3066993    # green
+            HEALTH="Enumeration complete (${REG} skills)."
+          fi
+
+          DESC="${HEALTH}
+          Coverage: ${COVERAGE} - scanned ${SCANNED} this run, ${STALE} stale, ${CARRIED} carried forward, ${ESC} LLM-verified.
+          MALICIOUS counts are corroborated/verified, not raw single-rule hits."
+
           PAYLOAD=$(jq -n \
             --arg title "malwar registry sweep $(date -u +%Y-%m-%d)" \
-            --arg desc "$DESC" \
+            --arg desc "$DESC" --argjson color "$COLOR" \
             --argjson mal "$MAL" --argjson sus "$SUS" --argjson cau "$CAU" \
-            --argjson cln "$CLN" --argjson unk "$UNK" --argjson total "$TOTAL" \
-            '{embeds:[{title:$title, description:$desc, color:3447003, fields:[
-              {name:"MALICIOUS",     value:($mal|tostring),   inline:true},
-              {name:"SUSPICIOUS",    value:($sus|tostring),   inline:true},
-              {name:"CAUTION",       value:($cau|tostring),   inline:true},
-              {name:"CLEAN",         value:($cln|tostring),   inline:true},
-              {name:"UNKNOWN",       value:($unk|tostring),   inline:true},
-              {name:"Total tracked", value:($total|tostring), inline:true}
+            --argjson cln "$CLN" --argjson unk "$UNK" --argjson reg "$REG" \
+            '{embeds:[{title:$title, description:$desc, color:$color, fields:[
+              {name:"MALICIOUS",       value:($mal|tostring), inline:true},
+              {name:"SUSPICIOUS",      value:($sus|tostring), inline:true},
+              {name:"CAUTION",         value:($cau|tostring), inline:true},
+              {name:"CLEAN",           value:($cln|tostring), inline:true},
+              {name:"Not yet scanned", value:($unk|tostring), inline:true},
+              {name:"Registry size",
+               value:(if $reg>0 then ($reg|tostring) else "unknown" end), inline:true}
             ]}]}')
           if curl -sS -X POST -H "Content-Type: application/json" \
                -d "$PAYLOAD" "$DISCORD_WEBHOOK" >/dev/null; then
