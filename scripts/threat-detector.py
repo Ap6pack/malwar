@@ -9,10 +9,10 @@ and detects novel campaigns for automated threat research publication.
 import json
 import sys
 from collections import defaultdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+
 import yaml
-from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -32,7 +32,7 @@ def load_snapshot(path: Path) -> dict:
     """Load a registry snapshot from JSON."""
     if not path.exists():
         return {}
-    with open(path, "r") as f:
+    with open(path) as f:
         return json.load(f)
 
 
@@ -40,7 +40,7 @@ def load_campaigns_db(path: Path) -> dict:
     """Load the known campaigns database."""
     if not path.exists():
         return {"campaigns": []}
-    with open(path, "r") as f:
+    with open(path) as f:
         return yaml.safe_load(f) or {"campaigns": []}
 
 

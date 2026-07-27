@@ -290,8 +290,14 @@ def _pending_record(meta: SkillMeta, *, prior: SkillRecord | None = None) -> Ski
     UNKNOWN, or the stale flag), so a later run re-scans it for real — this is
     how a budgeted baseline converges over successive runs without regressing
     in between.
+
+    ``stale`` means specifically "carries a real verdict that is now due for a
+    refresh". A prior that was itself only a placeholder (verdict UNKNOWN) has
+    no verdict to go stale, so it stays a plain UNKNOWN placeholder — otherwise
+    ``stale_count`` would conflate "known but ageing" with "never scanned" and
+    overstate how much verified data we actually hold.
     """
-    if prior is not None:
+    if prior is not None and prior.verdict != "UNKNOWN":
         record = prior.model_copy(deep=True)
         record.display_name = meta.display_name
         record.version = meta.version

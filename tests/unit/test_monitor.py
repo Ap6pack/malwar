@@ -890,3 +890,53 @@ class TestScanRotation:
         client2 = FakeClawHubClient({"known": BENIGN_BODY, "brand-new": BENIGN_BODY})
         await build_snapshot(client2, previous=day1, force_rescan=True, scan_budget=1)
         assert client2.file_fetches == ["brand-new"]
+
+
+class TestStaleSemanticsAndDiffLabelling:
+    async def test_never_scanned_placeholder_is_not_counted_as_stale(self):
+        # "stale" must mean "carries a real verdict that needs refreshing".
+        # A placeholder that was never scanned has no verdict to go stale, so
+        # counting it would overstate how much verified data we hold.
+        prev = None
+        for _ in range(2):
+            client = FakeClawHubClient({f"s{i}": BENIGN_BODY for i in range(6)})
+            snap = await build_snapshot(client, previous=prev, scan_budget=2)
+            prev = snap
+        unknowns = [r for r in snap.skills.values() if r.verdict == "UNKNOWN"]
+        assert unknowns, "expected some skills still awaiting a first scan"
+        assert all(not r.stale for r in unknowns)
+        assert snap.stale_count == 0
+
+    async def test_real_verdict_deferred_is_counted_as_stale(self):
+        # The counterpart: a genuine prior verdict the budget couldn't refresh
+        # *is* stale.
+        prev = RegistrySnapshot(registry="https://clawhub.test")
+        prev.skills["evil"] = SkillRecord(
+            slug="evil", verdict="MALICIOUS", risk_score=92,
+            finding_rule_ids=["MALWAR-CMD-001", "MALWAR-PERSIST-001"],
+            version="1.0.0", updated_at=1000, scanned_at="2020-01-01T00:00:00+00:00",
+        )
+        client = FakeClawHubClient({"fresh": BENIGN_BODY, "evil": BENIGN_BODY})
+        snap = await build_snapshot(client, previous=prev, force_rescan=True, scan_budget=1)
+        assert snap.skills["evil"].stale is True
+        assert snap.skills["evil"].verdict == "MALICIOUS"
+        assert snap.stale_count == 1
+
+    async def test_diff_flags_a_deferred_skill_as_not_yet_rescanned(self):
+        # A deferred skill shows the registry's NEW version but its verdict is
+        # from the OLD one. The digest must say so, or it reads as though the
+        # verdict describes the new version.
+        day1 = await build_snapshot(FakeClawHubClient({"a": BENIGN_BODY, "b": BENIGN_BODY}))
+        client2 = FakeClawHubClient(
+            {"a": BENIGN_BODY, "b": BENIGN_BODY},
+            versions={"a": "2.0.0", "b": "2.0.0"},
+        )
+        day2 = await build_snapshot(client2, previous=day1, scan_budget=1)
+
+        diff = diff_snapshots(day1, day2)
+        details = {c.slug: c.detail for c in diff.modified}
+        deferred = [s for s in ("a", "b") if day2.skills[s].stale]
+        rescanned = [s for s in ("a", "b") if not day2.skills[s].stale]
+        assert deferred and rescanned, "expected one deferred and one re-scanned"
+        assert "NOT yet re-scanned" in details[deferred[0]]
+        assert "NOT yet re-scanned" not in details[rescanned[0]]

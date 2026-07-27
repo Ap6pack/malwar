@@ -25,14 +25,26 @@ from malwar.monitor.models import (
 
 
 def _content_changed(old: SkillRecord, new: SkillRecord) -> str | None:
-    """Return a human description if the skill's content/version changed."""
+    """Return a human description if the skill's content/version changed.
+
+    A skill the run deferred (``new.stale``) still shows its *new* version from
+    the registry listing while carrying the verdict from its last actual scan.
+    Say so explicitly: without the caveat a digest reads as though the verdict
+    describes the new version, when that version has not been scanned yet.
+    """
+    detail: str | None = None
     if old.content_sha256 and new.content_sha256 and old.content_sha256 != new.content_sha256:
-        if old.version != new.version:
-            return f"version {old.version} → {new.version}, content changed"
-        return "content changed (same version — silent update)"
-    if old.version != new.version:
-        return f"version {old.version} → {new.version}"
-    return None
+        detail = (
+            f"version {old.version} → {new.version}, content changed"
+            if old.version != new.version
+            else "content changed (same version — silent update)"
+        )
+    elif old.version != new.version:
+        detail = f"version {old.version} → {new.version}"
+
+    if detail is not None and new.stale:
+        detail += " — NOT yet re-scanned, verdict is from the previous version"
+    return detail
 
 
 def diff_snapshots(

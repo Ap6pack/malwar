@@ -8,9 +8,8 @@ for publishing to the blog.
 
 import json
 import sys
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-
 
 ARTICLE_TEMPLATE = """# {title}
 
@@ -131,9 +130,12 @@ This is the first in a series of weekly threat intelligence reports. We scan the
 def generate_article(campaign_data: dict, disclosure_contact: str) -> str:
     """Generate a markdown article from campaign data."""
 
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    disclosure_date = (datetime.utcnow().replace(day=datetime.utcnow().day + 3)
-                       .strftime("%Y-%m-%d"))  # 3 days out for embargo
+    now = datetime.now(UTC)
+    today = now.strftime("%Y-%m-%d")
+    # 3 days out for the embargo. Must be timedelta, not .replace(day=day + 3):
+    # that raises ValueError on the last three days of any month (e.g. the 29th
+    # would ask for day 32), so the generator crashed on those dates.
+    disclosure_date = (now + timedelta(days=3)).strftime("%Y-%m-%d")
 
     # Generate verdict rows
     verdict_rows = "\n".join(
@@ -199,7 +201,7 @@ def main():
     campaign_file = Path(sys.argv[1])
     disclosure_contact = sys.argv[2] if len(sys.argv) > 2 else "contact@veritasandaequitas.com"
 
-    with open(campaign_file, "r") as f:
+    with open(campaign_file) as f:
         campaign_data = json.load(f)
 
     article = generate_article(campaign_data, disclosure_contact)

@@ -104,6 +104,11 @@ ignore = [
     "UP047",    # generic function type params — Python 3.12+ syntax, keeping TypeVar for compat
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# scripts/ are standalone CLI utilities whose output *is* stdout, so printing
+# is the interface, not a stray debug statement.
+"scripts/*" = ["T201"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["malwar"]
 
