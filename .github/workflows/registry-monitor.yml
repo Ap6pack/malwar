@@ -28,7 +28,11 @@ name: Registry Monitor
 
 on:
   schedule:
-    - cron: "0 6 * * *" # daily 06:00 UTC — incremental
+    # Every 8h while the baseline builds. ClawHub allows ~120 req/min and a
+    # full pass over the registry is ~10h of request time at that ceiling, so
+    # throughput comes from running more often and for longer -- NOT from
+    # raising concurrency, which would push past their documented limit.
+    - cron: "0 2,10,18 * * *" # 02:00 / 10:00 / 18:00 UTC — incremental
     - cron: "0 7 * * 0" # Sunday 07:00 UTC — full re-scan
   workflow_dispatch: # manual "run now" from the Actions tab
     inputs:
@@ -43,7 +47,7 @@ on:
       page_size:
         description: "Skills per listing page (larger = fewer requests to enumerate)"
         type: string
-        default: "100"
+        default: "250"
 
 # Never let two sweeps race on the snapshot history / the push.
 concurrency:
@@ -57,9 +61,12 @@ jobs:
   monitor:
     name: Sweep registry and commit report
     runs-on: ubuntu-latest
-    # The weekly full re-scan is the long pole; incremental daily runs finish
-    # far sooner once the baseline exists.
-    timeout-minutes: 60
+    # Sized for --max-scans at ClawHub's ~2 req/s ceiling, with generous slack:
+    # 12,000 scans is ~145 min of request time, and per-request latency varies
+    # day to day. The previous 60 min was nearly breached (a 56.8 min sweep on
+    # 2026-08-01) because enumeration cost grows with the registry, so leave
+    # real headroom rather than trimming to the observed figure.
+    timeout-minutes: 180
 
     steps:
       - name: Checkout repository
@@ -101,9 +108,12 @@ jobs:
           # Manual dispatch may raise the per-run LLM verification cap; scheduled
           # runs use the steady-state default (200).
           ESCALATE_BUDGET: ${{ github.event.inputs.escalate_budget || '200' }}
-          # Listing page size; larger means fewer requests to enumerate the ~66k
-          # registry (the API returns its own max if this exceeds it).
-          PAGE_SIZE: ${{ github.event.inputs.page_size || '100' }}
+          # Listing page size; larger means fewer requests to enumerate the ~72k
+          # registry (the API returns its own max if this exceeds it). Every run
+          # pays the full enumeration before scanning anything, so at 250/page
+          # that is ~287 requests instead of ~717 -- roughly 4 minutes saved per
+          # run, for free.
+          PAGE_SIZE: ${{ github.event.inputs.page_size || '250' }}
         run: |
           FULL=""
           if [ "$IS_WEEKLY" = "true" ] || [ "$DISPATCH_FULL" = "true" ]; then
@@ -124,17 +134,21 @@ jobs:
           # local runs (`--escalate-backend hf|tiered`, needs the [hf] extra) but
           # is kept out of CI to avoid a heavy torch install on the critical path.
           #
-          # ClawHub is rate-limited (~2 req/s) and the registry is ~66k skills, so
-          # a full sweep can't run in one CI window. --max-scans caps scans per
-          # run; the overflow is deferred and picked up next run, so the baseline
-          # builds up over successive runs, then daily runs only touch what changed.
+          # ClawHub is rate-limited (~120 req/min) and the registry is ~72k
+          # skills, so a full pass is ~10h of request time and cannot fit in one
+          # CI window. --max-scans caps scans per run; the overflow is deferred
+          # and picked up next run (least-recently-scanned first), so the
+          # baseline builds over successive runs, then runs only touch what
+          # changed. Throughput comes from longer and more frequent runs, which
+          # respect their per-minute limit, rather than from higher concurrency,
+          # which would not.
           malwar crawl monitor \
             --snapshot-dir data/registry-snapshots \
             --format json \
             --output data/registry-snapshots/latest-diff.json \
             --escalate-backend anthropic \
             --escalate-budget "$ESCALATE_BUDGET" \
-            --max-scans 4000 \
+            --max-scans 12000 \
             --page-size "$PAGE_SIZE" \
             $FULL
 
