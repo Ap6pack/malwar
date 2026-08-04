@@ -173,6 +173,12 @@ jobs:
           CAU=$(jq '[.skills[]|select(.verdict=="CAUTION")]|length' "$SNAP")
           CLN=$(jq '[.skills[]|select(.verdict=="CLEAN")]|length' "$SNAP")
           UNK=$(jq '[.skills[]|select(.verdict=="UNKNOWN")]|length' "$SNAP")
+          # Skills that can never produce a verdict however often we retry: the
+          # registry serves a malformed SKILL.md (frontmatter won't parse) or
+          # 404s the file entirely. They are UNKNOWN-with-an-error, so counting
+          # them as "not yet scanned" understates coverage permanently and the
+          # summary could never go green.
+          UNSCANNABLE=$(jq '[.skills[]|select(.verdict=="UNKNOWN" and .error!=null)]|length' "$SNAP")
           TOTAL=$(jq '.skills|length' "$SNAP")
           SCANNED=$(jq '.scanned_count // 0' "$SNAP")
           ESC=$(jq '.escalated_count // 0' "$SNAP")
@@ -189,8 +195,16 @@ jobs:
           VERDICTED=$((TOTAL - UNK))
           if [ "$ENUM" -gt 0 ]; then
             REG="$ENUM"
-            PCT=$(( VERDICTED * 100 / REG ))
-            COVERAGE="**${VERDICTED}/${REG} (${PCT}%)** have a verdict"
+            # Coverage is measured against what is actually *scannable*. The
+            # unscannable remainder is reported separately rather than folded
+            # into "not yet scanned", which would imply work still to do.
+            SCANNABLE=$(( REG - UNSCANNABLE ))
+            [ "$SCANNABLE" -lt 1 ] && SCANNABLE=1
+            PCT=$(( VERDICTED * 100 / SCANNABLE ))
+            COVERAGE="**${VERDICTED}/${SCANNABLE} (${PCT}%)** of scannable skills have a verdict"
+            if [ "$UNSCANNABLE" -gt 0 ]; then
+              COVERAGE="${COVERAGE}; ${UNSCANNABLE} unscannable (registry serves a malformed or missing SKILL.md)"
+            fi
           else
             # Snapshot predates enumeration-health tracking: registry size is
             # unknown, so do NOT infer a percentage from tracked skills -- that
@@ -222,12 +236,14 @@ jobs:
             --arg desc "$DESC" --argjson color "$COLOR" \
             --argjson mal "$MAL" --argjson sus "$SUS" --argjson cau "$CAU" \
             --argjson cln "$CLN" --argjson unk "$UNK" --argjson reg "$REG" \
+            --argjson unscannable "$UNSCANNABLE" \
             '{embeds:[{title:$title, description:$desc, color:$color, fields:[
               {name:"MALICIOUS",       value:($mal|tostring), inline:true},
               {name:"SUSPICIOUS",      value:($sus|tostring), inline:true},
               {name:"CAUTION",         value:($cau|tostring), inline:true},
               {name:"CLEAN",           value:($cln|tostring), inline:true},
-              {name:"Not yet scanned", value:($unk|tostring), inline:true},
+              {name:"Awaiting scan",   value:(($unk-$unscannable)|tostring), inline:true},
+              {name:"Unscannable",     value:($unscannable|tostring), inline:true},
               {name:"Registry size",
                value:(if $reg>0 then ($reg|tostring) else "unknown" end), inline:true}
             ]}]}')

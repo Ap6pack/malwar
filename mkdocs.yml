@@ -34,6 +34,7 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quickstart.md
   - Threat Research:
+    - "We Scanned Every Skill: 2.9% Are Malicious": blog/2026-08-05-we-scanned-every-skill.md
     - "Most \"Malicious\" AI Skills Aren't": blog/2026-07-17-most-malicious-ai-skills-arent.md
     - "OpenClaw's Agentic Supply-Chain Attacks": blog/openclaw-agentic-supply-chain.md
     - "12% of AI Agent Skills Are Malicious": blog/clawhavoc-12-percent.md
