@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import logging
+import re
 from pathlib import Path
 
 import aiofiles
@@ -11,6 +13,23 @@ import frontmatter
 from malwar.core.exceptions import ParseError
 from malwar.models.skill import CodeBlock, MarkdownSection, SkillContent, SkillMetadata
 from malwar.parsers.markdown_parser import extract_code_blocks, extract_sections, extract_urls
+
+logger = logging.getLogger("malwar.parsers.skill")
+
+# A leading `---` ... `---` block, i.e. the frontmatter fence, even when what is
+# inside it is not valid YAML.
+_FRONTMATTER_FENCE = re.compile(r"\A﻿?\s*---\s*\n.*?\n---\s*(?:\n|\Z)", re.DOTALL)
+
+
+def _strip_unparseable_frontmatter(raw_content: str) -> str:
+    """Return the body of a skill whose frontmatter fence will not parse as YAML.
+
+    Drops a leading ``---`` fenced block if present so header keys are not
+    mistaken for body prose; if no complete fence is found the content is
+    returned untouched, because scanning too much is safe and scanning nothing
+    is not.
+    """
+    return _FRONTMATTER_FENCE.sub("", raw_content, count=1)
 
 
 def _str_or_none(val: object) -> str | None:
@@ -67,11 +86,23 @@ def parse_skill_content(raw_content: str, file_path: str = "<stdin>") -> SkillCo
     """
     try:
         post = frontmatter.loads(raw_content)
+        fm_data: dict[str, object] = dict(post.metadata) if post.metadata else {}
+        body: str = post.content
     except Exception as exc:
-        raise ParseError(f"Failed to parse frontmatter in {file_path}: {exc}") from exc
-
-    fm_data: dict[str, object] = dict(post.metadata) if post.metadata else {}
-    body: str = post.content
+        # Unparseable frontmatter must NOT stop the scan. Refusing to analyse a
+        # file whose YAML header is malformed is a working evasion: the payload
+        # lives in the body, so an attacker only has to break the header (a
+        # stray colon is enough) to skip detection entirely. Fall back to
+        # scanning the raw text, minus any leading fenced header, so every
+        # content rule still runs.
+        logger.warning(
+            "Frontmatter in %s did not parse (%s); scanning raw content instead "
+            "so a malformed header cannot be used to evade detection.",
+            file_path,
+            exc,
+        )
+        fm_data = {}
+        body = _strip_unparseable_frontmatter(raw_content)
 
     metadata = _build_metadata(fm_data)
     sha256 = hashlib.sha256(raw_content.encode("utf-8")).hexdigest()
