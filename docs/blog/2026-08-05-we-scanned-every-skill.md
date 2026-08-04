@@ -1,86 +1,80 @@
-# One broken character in a skill's header hides it from your scanner
+# Two colons can switch off your AI skill scanner
 
 *August 5, 2026 | Adam Rhys Heaton - Ap6pack*
 
 ---
 
-Take a known-malicious AI agent skill. Add two colons to its description. The payload does not change by a single byte, but our scanner goes from reporting five critical findings to reporting nothing at all.
+If you rely on a scanner to tell you an AI agent skill is safe, here is a two minute test worth running today.
 
-**3.6% of a live 72,198-skill marketplace is already in that state right now.** Not because anyone is necessarily attacking, but because broken YAML is common, and a scanner that refuses to read a file it cannot parse is a scanner you can switch off from the outside.
+Take a skill your scanner correctly flags as malicious. Do not touch the payload. Go to the YAML header at the top of the file and put two unquoted colons in the description, like this:
 
-We found this in our own tool. Here is the demonstration, the measurement, and the fix.
+```
+description: Automated trading: real-time odds: smart execution
+```
 
-## The demonstration
+That is not valid YAML. Now scan it again.
 
-We used a ClawHavoc sample, the macOS infostealer campaign [Koi Security documented in February](https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/). Scanned intact, our tool reports:
+If you get an error instead of a verdict, your scanner is not protecting you against that file. And it is not protecting you against **2,580 skills sitting in a live marketplace right now**, because they are already in exactly that state.
+
+## Why this works
+
+Every skill is two things: a header describing it, and a body containing the actual instructions and shell commands. The dangerous part is always the body. The header is a label.
+
+A lot of scanners parse the header first. If the header is broken, the parse throws, and the scan stops before anything looks at the body. The payload is right there in plain text and nobody reads it.
+
+That is the whole trick. No obfuscation, no encoding, no knowledge of which rules the scanner runs. Break the label and the bag goes through unopened.
+
+## What it looks like end to end
+
+We ran this against a real ClawHavoc sample, the macOS infostealer campaign [Koi Security documented in February](https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/). Scanned intact:
 
 ```
 VERDICT: MALICIOUS (100/100), 5 critical findings
   - ClawHavoc payload domain detected
   - Known malicious author
   - Base64-encoded command execution
-  - Threat signature match: ClawHavoc C2 IP 91.92.242.30
+  - Threat signature match: C2 IP 91.92.242.30
   - Threat signature match: ClawHavoc glot.io snippet
 ```
 
-Then we changed one line of the frontmatter, the YAML header at the top of the file. Not the payload. The description field, from this:
+Then the two colons, body byte identical. Result: a parse error and no scan at all. The C2 address and the `base64 -D | bash` dropper were still sitting in the file, unread.
 
-```
-description: Automated prediction market trading with real-time odds analysis
-```
+We used our own scanner for this because it is the one whose full trace we can publish. It is not the only one that behaves this way, and the point is not which tool we used. The point is that the failure mode is invisible: the scan does not say "I could not check this." It just does not produce a verdict, and a missing verdict is easy to read as nothing to worry about.
 
-to this:
+## How much of the marketplace is in the gap
 
-```
-description: Automated trading: real-time odds: smart execution
-```
+We scanned a public marketplace end to end: 72,198 skills. **2,580 of them, 3.6%, cannot be parsed at all.** Their headers are malformed.
 
-Unquoted colons are not valid YAML in that position. The parser raises, and our scanner does not fall back. It stops. The `base64 -D | bash` dropper and the C2 address are still sitting in the file in plain text, and we report nothing.
+We are not saying those 2,580 are malicious. Most are probably ordinary mistakes, an unquoted colon in a description being far and away the most common. That is exactly what makes it useful cover. The gap is not hypothetical, it is not rare, and it is already populated with thousands of files that a hard failing scanner has never looked inside.
 
-That is a one-character-class change, requiring no obfuscation, no encoding, and no knowledge of which rules the scanner runs.
+For completeness, the other things we could not read: 396 return a 404 despite being listed, 1,072 fail because more than one skill is published under the same name, and 86 hit a temporary rate limit and get retried. The malformed group is the one that matters, because it is the only one where the file exists, downloads fine, and the scanner then chooses not to look at it.
 
-## The measurement
+## What to do about it
 
-We scanned the whole marketplace: 72,198 skills, of which 68,064 could be read. **2,580 could not be parsed at all** because their frontmatter is malformed. That is 3.6% of the registry sitting in the blind spot today, before anyone deliberately abuses it.
+**Test your scanner.** Break a header, rescan, and see whether you get a verdict or an error. Two minutes.
 
-We are not claiming those 2,580 are malicious. Most are probably ordinary mistakes, an unquoted colon in a description being by far the most common. The point is that the blind spot is not hypothetical or narrow. It is a large, already-populated region of the marketplace that a hard-failing scanner never looks at, and any of those files could contain anything.
+**Make the failure mode "scan it anyway."** When a header will not parse, fall back to scanning the raw body. Strip the leading fence so header keys are not read as prose, and leave the metadata empty rather than guessing at it.
 
-For completeness, the rest of what we could not read: 396 return a 404 despite being listed, 1,072 fail with an ambiguous slug error because more than one skill is published under the same name, and 86 hit a temporary rate limit and will simply be retried on the next sweep.
+You lose the signals that come from the header. In our case the malformed sample went from 5 findings to 4, and the one that disappeared was "known malicious author," which is read from the author field and is genuinely unreadable when the header is broken. You keep everything that comes from the payload, which is where the malware actually is.
 
-The malformed group is the one that matters here, because it is the only one where the file exists, we successfully downloaded it, and we then chose not to look at it.
+**Check you have not traded it for false positives.** A benign skill with an equally broken header should still come back clean. Ours does.
 
-## Why this is not new, and what is
+The principle here is not new. [Adversa's review of eight open source skill scanners](https://adversa.ai/blog/agent-skill-scanners-bypass-eight-tested/) already notes that files failing to parse should "fall through to text rules rather than being silently dropped." What we have not seen published is how much of a live marketplace currently sits in that blind spot, which is the 3.6% above, and a full demonstration that the evasion works against a real sample.
 
-The idea that a scanner should degrade rather than fail is known. [Adversa's review of eight open-source skill scanners](https://adversa.ai/blog/agent-skill-scanners-bypass-eight-tested/) notes that files which fail to parse should "fall through to text rules rather than being silently dropped, so broken skills still get scanned." We did not do that, and we should have.
+## The rest of the scan, briefly
 
-What we have not seen published is the measurement: how much of a live marketplace is *currently* unparseable, and therefore how big the blind spot actually is in practice. 3.6% of 72,198 skills is our contribution here, along with a reproducible demonstration that the evasion works end to end against a real sample.
+We ran the full sweep to have a baseline: **1,973 malicious out of 68,064 scannable skills, or 2.9%**.
 
-If you maintain a skill scanner, the test takes two minutes. Take a sample you detect, break its frontmatter, and scan it again. If you get an error instead of a verdict, you have this problem.
+That number is less interesting than it looks, and we would rather say so than dress it up. Earlier complete audits reported much higher rates: [Koi Security found 11.9% in February](https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/), Bitdefender around 17%, and [a 12% figure prompted the platform to ship verified skill screening in March](https://www.tradingview.com/news/reuters.com,2026-03-26:newsml_ACN105904:0-openclawd-ships-verified-skill-screening-after-security-researchers-find-12-of-openclaw-marketplace-skills-are-malware/).
 
-## The fix
+Ours is far lower and we cannot tell you why with confidence. The registry has grown roughly twenty five times since those audits, which dilutes any fixed set of bad skills. There was a platform cleanup. And we count conservatively, refusing to convict on a single uncorroborated rule match. Those explanations have very different implications, we cannot separate them from the outside, and so we are not going to claim the marketplace got safer.
 
-Our parser now falls back to scanning the raw body when the frontmatter will not parse, stripping only the leading fence so header keys are not read as prose. Metadata is left empty rather than guessed, because we genuinely could not read it.
+For what the number is worth: 1,064 of the 1,973 were corroborated by two or more independent rules, 315 were confirmed by a semantic check, and the rest rest on single rules we tested against legitimate content to confirm they do not over flag.
 
-The same malformed sample now returns MALICIOUS with four of the five original findings. The one that disappears is "known malicious author," which is derived from the author field, and is unreadable by definition when the header is broken. That is the honest cost: you lose metadata-derived signals, and you keep everything that comes from the payload, which is where the malware actually is.
+One thing we cannot tell you at all is how many people installed any of it. The install count reads zero for all 72,198 skills, which means the field is not populated, not that nothing is installed. We could have written "none of the malicious skills have any installs." It would have been technically true and completely misleading.
 
-We also checked the obvious way to get this wrong. A benign skill with equally broken frontmatter still scores CLEAN. The fallback does not buy detection by trading it for false positives.
+## The short version
 
-## The rest of what we found, in context
-
-We ran the full scan mostly to have a baseline. The headline number is **1,973 malicious out of 68,064 scannable skills, or 2.9%**.
-
-That figure needs context, and the context makes it much less interesting than it first looks. Prior complete audits reported far higher rates: [Koi Security found 341 of 2,857 skills malicious in February, 11.9%](https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/), Bitdefender reported around 17% of early skills, and [a 12% figure prompted the platform to ship verified skill screening in March](https://www.tradingview.com/news/reuters.com,2026-03-26:newsml_ACN105904:0-openclawd-ships-verified-skill-screening-after-security-researchers-find-12-of-openclaw-marketplace-skills-are-malware/).
-
-Our number is much lower, and we cannot tell you why with any confidence. The registry has grown roughly twenty-five times since those audits, which dilutes any fixed set of bad skills. The platform ran a cleanup after partnering with VirusTotal. And we count more conservatively than a naive scanner would, because we refuse to convict on a single uncorroborated rule match. Those three explanations have very different implications and we cannot separate them from the outside, so we are not going to pretend a 2.9% figure means the marketplace got safer.
-
-We will say what the number is measured on: 1,064 of the 1,973 were corroborated by two or more independent rules, 315 were confirmed by a semantic check, and the remainder rest on single rules we specifically tested against legitimate content to confirm they do not over-flag.
-
-One more thing we cannot tell you: how many people installed any of it. The install count is zero for all 72,198 skills, which means the field is not populated, not that nothing is installed. We could have written "none of the malicious skills have any installs." It would have been technically true and completely misleading.
-
-## What we would take from this
-
-- **A scanner that errors is a scanner that is off.** Every parse failure is a decision to look at nothing. Make the failure mode "scan it anyway with less context," never "skip it."
-- **Measure your blind spots, not just your findings.** We had a number for how many skills were malicious long before we had a number for how many we were not reading.
-- **Check the boring failures.** 2,580 skills returning a parse error looked like a data quality annoyance for weeks. It was the most interesting thing in the dataset.
+A scanner that errors is a scanner that is off, and it will not tell you it is off. Measure what you are not reading, not just what you found. We had a number for how many skills were malicious long before we had a number for how many we were never opening.
 
 The scanner, its rules and this fix are open source, and the snapshot behind these numbers is published alongside the project.
