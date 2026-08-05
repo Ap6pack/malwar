@@ -124,6 +124,30 @@ class RegistrySnapshot(BaseModel):
         """Skills whose verdict is carried forward and due for a fresh scan."""
         return sum(1 for r in self.skills.values() if r.stale)
 
+    @property
+    def attributed_count(self) -> int:
+        """Skills whose publisher and platform moderation state we have fetched."""
+        return sum(1 for r in self.skills.values() if r.moderation_checked)
+
+    @property
+    def unblocked_malicious_count(self) -> int:
+        """Skills we verified malicious that the platform has screened and cleared.
+
+        Deliberately excludes anything we never checked (``moderation_blocked``
+        defaults False, so an unenriched record would otherwise read as the
+        platform vouching for it) and anything still awaiting the platform's own
+        scan, which is not yet a miss on their part.
+        """
+        return sum(
+            1
+            for r in self.skills.values()
+            if r.verdict == "MALICIOUS"
+            and r.moderation_checked
+            and not r.moderation_blocked
+            and not r.moderation_pending
+            and not r.moderation_suspicious
+        )
+
 
 class SkillChange(BaseModel):
     """A single detected change between two snapshots."""

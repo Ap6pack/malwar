@@ -1037,3 +1037,62 @@ class TestFlaggedEnrichment:
         rec = snap.skills["money-radar"]
         assert rec.is_flagged            # the sweep still produced its verdict
         assert rec.moderation_checked is False
+
+
+class TestAttributionCounters:
+    """The gap counter must never invent a gap out of records we never checked."""
+
+    @staticmethod
+    def _snap(**records: SkillRecord) -> RegistrySnapshot:
+        return RegistrySnapshot(skills=dict(records))
+
+    def test_unchecked_malicious_is_not_counted_as_unblocked(self):
+        # moderation_blocked defaults False. If the counter read that as the
+        # platform's opinion, every unenriched malicious skill would be
+        # published as a screening failure.
+        snap = self._snap(a=SkillRecord(slug="a", verdict="MALICIOUS"))
+        assert snap.attributed_count == 0
+        assert snap.unblocked_malicious_count == 0
+
+    def test_checked_and_cleared_is_the_gap(self):
+        snap = self._snap(
+            a=SkillRecord(slug="a", verdict="MALICIOUS", moderation_checked=True)
+        )
+        assert snap.attributed_count == 1
+        assert snap.unblocked_malicious_count == 1
+
+    def test_blocked_pending_and_suspicious_are_not_gaps(self):
+        # Blocked is a catch. Pending has not been judged yet. Suspicious means
+        # the platform did flag it, just not fatally. None of the three is a miss.
+        snap = self._snap(
+            blocked=SkillRecord(
+                slug="blocked",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_blocked=True,
+            ),
+            pending=SkillRecord(
+                slug="pending",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_pending=True,
+            ),
+            suspect=SkillRecord(
+                slug="suspect",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_suspicious=True,
+            ),
+        )
+        assert snap.attributed_count == 3
+        assert snap.unblocked_malicious_count == 0
+
+    def test_only_malicious_verdicts_count_toward_the_gap(self):
+        # We escalate ambiguous skills rather than convict them; a CAUTION we
+        # never confirmed is not evidence the platform missed anything.
+        snap = self._snap(
+            a=SkillRecord(slug="a", verdict="CAUTION", moderation_checked=True),
+            b=SkillRecord(slug="b", verdict="SUSPICIOUS", moderation_checked=True),
+        )
+        assert snap.attributed_count == 2
+        assert snap.unblocked_malicious_count == 0
