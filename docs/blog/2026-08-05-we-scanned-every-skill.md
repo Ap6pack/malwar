@@ -14,7 +14,9 @@ description: Automated trading: real-time odds: smart execution
 
 That is not valid YAML. Now scan it again.
 
-If you get an error instead of a verdict, your scanner is not protecting you against that file. And it is not protecting you against **2,580 skills sitting in a live marketplace right now**, because they are already in exactly that state.
+If you get an error instead of a verdict, your scanner is not protecting you against that file. And it was not protecting you against **2,580 skills in a live marketplace**, because they were already in exactly that state.
+
+We fixed our own scanner and re-ran it against those 2,580. **86 of them are malicious.** They had been sitting in the registry the entire time, invisible, not because anyone hid them cleverly but because a parse error is a decision to look at nothing.
 
 ## Why this works
 
@@ -45,9 +47,23 @@ We used our own scanner for this because it is the one whose full trace we can p
 
 We scanned a public marketplace end to end: 72,198 skills. **2,580 of them, 3.6%, cannot be parsed at all.** Their headers are malformed.
 
-We are not saying those 2,580 are malicious. Most are probably ordinary mistakes, an unquoted colon in a description being far and away the most common. That is exactly what makes it useful cover. The gap is not hypothetical, it is not rare, and it is already populated with thousands of files that a hard failing scanner has never looked inside.
+Most of those broken headers are probably ordinary mistakes, an unquoted colon in a description being far and away the most common. That is exactly what makes the gap useful cover: it is not hypothetical, it is not rare, and it was already populated with thousands of files no parse-strict scanner had ever looked inside.
 
-For completeness, the other things we could not read: 396 return a 404 despite being listed, 1,072 fail because more than one skill is published under the same name, and 86 hit a temporary rate limit and get retried. The malformed group is the one that matters, because it is the only one where the file exists, downloads fine, and the scanner then chooses not to look at it.
+So we fixed ours and looked. Of the 2,580:
+
+| verdict | count |
+|---|---|
+| Clean | 2,399 |
+| **Malicious** | **86** |
+| Caution | 47 |
+| Suspicious | 37 |
+| Unreadable for other reasons | 11 |
+
+**86 malicious skills had been invisible.** Persistence hooks, environment-variable harvesting, `curl | sh` droppers, credential exfiltration. Ordinary bad things, in files nothing was reading.
+
+One number we checked specifically, because it would have made a better story if it went the other way: **broken-header skills are not disproportionately malicious.** They are malicious at 3.35% against a 2.90% baseline, a 1.15x difference, which is noise. We found no evidence anyone is deliberately breaking headers to hide. The finding is not that attackers discovered this trick. It is that the blind spot is real, it is large, and it was concealing 86 genuine detections by accident alone. What an attacker who *did* notice could do with it is left as an exercise.
+
+For completeness, the other things we could not read: 396 return a 404 despite being listed, 1,072 fail because more than one skill is published under the same name, and 86 hit a temporary rate limit and get retried. The malformed group is the one that mattered, because it is the only one where the file exists, downloads fine, and the scanner then chooses not to look at it.
 
 ## What to do about it
 
@@ -63,13 +79,13 @@ The principle here is not new. [Adversa's review of eight open source skill scan
 
 ## The rest of the scan, briefly
 
-We ran the full sweep to have a baseline: **1,973 malicious out of 68,064 scannable skills, or 2.9%**.
+We ran the full sweep to have a baseline. With the 2,580 previously-unreadable skills now included, that is **2,065 malicious out of 70,699 scanned, or 2.9%**.
 
 That number is less interesting than it looks, and we would rather say so than dress it up. Earlier complete audits reported much higher rates: [Koi Security found 11.9% in February](https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/), Bitdefender around 17%, and [a 12% figure prompted the platform to ship verified skill screening in March](https://www.tradingview.com/news/reuters.com,2026-03-26:newsml_ACN105904:0-openclawd-ships-verified-skill-screening-after-security-researchers-find-12-of-openclaw-marketplace-skills-are-malware/).
 
 Ours is far lower and we cannot tell you why with confidence. The registry has grown roughly twenty five times since those audits, which dilutes any fixed set of bad skills. There was a platform cleanup. And we count conservatively, refusing to convict on a single uncorroborated rule match. Those explanations have very different implications, we cannot separate them from the outside, and so we are not going to claim the marketplace got safer.
 
-For what the number is worth: 1,064 of the 1,973 were corroborated by two or more independent rules, 315 were confirmed by a semantic check, and the rest rest on single rules we tested against legitimate content to confirm they do not over flag.
+For what the number is worth: 1,107 of the 2,065 were corroborated by two or more independent rules, 336 were confirmed by a semantic check, and the rest rest on single rules we tested against legitimate content to confirm they do not over flag.
 
 One thing we cannot tell you at all is how many people installed any of it. The install count reads zero for all 72,198 skills, which means the field is not populated, not that nothing is installed. We could have written "none of the malicious skills have any installs." It would have been technically true and completely misleading.
 

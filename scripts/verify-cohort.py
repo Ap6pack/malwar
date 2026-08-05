@@ -53,6 +53,28 @@ def select(snapshot: dict, pattern: str, verdict: str, require_behavioural: bool
     return sorted(out)
 
 
+# Infrastructure worth correlating across a cohort. A shared C2 host, endpoint
+# or literal payload across several skills is what separates "these all tripped
+# the same rule" from "these are the same operator".
+_URL_RE = re.compile(r"https?://[^\s'\"`)>\]]+")
+_IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+_B64_RE = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
+
+
+def extract_iocs(content: str) -> dict[str, list[str]]:
+    """Pull the indicators worth comparing between members of a cohort."""
+    from urllib.parse import urlparse
+
+    urls = _URL_RE.findall(content)
+    hosts = sorted({(urlparse(u).hostname or "").lower() for u in urls} - {""})
+    return {
+        "hosts": hosts,
+        "urls": sorted(set(urls)),
+        "ips": sorted(set(_IPV4_RE.findall(content))),
+        "b64_blobs": sorted(set(_B64_RE.findall(content))),
+    }
+
+
 async def verify(slugs: list[str], concurrency: int) -> list[dict]:
     from malwar.crawl.client import ClawHubClient
     from malwar.sdk import scan
@@ -81,16 +103,41 @@ async def verify(slugs: list[str], concurrency: int) -> list[dict]:
                 "risk_score": res.risk_score,
                 "rules": sorted({f.rule_id for f in res.findings if not f.suppressed}),
                 "suppressed": sorted({f.rule_id for f in res.findings if f.suppressed}),
+                "iocs": extract_iocs(content),
             })
 
     await asyncio.gather(*(one(s) for s in slugs))
     return sorted(results, key=lambda r: r["slug"])
 
 
+def correlate(results: list[dict]) -> dict[str, dict[str, list[str]]]:
+    """Indicators appearing in more than one cohort member, by kind.
+
+    This is the campaign test. Members tripping the same rule proves only that
+    they share a behaviour; members pointing at the same host, endpoint or
+    literal blob is evidence they share an operator.
+    """
+    shared: dict[str, dict[str, list[str]]] = {}
+    for kind in ("hosts", "urls", "ips", "b64_blobs"):
+        seen: dict[str, list[str]] = {}
+        for r in results:
+            for val in (r.get("iocs") or {}).get(kind, []):
+                seen.setdefault(val, []).append(r["slug"])
+        multi = {v: sorted(s) for v, s in seen.items() if len(set(s)) > 1}
+        if multi:
+            shared[kind] = dict(sorted(multi.items(), key=lambda kv: -len(kv[1])))
+    return shared
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("snapshot", type=Path)
-    ap.add_argument("--slug-pattern", required=True, help="regex the slug must match")
+    ap.add_argument(
+        "--slugs",
+        help="comma-separated slugs; bypasses snapshot selection entirely "
+             "(for a cohort defined by behaviour over time rather than by name)",
+    )
+    ap.add_argument("--slug-pattern", help="regex the slug must match")
     ap.add_argument("--verdict", default="MALICIOUS", help="snapshot verdict to select")
     ap.add_argument(
         "--require-behavioural",
@@ -102,8 +149,13 @@ def main() -> None:
     ap.add_argument("--output", type=Path, help="write full JSON results here")
     args = ap.parse_args()
 
-    snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
-    slugs = select(snapshot, args.slug_pattern, args.verdict, args.require_behavioural)
+    if args.slugs:
+        slugs = [s.strip() for s in args.slugs.split(",") if s.strip()]
+    else:
+        if not args.slug_pattern:
+            ap.error("provide either --slugs or --slug-pattern")
+        snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
+        slugs = select(snapshot, args.slug_pattern, args.verdict, args.require_behavioural)
     if args.limit:
         slugs = slugs[: args.limit]
     if not slugs:
@@ -130,7 +182,20 @@ def main() -> None:
         print(f"\n  confirmed malicious: {confirmed}/{checked} "
               f"({confirmed / checked * 100:.1f}% of those the LLM could read)", file=sys.stderr)
 
-    payload = {"cohort_size": len(slugs), "counts": counts, "results": results}
+    shared = correlate(results)
+    print("\n=== shared infrastructure across the cohort ===", file=sys.stderr)
+    if not shared:
+        print("  none. Members share a behaviour, not an operator:\n"
+              "  no host, URL, IP or literal blob appears in more than one skill.",
+              file=sys.stderr)
+    else:
+        for kind, vals in shared.items():
+            print(f"  {kind}:", file=sys.stderr)
+            for val, owners in list(vals.items())[:10]:
+                print(f"    {len(owners):3} skills  {val[:88]}", file=sys.stderr)
+
+    payload = {"cohort_size": len(slugs), "counts": counts,
+               "shared_infrastructure": shared, "results": results}
     if args.output:
         args.output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     else:
