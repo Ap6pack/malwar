@@ -13,10 +13,14 @@ name: Verify Cohort
 on:
   workflow_dispatch:
     inputs:
-      slug_pattern:
-        description: "Regex a slug must match to join the cohort"
+      slugs:
+        description: "Explicit comma-separated slugs (for a cohort defined by behaviour over time). Overrides slug_pattern."
         type: string
-        required: true
+        default: ""
+      slug_pattern:
+        description: "Regex a slug must match to join the cohort (ignored if slugs is set)"
+        type: string
+        default: ""
       verdict:
         description: "Snapshot verdict to select"
         type: string
@@ -66,19 +70,23 @@ jobs:
       - name: Verify cohort
         env:
           MALWAR_ANTHROPIC_API_KEY: ${{ secrets.MALWAR_ANTHROPIC_API_KEY }}
+          SLUGS: ${{ github.event.inputs.slugs }}
           SLUG_PATTERN: ${{ github.event.inputs.slug_pattern }}
           VERDICT: ${{ github.event.inputs.verdict }}
           LIMIT: ${{ github.event.inputs.limit }}
           BEHAVIOURAL: ${{ github.event.inputs.require_behavioural }}
         run: |
-          EXTRA=""
-          [ "$BEHAVIOURAL" = "true" ] && EXTRA="--require-behavioural"
+          ARGS=""
+          if [ -n "$SLUGS" ]; then
+            ARGS="--slugs $SLUGS"
+          else
+            ARGS="--slug-pattern $SLUG_PATTERN --verdict $VERDICT"
+            [ "$BEHAVIOURAL" = "true" ] && ARGS="$ARGS --require-behavioural"
+          fi
           python scripts/verify-cohort.py \
             data/registry-snapshots/latest.json \
-            --slug-pattern "$SLUG_PATTERN" \
-            --verdict "$VERDICT" \
+            $ARGS \
             --limit "$LIMIT" \
-            $EXTRA \
             --output cohort-results.json
 
       - name: Upload results
