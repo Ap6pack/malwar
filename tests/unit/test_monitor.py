@@ -981,6 +981,51 @@ class TestFlaggedEnrichment:
         assert client.detail_fetches == []
         assert snap.skills["money-radar"].moderation_checked is False
 
+    async def test_backfill_attributes_carried_forward_flagged_skills(self):
+        # A flagged skill reused unchanged from the previous snapshot is never
+        # rescanned, so without backfill it would stay unattributed until the
+        # rotation happened to reach it.
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        first = await build_snapshot(client, enrich_flagged=False)
+        assert first.skills["money-radar"].moderation_checked is False
+
+        client.detail_fetches.clear()
+        second = await build_snapshot(client, previous=first)
+        assert client.file_fetches.count("money-radar") == 1  # reused, not rescanned
+        assert client.detail_fetches == ["money-radar"]
+        assert second.skills["money-radar"].moderation_checked is True
+        assert second.skills["money-radar"].publisher == "publisher"
+
+    async def test_backfill_skips_already_attributed_skills(self):
+        # Attribution does not change, so re-fetching it every run would spend
+        # the flagged tail's request budget on nothing.
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        first = await build_snapshot(client)
+        assert first.skills["money-radar"].moderation_checked is True
+
+        client.detail_fetches.clear()
+        await build_snapshot(client, previous=first)
+        assert client.detail_fetches == []
+
+    async def test_backfill_limit_bounds_the_extra_requests(self):
+        client = FakeClawHubClient({f"bad-{i}": MALICIOUS_BODY for i in range(5)})
+        first = await build_snapshot(client, enrich_flagged=False)
+        assert all(r.is_flagged for r in first.skills.values())
+
+        client.detail_fetches.clear()
+        second = await build_snapshot(client, previous=first, enrich_backfill_limit=2)
+        assert len(client.detail_fetches) == 2
+        checked = [s for s, r in second.skills.items() if r.moderation_checked]
+        assert len(checked) == 2
+
+    async def test_backfill_can_be_disabled(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        first = await build_snapshot(client, enrich_flagged=False)
+
+        client.detail_fetches.clear()
+        await build_snapshot(client, previous=first, enrich_backfill_limit=0)
+        assert client.detail_fetches == []
+
     async def test_detail_failure_is_not_fatal(self):
         client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
 

@@ -327,6 +327,7 @@ async def build_snapshot(
     concurrency: int = 8,
     page_size: int = 50,
     enrich_flagged: bool = True,
+    enrich_backfill_limit: int = 500,
     on_progress: ProgressCallback | None = None,
 ) -> RegistrySnapshot:
     """Crawl and scan the registry into a :class:`RegistrySnapshot`.
@@ -378,6 +379,11 @@ async def build_snapshot(
         that ended up flagged, to record who published them and what ClawHub's
         own moderation says. Costs one extra request per flagged skill, so it is
         affordable only once the baseline exists; set False to skip it.
+    enrich_backfill_limit:
+        Per-run cap on how many *already-flagged* skills from earlier snapshots
+        get attributed, so the existing flagged tail is covered over a bounded
+        number of runs instead of whenever the rescan rotation reaches it. 0
+        disables backfill and enriches only what was scanned this run.
     on_progress:
         Optional callback ``(done, total, slug)`` for progress reporting.
     """
@@ -577,12 +583,27 @@ async def build_snapshot(
     # compared against the platform's: a skill we verified malicious that the
     # platform has not blocked is a gap in their screening, which is only
     # meaningful if we can also tell "not blocked" from "not scanned yet".
+    #
+    # Flagged skills scanned this run are always enriched. Flagged skills
+    # carried forward from an earlier snapshot are enriched too, but only up to
+    # ``enrich_backfill_limit`` per run: without that backfill, attribution for
+    # the existing flagged tail would arrive only when the least-recently-scanned
+    # rotation happened to reach each skill, which makes any cross-registry
+    # analysis wait on luck. With it, coverage is bounded and predictable.
     if enrich_flagged:
+        rescanned = {meta.slug for meta in to_scan}
         flagged = [
-            meta.slug
-            for meta in to_scan
-            if (r := snapshot.skills.get(meta.slug)) is not None and r.is_flagged
+            slug
+            for slug, rec in snapshot.skills.items()
+            if rec.is_flagged and slug in rescanned
         ]
+        if enrich_backfill_limit > 0:
+            backfill = [
+                slug
+                for slug, rec in snapshot.skills.items()
+                if rec.is_flagged and slug not in rescanned and not rec.moderation_checked
+            ]
+            flagged.extend(backfill[:enrich_backfill_limit])
         if flagged:
             enrich_sem = asyncio.Semaphore(max(1, concurrency))
 
