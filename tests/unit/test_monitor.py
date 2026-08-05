@@ -940,3 +940,159 @@ class TestStaleSemanticsAndDiffLabelling:
         assert deferred and rescanned, "expected one deferred and one re-scanned"
         assert "NOT yet re-scanned" in details[deferred[0]]
         assert "NOT yet re-scanned" not in details[rescanned[0]]
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: attribution + platform moderation for flagged skills
+# ---------------------------------------------------------------------------
+
+class TestFlaggedEnrichment:
+    async def test_flagged_skill_gets_publisher_and_moderation(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        snap = await build_snapshot(client)
+        rec = snap.skills["money-radar"]
+        assert rec.is_flagged
+        assert rec.publisher == "publisher"
+        assert rec.moderation_checked is True
+        assert client.detail_fetches == ["money-radar"]
+
+    async def test_clean_skills_are_not_enriched(self):
+        # The detail endpoint doubles the per-skill request cost, so it must
+        # only ever be spent on the flagged tail.
+        client = FakeClawHubClient({"good": BENIGN_BODY, "money-radar": MALICIOUS_BODY})
+        snap = await build_snapshot(client)
+        assert client.detail_fetches == ["money-radar"]
+        assert snap.skills["good"].moderation_checked is False
+        assert snap.skills["good"].publisher == ""
+
+    async def test_unchecked_is_distinguishable_from_not_blocked(self):
+        # moderation_blocked defaults False. Without moderation_checked, a skill
+        # we never asked about would read as "the platform says it is fine",
+        # which is the whole claim the gap analysis rests on.
+        client = FakeClawHubClient({"good": BENIGN_BODY})
+        snap = await build_snapshot(client)
+        rec = snap.skills["good"]
+        assert rec.moderation_blocked is False
+        assert rec.moderation_checked is False  # so the False above means nothing
+
+    async def test_enrichment_can_be_disabled(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        snap = await build_snapshot(client, enrich_flagged=False)
+        assert client.detail_fetches == []
+        assert snap.skills["money-radar"].moderation_checked is False
+
+    async def test_backfill_attributes_carried_forward_flagged_skills(self):
+        # A flagged skill reused unchanged from the previous snapshot is never
+        # rescanned, so without backfill it would stay unattributed until the
+        # rotation happened to reach it.
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        first = await build_snapshot(client, enrich_flagged=False)
+        assert first.skills["money-radar"].moderation_checked is False
+
+        client.detail_fetches.clear()
+        second = await build_snapshot(client, previous=first)
+        assert client.file_fetches.count("money-radar") == 1  # reused, not rescanned
+        assert client.detail_fetches == ["money-radar"]
+        assert second.skills["money-radar"].moderation_checked is True
+        assert second.skills["money-radar"].publisher == "publisher"
+
+    async def test_backfill_skips_already_attributed_skills(self):
+        # Attribution does not change, so re-fetching it every run would spend
+        # the flagged tail's request budget on nothing.
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        first = await build_snapshot(client)
+        assert first.skills["money-radar"].moderation_checked is True
+
+        client.detail_fetches.clear()
+        await build_snapshot(client, previous=first)
+        assert client.detail_fetches == []
+
+    async def test_backfill_limit_bounds_the_extra_requests(self):
+        client = FakeClawHubClient({f"bad-{i}": MALICIOUS_BODY for i in range(5)})
+        first = await build_snapshot(client, enrich_flagged=False)
+        assert all(r.is_flagged for r in first.skills.values())
+
+        client.detail_fetches.clear()
+        second = await build_snapshot(client, previous=first, enrich_backfill_limit=2)
+        assert len(client.detail_fetches) == 2
+        checked = [s for s, r in second.skills.items() if r.moderation_checked]
+        assert len(checked) == 2
+
+    async def test_backfill_can_be_disabled(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        first = await build_snapshot(client, enrich_flagged=False)
+
+        client.detail_fetches.clear()
+        await build_snapshot(client, previous=first, enrich_backfill_limit=0)
+        assert client.detail_fetches == []
+
+    async def test_detail_failure_is_not_fatal(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+
+        async def _boom(slug):
+            raise ClawHubError("detail unavailable")
+
+        client.get_skill = _boom  # type: ignore[assignment]
+        snap = await build_snapshot(client)
+        rec = snap.skills["money-radar"]
+        assert rec.is_flagged            # the sweep still produced its verdict
+        assert rec.moderation_checked is False
+
+
+class TestAttributionCounters:
+    """The gap counter must never invent a gap out of records we never checked."""
+
+    @staticmethod
+    def _snap(**records: SkillRecord) -> RegistrySnapshot:
+        return RegistrySnapshot(skills=dict(records))
+
+    def test_unchecked_malicious_is_not_counted_as_unblocked(self):
+        # moderation_blocked defaults False. If the counter read that as the
+        # platform's opinion, every unenriched malicious skill would be
+        # published as a screening failure.
+        snap = self._snap(a=SkillRecord(slug="a", verdict="MALICIOUS"))
+        assert snap.attributed_count == 0
+        assert snap.unblocked_malicious_count == 0
+
+    def test_checked_and_cleared_is_the_gap(self):
+        snap = self._snap(
+            a=SkillRecord(slug="a", verdict="MALICIOUS", moderation_checked=True)
+        )
+        assert snap.attributed_count == 1
+        assert snap.unblocked_malicious_count == 1
+
+    def test_blocked_pending_and_suspicious_are_not_gaps(self):
+        # Blocked is a catch. Pending has not been judged yet. Suspicious means
+        # the platform did flag it, just not fatally. None of the three is a miss.
+        snap = self._snap(
+            blocked=SkillRecord(
+                slug="blocked",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_blocked=True,
+            ),
+            pending=SkillRecord(
+                slug="pending",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_pending=True,
+            ),
+            suspect=SkillRecord(
+                slug="suspect",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_suspicious=True,
+            ),
+        )
+        assert snap.attributed_count == 3
+        assert snap.unblocked_malicious_count == 0
+
+    def test_only_malicious_verdicts_count_toward_the_gap(self):
+        # We escalate ambiguous skills rather than convict them; a CAUTION we
+        # never confirmed is not evidence the platform missed anything.
+        snap = self._snap(
+            a=SkillRecord(slug="a", verdict="CAUTION", moderation_checked=True),
+            b=SkillRecord(slug="b", verdict="SUSPICIOUS", moderation_checked=True),
+        )
+        assert snap.attributed_count == 2
+        assert snap.unblocked_malicious_count == 0

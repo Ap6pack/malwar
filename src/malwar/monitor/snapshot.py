@@ -326,6 +326,8 @@ async def build_snapshot(
     escalation_policy: EscalationPolicy | None = None,
     concurrency: int = 8,
     page_size: int = 50,
+    enrich_flagged: bool = True,
+    enrich_backfill_limit: int = 500,
     on_progress: ProgressCallback | None = None,
 ) -> RegistrySnapshot:
     """Crawl and scan the registry into a :class:`RegistrySnapshot`.
@@ -372,6 +374,16 @@ async def build_snapshot(
         :class:`~malwar.monitor.escalation.EscalationPolicy`.
     concurrency:
         Maximum number of skills scanned in parallel.
+    enrich_flagged:
+        After verdicts are final, fetch the per-skill detail endpoint for skills
+        that ended up flagged, to record who published them and what ClawHub's
+        own moderation says. Costs one extra request per flagged skill, so it is
+        affordable only once the baseline exists; set False to skip it.
+    enrich_backfill_limit:
+        Per-run cap on how many *already-flagged* skills from earlier snapshots
+        get attributed, so the existing flagged tail is covered over a bounded
+        number of runs instead of whenever the rescan rotation reaches it. 0
+        disables backfill and enriches only what was scanned this run.
     on_progress:
         Optional callback ``(done, total, slug)`` for progress reporting.
     """
@@ -557,6 +569,76 @@ async def build_snapshot(
             downgraded,
         )
     snapshot.downgraded_count = downgraded
+
+    # --- Phase 3: attribution + platform moderation for flagged skills ---
+    # Runs last, so verdicts are final and we only spend a request on skills that
+    # actually ended up flagged. The listing gives no owner, so this is the only
+    # way to know who published a skill: without it, "campaign" analysis can only
+    # guess an operator from slug prefixes, which conflates one vendor's branded
+    # portfolio with a coordinated actor. Fetching this for the whole registry
+    # would double every sweep; fetching it for the flagged tail costs almost
+    # nothing now the baseline exists.
+    #
+    # It also records ClawHub's own moderation state, so our verdict can be
+    # compared against the platform's: a skill we verified malicious that the
+    # platform has not blocked is a gap in their screening, which is only
+    # meaningful if we can also tell "not blocked" from "not scanned yet".
+    #
+    # Flagged skills scanned this run are always enriched. Flagged skills
+    # carried forward from an earlier snapshot are enriched too, but only up to
+    # ``enrich_backfill_limit`` per run: without that backfill, attribution for
+    # the existing flagged tail would arrive only when the least-recently-scanned
+    # rotation happened to reach each skill, which makes any cross-registry
+    # analysis wait on luck. With it, coverage is bounded and predictable.
+    if enrich_flagged:
+        rescanned = {meta.slug for meta in to_scan}
+        flagged = [
+            slug
+            for slug, rec in snapshot.skills.items()
+            if rec.is_flagged and slug in rescanned
+        ]
+        if enrich_backfill_limit > 0:
+            backfill = [
+                slug
+                for slug, rec in snapshot.skills.items()
+                if rec.is_flagged and slug not in rescanned and not rec.moderation_checked
+            ]
+            flagged.extend(backfill[:enrich_backfill_limit])
+        if flagged:
+            enrich_sem = asyncio.Semaphore(max(1, concurrency))
+
+            async def _enrich(slug: str) -> None:
+                async with enrich_sem:
+                    try:
+                        detail = await client.get_skill(slug)
+                    except Exception as exc:  # never fatal; attribution is a bonus
+                        logger.debug("detail fetch failed for %s: %s", slug, exc)
+                        return
+                rec = snapshot.skills[slug]
+                if detail.owner is not None:
+                    rec.publisher = detail.owner.username
+                if detail.moderation is not None:
+                    rec.moderation_blocked = detail.moderation.is_malware_blocked
+                    rec.moderation_suspicious = detail.moderation.is_suspicious
+                    rec.moderation_pending = detail.moderation.is_pending_scan
+                rec.moderation_checked = True
+
+            await asyncio.gather(*(_enrich(slug) for slug in flagged))
+            enriched = sum(1 for s in flagged if snapshot.skills[s].moderation_checked)
+            unblocked = sum(
+                1
+                for s in flagged
+                if (r := snapshot.skills[s]).moderation_checked
+                and r.verdict == "MALICIOUS"
+                and not r.moderation_blocked
+            )
+            logger.info(
+                "enrichment: %d/%d flagged skills attributed; %d MALICIOUS not "
+                "blocked by the platform",
+                enriched,
+                len(flagged),
+                unblocked,
+            )
 
     return snapshot
 

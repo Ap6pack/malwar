@@ -557,6 +557,23 @@ def crawl_monitor(
             "own maximum if this exceeds it).",
         ),
     ] = 100,
+    no_enrich: Annotated[
+        bool,
+        typer.Option(
+            "--no-enrich",
+            help="Skip fetching publisher and platform moderation state for "
+            "flagged skills (saves one request each, loses attribution).",
+        ),
+    ] = False,
+    enrich_backfill: Annotated[
+        int,
+        typer.Option(
+            "--enrich-backfill",
+            help="Per-run cap on attributing already-flagged skills from earlier "
+            "snapshots, so the existing flagged tail is covered over a bounded "
+            "number of runs rather than whenever the rescan rotation reaches it.",
+        ),
+    ] = 500,
 ) -> None:
     """Scan the registry incrementally and diff against the last snapshot.
 
@@ -584,6 +601,8 @@ def crawl_monitor(
             full=full,
             max_scans=max_scans,
             page_size=page_size,
+            enrich_flagged=not no_enrich,
+            enrich_backfill=enrich_backfill,
         )
     )
     raise typer.Exit(exit_code)
@@ -605,6 +624,8 @@ async def _async_monitor(
     full: bool = False,
     max_scans: int | None = None,
     page_size: int = 100,
+    enrich_flagged: bool = True,
+    enrich_backfill: int = 500,
 ) -> int:
     from rich.progress import BarColumn, Progress, TextColumn
 
@@ -653,6 +674,8 @@ async def _async_monitor(
             escalation_policy=policy,
             concurrency=concurrency,
             page_size=page_size,
+            enrich_flagged=enrich_flagged,
+            enrich_backfill_limit=enrich_backfill,
             on_progress=_on_progress,
         )
 
@@ -668,6 +691,11 @@ async def _async_monitor(
         summary += f", deferred {snapshot.pending_count} to next run"
     if snapshot.escalated_count:
         summary += f", escalated {snapshot.escalated_count} to '{backend.name}'"
+    if snapshot.attributed_count:
+        summary += (
+            f", attributed {snapshot.attributed_count} flagged "
+            f"({snapshot.unblocked_malicious_count} malicious unblocked upstream)"
+        )
     console.print(summary + ".[/dim]")
 
     diff = diff_snapshots(previous, snapshot)

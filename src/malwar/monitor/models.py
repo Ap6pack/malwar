@@ -53,8 +53,17 @@ class SkillRecord(BaseModel):
     escalation_backend: str = ""
     escalation_verdict: str = ""
     escalation_score: float | None = None
+    # ClawHub's own moderation state, fetched for flagged skills only (see the
+    # enrichment phase in monitor.snapshot). Lets us compare our verdict against
+    # the platform's: a skill we verify malicious that the platform has not
+    # blocked is a gap in *their* screening, and distinguishing "scanned and not
+    # blocked" from "not scanned yet" needs the pending flag as well.
     moderation_blocked: bool = False
     moderation_suspicious: bool = False
+    moderation_pending: bool = False
+    # True once we have actually fetched the detail endpoint for this skill, so
+    # an unenriched record is never mistaken for "platform says it is fine".
+    moderation_checked: bool = False
     scanned_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat()
     )
@@ -114,6 +123,30 @@ class RegistrySnapshot(BaseModel):
     def stale_count(self) -> int:
         """Skills whose verdict is carried forward and due for a fresh scan."""
         return sum(1 for r in self.skills.values() if r.stale)
+
+    @property
+    def attributed_count(self) -> int:
+        """Skills whose publisher and platform moderation state we have fetched."""
+        return sum(1 for r in self.skills.values() if r.moderation_checked)
+
+    @property
+    def unblocked_malicious_count(self) -> int:
+        """Skills we verified malicious that the platform has screened and cleared.
+
+        Deliberately excludes anything we never checked (``moderation_blocked``
+        defaults False, so an unenriched record would otherwise read as the
+        platform vouching for it) and anything still awaiting the platform's own
+        scan, which is not yet a miss on their part.
+        """
+        return sum(
+            1
+            for r in self.skills.values()
+            if r.verdict == "MALICIOUS"
+            and r.moderation_checked
+            and not r.moderation_blocked
+            and not r.moderation_pending
+            and not r.moderation_suspicious
+        )
 
 
 class SkillChange(BaseModel):
