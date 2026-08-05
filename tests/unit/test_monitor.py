@@ -940,3 +940,55 @@ class TestStaleSemanticsAndDiffLabelling:
         assert deferred and rescanned, "expected one deferred and one re-scanned"
         assert "NOT yet re-scanned" in details[deferred[0]]
         assert "NOT yet re-scanned" not in details[rescanned[0]]
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: attribution + platform moderation for flagged skills
+# ---------------------------------------------------------------------------
+
+class TestFlaggedEnrichment:
+    async def test_flagged_skill_gets_publisher_and_moderation(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        snap = await build_snapshot(client)
+        rec = snap.skills["money-radar"]
+        assert rec.is_flagged
+        assert rec.publisher == "publisher"
+        assert rec.moderation_checked is True
+        assert client.detail_fetches == ["money-radar"]
+
+    async def test_clean_skills_are_not_enriched(self):
+        # The detail endpoint doubles the per-skill request cost, so it must
+        # only ever be spent on the flagged tail.
+        client = FakeClawHubClient({"good": BENIGN_BODY, "money-radar": MALICIOUS_BODY})
+        snap = await build_snapshot(client)
+        assert client.detail_fetches == ["money-radar"]
+        assert snap.skills["good"].moderation_checked is False
+        assert snap.skills["good"].publisher == ""
+
+    async def test_unchecked_is_distinguishable_from_not_blocked(self):
+        # moderation_blocked defaults False. Without moderation_checked, a skill
+        # we never asked about would read as "the platform says it is fine",
+        # which is the whole claim the gap analysis rests on.
+        client = FakeClawHubClient({"good": BENIGN_BODY})
+        snap = await build_snapshot(client)
+        rec = snap.skills["good"]
+        assert rec.moderation_blocked is False
+        assert rec.moderation_checked is False  # so the False above means nothing
+
+    async def test_enrichment_can_be_disabled(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        snap = await build_snapshot(client, enrich_flagged=False)
+        assert client.detail_fetches == []
+        assert snap.skills["money-radar"].moderation_checked is False
+
+    async def test_detail_failure_is_not_fatal(self):
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+
+        async def _boom(slug):
+            raise ClawHubError("detail unavailable")
+
+        client.get_skill = _boom  # type: ignore[assignment]
+        snap = await build_snapshot(client)
+        rec = snap.skills["money-radar"]
+        assert rec.is_flagged            # the sweep still produced its verdict
+        assert rec.moderation_checked is False

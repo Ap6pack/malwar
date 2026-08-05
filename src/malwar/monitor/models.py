@@ -53,8 +53,17 @@ class SkillRecord(BaseModel):
     escalation_backend: str = ""
     escalation_verdict: str = ""
     escalation_score: float | None = None
+    # ClawHub's own moderation state, fetched for flagged skills only (see the
+    # enrichment phase in monitor.snapshot). Lets us compare our verdict against
+    # the platform's: a skill we verify malicious that the platform has not
+    # blocked is a gap in *their* screening, and distinguishing "scanned and not
+    # blocked" from "not scanned yet" needs the pending flag as well.
     moderation_blocked: bool = False
     moderation_suspicious: bool = False
+    moderation_pending: bool = False
+    # True once we have actually fetched the detail endpoint for this skill, so
+    # an unenriched record is never mistaken for "platform says it is fine".
+    moderation_checked: bool = False
     scanned_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat()
     )
