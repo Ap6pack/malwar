@@ -36,6 +36,10 @@ class SkillRecord(BaseModel):
     slug: str
     display_name: str = ""
     publisher: str = ""
+    # The registry's immutable account id. Handles can be renamed by their
+    # owner, so clustering a campaign on the handle alone can split one operator
+    # in two or merge two that reused a name.
+    publisher_id: str = ""
     version: str | None = None
     updated_at: int | None = None
     content_sha256: str | None = None

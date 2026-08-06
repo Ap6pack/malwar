@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 
 class VersionInfo(BaseModel):
@@ -67,9 +67,28 @@ class ModerationInfo(BaseModel):
 
 
 class OwnerInfo(BaseModel):
-    """Skill owner/publisher info."""
+    """Skill owner/publisher info.
 
-    username: str = ""
+    The registry calls the account name ``handle``, not ``username``. Because
+    pydantic ignores unknown keys by default, validating a real response against
+    a model expecting ``username`` succeeds and silently yields an empty string,
+    which is how 992 enriched skills ended up with no publisher. ``handle`` is
+    accepted as an alias so a rename upstream fails loudly instead of quietly.
+
+    ``user_id`` is the durable key. Handles can be changed by their owner, so
+    clustering a campaign on one risks splitting an operator in two or merging
+    two operators that reused a name.
+    """
+
+    username: str = Field(
+        default="", validation_alias=AliasChoices("username", "handle")
+    )
+    user_id: str = Field(default="", validation_alias=AliasChoices("userId", "user_id"))
+    display_name: str = Field(
+        default="", validation_alias=AliasChoices("displayName", "display_name")
+    )
+
+    model_config = {"populate_by_name": True}
 
 
 class SkillDetail(BaseModel):

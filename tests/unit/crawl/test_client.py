@@ -337,3 +337,69 @@ class TestConnectionResilience:
     def test_retries_configurable(self):
         assert ClawHubClient(retries=0).retries == 0
         assert ClawHubClient(retries=5).retries == 5
+
+
+class TestGetSkillRealResponseShape:
+    """Pin the layout the registry actually returns, not the one we assumed.
+
+    The pre-existing test for get_skill asserts an owner shaped
+    ``{"username": ...}``. The live endpoint returns ``{"handle": ...}``, and
+    because pydantic ignores unknown keys, validating one against the other
+    succeeds and yields an empty username. That is why a full sweep attributed
+    992 skills to nobody while every test passed. This response body is copied
+    from an actual API reply.
+    """
+
+    LIVE_RESPONSE = {
+        "skill": {
+            "slug": "accountant",
+            "displayName": "Accountant",
+            "summary": "a summary",
+            "icon": None,
+            "description": "a description",
+            "tags": {"latest": "1.0.0"},
+            "stats": {"comments": 0, "downloads": 12, "installs": 0,
+                      "stars": 0, "versions": 1},
+            "createdAt": 1700000000000,
+            "updatedAt": 1700000000000,
+        },
+        "latestVersion": {"version": "1.0.0", "createdAt": 1700000000000,
+                          "changelog": "", "license": "MIT"},
+        "metadata": {"setup": [], "os": ["linux", "darwin", "win32"], "systems": None},
+        "owner": {
+            "handle": "ivangdavila",
+            "userId": "s178jdk12x4qj3gs2se3etxf3h83h7ft",
+            "displayName": "Iván",
+            "image": "https://avatars.githubusercontent.com/u/81719670?v=4",
+        },
+        # Present as a key, but null. Absence of a moderation block is not the
+        # platform saying a skill is fine.
+        "moderation": None,
+    }
+
+    @pytest.mark.asyncio
+    async def test_owner_handle_is_read_as_the_publisher(self):
+        client = ClawHubClient()
+        with patch.object(
+            client, "_client",
+            return_value=_mock_client(_json_response(self.LIVE_RESPONSE)),
+        ):
+            detail = await client.get_skill("accountant")
+
+        assert detail.owner is not None
+        assert detail.owner.username == "ivangdavila"
+        assert detail.owner.user_id == "s178jdk12x4qj3gs2se3etxf3h83h7ft"
+        assert detail.owner.display_name == "Iván"
+
+    @pytest.mark.asyncio
+    async def test_null_moderation_stays_none(self):
+        client = ClawHubClient()
+        with patch.object(
+            client, "_client",
+            return_value=_mock_client(_json_response(self.LIVE_RESPONSE)),
+        ):
+            detail = await client.get_skill("accountant")
+
+        # Not a ModerationInfo with everything False, which would read as a
+        # clean bill of health from a platform that told us nothing.
+        assert detail.moderation is None

@@ -104,14 +104,19 @@ def publisher_clusters(
     different claim from 3 out of 300, and only the first is worth calling a
     campaign.
     """
+    # Keyed on the immutable account id where we have it, because a handle can
+    # be renamed and would then split one operator across two clusters.
     by_publisher: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for skill in skills.values():
-        publisher = skill.get("publisher") or ""
-        if publisher:
-            by_publisher[publisher].append(skill)
+        key = skill.get("publisher_id") or skill.get("publisher") or ""
+        if key:
+            by_publisher[key].append(skill)
 
     clusters = []
-    for publisher, members in by_publisher.items():
+    for key, members in by_publisher.items():
+        publisher = next(
+            (m.get("publisher") for m in members if m.get("publisher")), key
+        )
         flagged = [s for s in members if s.get("verdict") in FLAGGED]
         malicious = [s for s in flagged if s.get("verdict") == "MALICIOUS"]
         if len(malicious) < min_cluster:
