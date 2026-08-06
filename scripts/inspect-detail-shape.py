@@ -138,10 +138,41 @@ async def survey(slugs: list[str]) -> None:
         )
 
 
+async def dump_content(slugs: list[str], max_chars: int = 4000) -> None:
+    """Print each skill's SKILL.md so a verdict can be checked against the file.
+
+    An LLM second opinion agreeing with a rule is not ground truth; both can be
+    wrong the same way. When a cohort's verdict rests on how a whole *category*
+    of skill is read -- integration connectors legitimately hold credentials and
+    call out to an API -- the only way to settle it is to read the file.
+
+    The registry is public, so this prints content that is already published.
+    Truncated per skill to keep a cohort readable in one job log.
+    """
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+        for slug in slugs:
+            print(f"\n{'=' * 70}\n{slug}\n{'=' * 70}", flush=True)
+            try:
+                resp = await client.get(f"{BASE_URL}/skills/{slug}/file")
+                if resp.status_code != 200:
+                    print(f"  HTTP {resp.status_code}: {resp.text[:200]}", flush=True)
+                else:
+                    body = resp.text
+                    print(body[:max_chars], flush=True)
+                    if len(body) > max_chars:
+                        print(f"\n  ... truncated, {len(body) - max_chars} more chars", flush=True)
+            except Exception as exc:
+                print(f"  {type(exc).__name__}: {exc}", flush=True)
+            await asyncio.sleep(0.55)
+
+
 async def main() -> int:
     args = sys.argv[1:]
     if args and args[0] == "--survey":
         await survey(args[1:])
+        return 0
+    if args and args[0] == "--content":
+        await dump_content(args[1:])
         return 0
 
     slugs = args

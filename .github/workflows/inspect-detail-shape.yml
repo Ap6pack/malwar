@@ -17,6 +17,10 @@ on:
         description: "Count how often owner/moderation are populated instead of dumping each tree"
         type: boolean
         default: false
+      content:
+        description: "Print each skill's SKILL.md instead, to check a verdict against the file"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -41,8 +45,11 @@ jobs:
         env:
           SLUGS: ${{ github.event.inputs.slugs }}
           SURVEY: ${{ github.event.inputs.survey }}
+          CONTENT: ${{ github.event.inputs.content }}
         run: |
-          if [ "$SURVEY" = "true" ]; then
+          if [ "$CONTENT" = "true" ]; then
+            python scripts/inspect-detail-shape.py --content $SLUGS
+          elif [ "$SURVEY" = "true" ]; then
             python scripts/inspect-detail-shape.py --survey $SLUGS
           else
             python scripts/inspect-detail-shape.py $SLUGS
