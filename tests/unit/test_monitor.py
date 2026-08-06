@@ -1166,3 +1166,25 @@ class TestEnrichmentWithoutModerationData:
         assert rec.moderation_suspicious is True
         assert rec.moderation_pending is False
         assert rec.publisher == "publisher"
+
+    async def test_reenrichment_clears_a_stale_checked_flag(self):
+        # Snapshots written before the guard existed marked every successful
+        # fetch "checked". Those records are carried forward, so unless a
+        # re-fetch overwrites the flag, the phantom gap they produced survives
+        # every future run.
+        client = self._client_without_moderation()
+        stale = RegistrySnapshot(
+            skills={
+                "money-radar": SkillRecord(
+                    slug="money-radar",
+                    verdict="MALICIOUS",
+                    moderation_checked=True,   # written by the buggy run
+                    content_sha256="stale",    # force a re-scan of this skill
+                )
+            }
+        )
+        snap = await build_snapshot(client, previous=stale)
+        rec = snap.skills["money-radar"]
+        assert rec.detail_fetched is True
+        assert rec.moderation_checked is False
+        assert snap.unblocked_malicious_count == 0
