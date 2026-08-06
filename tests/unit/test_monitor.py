@@ -1237,3 +1237,51 @@ class TestPlatformVerdictCounters:
         snap = RegistrySnapshot(skills={"a": self._rec(slug="a")})
         assert snap.unblocked_malicious_count == 0
         assert snap.unscreened_malicious_count == 0
+
+
+class TestBackfillPriority:
+    """Worst verdict first when the per-run budget cannot cover the whole tail."""
+
+    @staticmethod
+    def _prior(**verdicts: str) -> RegistrySnapshot:
+        # Same version/updated_at as the fake serves, so each record is reused
+        # rather than re-scanned -- otherwise it lands in the rescanned set and
+        # gets enriched regardless of backfill order.
+        return RegistrySnapshot(
+            skills={
+                slug: SkillRecord(
+                    slug=slug, verdict=verdict, version="1.0.0", updated_at=1000
+                )
+                for slug, verdict in verdicts.items()
+            }
+        )
+
+    async def test_backfill_attributes_malicious_before_lesser_verdicts(self):
+        # The flagged tail is several times larger than the malicious set, so a
+        # budget spent in dictionary order leaves the skills any platform
+        # comparison turns on waiting days for coverage.
+        client = FakeClawHubClient(
+            dict.fromkeys(("caution-1", "caution-2", "malicious", "suspicious"), BENIGN_BODY)
+        )
+        prior = self._prior(
+            **{
+                "caution-1": "CAUTION",
+                "caution-2": "CAUTION",
+                "malicious": "MALICIOUS",
+                "suspicious": "SUSPICIOUS",
+            }
+        )
+        # Budget of one: it must go to the MALICIOUS skill, which is listed last
+        # in insertion order precisely so ordering cannot pass by accident.
+        await build_snapshot(client, previous=prior, enrich_backfill_limit=1)
+        assert client.detail_fetches == ["malicious"]
+
+    async def test_budget_covers_worst_first_then_next(self):
+        client = FakeClawHubClient(
+            dict.fromkeys(("caution", "malicious", "suspicious"), BENIGN_BODY)
+        )
+        prior = self._prior(
+            **{"caution": "CAUTION", "malicious": "MALICIOUS", "suspicious": "SUSPICIOUS"}
+        )
+        await build_snapshot(client, previous=prior, enrich_backfill_limit=2)
+        assert sorted(client.detail_fetches) == ["malicious", "suspicious"]
