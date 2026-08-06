@@ -39,12 +39,43 @@ DISCUSSION_RULES = {
 }
 
 
-def select(snapshot: dict, pattern: str, verdict: str, require_behavioural: bool) -> list[str]:
+def is_platform_cleared(rec: dict) -> bool:
+    """True when the registry screened this skill and returned a clean verdict.
+
+    Requires the verdict string itself. Every boolean in the moderation block
+    is derived from it and defaults False, so a record we never enriched, or
+    one the registry holds no screening result for, would otherwise look
+    identical to one the platform actively cleared.
+    """
+    return (
+        bool(rec.get("moderation_checked"))
+        and str(rec.get("moderation_verdict", "")).lower() == "clean"
+        and not rec.get("moderation_blocked")
+        and not rec.get("moderation_pending")
+        and not rec.get("moderation_suspicious")
+    )
+
+
+def select(
+    snapshot: dict,
+    pattern: str,
+    verdict: str,
+    require_behavioural: bool,
+    platform_cleared: bool = False,
+) -> list[str]:
     """Return slugs matching the cohort definition, sorted for stable output."""
-    rx = re.compile(pattern, re.IGNORECASE)
+    rx = re.compile(pattern, re.IGNORECASE) if pattern else None
     out = []
     for slug, rec in snapshot.get("skills", {}).items():
-        if rec.get("verdict") != verdict or not rx.search(slug):
+        if rec.get("verdict") != verdict:
+            continue
+        if rx is not None and not rx.search(slug):
+            continue
+        # The disagreement cohort: we call it malicious, the registry screened
+        # it and called it clean. Publishing that disagreement as a platform
+        # failure means assuming our side is right, which is the assumption
+        # this whole script exists to test.
+        if platform_cleared and not is_platform_cleared(rec):
             continue
         rules = set(rec.get("finding_rule_ids") or [])
         if require_behavioural and not (rules - DISCUSSION_RULES):
@@ -144,6 +175,12 @@ def main() -> None:
         action="store_true",
         help="drop members whose only evidence is a discussion-based rule",
     )
+    ap.add_argument(
+        "--platform-cleared",
+        action="store_true",
+        help="restrict to skills the registry screened and called clean "
+        "(the disagreement cohort); requires an enriched snapshot",
+    )
     ap.add_argument("--limit", type=int, default=0, help="cap cohort size (0 = no cap)")
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--output", type=Path, help="write full JSON results here")
@@ -152,17 +189,26 @@ def main() -> None:
     if args.slugs:
         slugs = [s.strip() for s in args.slugs.split(",") if s.strip()]
     else:
-        if not args.slug_pattern:
-            ap.error("provide either --slugs or --slug-pattern")
+        if not args.slug_pattern and not args.platform_cleared:
+            ap.error("provide --slugs, --slug-pattern, or --platform-cleared")
         snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
-        slugs = select(snapshot, args.slug_pattern, args.verdict, args.require_behavioural)
+        slugs = select(
+            snapshot,
+            args.slug_pattern or "",
+            args.verdict,
+            args.require_behavioural,
+            platform_cleared=args.platform_cleared,
+        )
     if args.limit:
         slugs = slugs[: args.limit]
     if not slugs:
         print("Cohort is empty; nothing to verify.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Cohort: {len(slugs)} skills matching /{args.slug_pattern}/ "
+    scope = f"matching /{args.slug_pattern}/ " if args.slug_pattern else ""
+    if args.platform_cleared:
+        scope += "that the registry screened and called clean "
+    print(f"Cohort: {len(slugs)} skills {scope}"
           f"with snapshot verdict {args.verdict}"
           f"{' (behavioural evidence required)' if args.require_behavioural else ''}",
           file=sys.stderr)

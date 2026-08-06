@@ -25,6 +25,10 @@ on:
         description: "Snapshot verdict to select"
         type: string
         default: "MALICIOUS"
+      platform_cleared:
+        description: "Restrict to skills the registry screened and called clean (the disagreement cohort)"
+        type: boolean
+        default: false
       require_behavioural:
         description: "Drop members whose only evidence is a discussion-based rule"
         type: boolean
@@ -75,12 +79,15 @@ jobs:
           VERDICT: ${{ github.event.inputs.verdict }}
           LIMIT: ${{ github.event.inputs.limit }}
           BEHAVIOURAL: ${{ github.event.inputs.require_behavioural }}
+          PLATFORM_CLEARED: ${{ github.event.inputs.platform_cleared }}
         run: |
           ARGS=""
           if [ -n "$SLUGS" ]; then
             ARGS="--slugs $SLUGS"
           else
-            ARGS="--slug-pattern $SLUG_PATTERN --verdict $VERDICT"
+            ARGS="--verdict $VERDICT"
+            [ -n "$SLUG_PATTERN" ] && ARGS="$ARGS --slug-pattern $SLUG_PATTERN"
+            [ "$PLATFORM_CLEARED" = "true" ] && ARGS="$ARGS --platform-cleared"
             [ "$BEHAVIOURAL" = "true" ] && ARGS="$ARGS --require-behavioural"
           fi
           python scripts/verify-cohort.py \
