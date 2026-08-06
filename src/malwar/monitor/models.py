@@ -61,9 +61,17 @@ class SkillRecord(BaseModel):
     moderation_blocked: bool = False
     moderation_suspicious: bool = False
     moderation_pending: bool = False
-    # True once we have actually fetched the detail endpoint for this skill, so
-    # an unenriched record is never mistaken for "platform says it is fine".
+    # True once the detail response actually carried a moderation block, so an
+    # unenriched record is never mistaken for "platform says it is fine". A
+    # successful fetch that omits moderation leaves this False: every flag
+    # defaults False, so treating the absence of data as the absence of a flag
+    # turns silence into a clean bill of health.
     moderation_checked: bool = False
+    # True once the detail endpoint was fetched at all, whatever it returned.
+    # Kept separate from moderation_checked so the backfill can tell "not asked
+    # yet" from "asked, got nothing useful" — without it, a registry that never
+    # returns moderation data would re-request the same skills every run.
+    detail_fetched: bool = False
     scanned_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat()
     )

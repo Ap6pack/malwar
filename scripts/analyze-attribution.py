@@ -54,6 +54,13 @@ def detection_gap(skills: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """
     malicious = [s for s in skills.values() if s.get("verdict") == "MALICIOUS"]
     checked = [s for s in malicious if s.get("moderation_checked")]
+    # Fetched but the response carried no moderation block. Reported separately
+    # because "we asked and the registry told us nothing" is a broken pipeline,
+    # not a platform that has cleared the skill, and the two look identical if
+    # you only count what is missing.
+    no_data = [
+        s for s in malicious if s.get("detail_fetched") and not s.get("moderation_checked")
+    ]
 
     blocked = [s for s in checked if s.get("moderation_blocked")]
     pending = [s for s in checked if s.get("moderation_pending") and not s.get("moderation_blocked")]
@@ -76,7 +83,8 @@ def detection_gap(skills: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return {
         "malicious_total": len(malicious),
         "malicious_checked": len(checked),
-        "malicious_unchecked": len(malicious) - len(checked),
+        "malicious_unchecked": len(malicious) - len(checked) - len(no_data),
+        "malicious_fetched_no_moderation_data": len(no_data),
         "platform_blocked": len(blocked),
         "platform_suspicious": len(suspicious),
         "platform_pending_scan": len(pending),
@@ -155,7 +163,13 @@ def main() -> int:
     print("== platform detection gap ==")
     print(f"we verified malicious:      {gap['malicious_total']:,}")
     print(f"  of which we checked:      {gap['malicious_checked']:,}")
-    print(f"  not yet checked:          {gap['malicious_unchecked']:,}")
+    print(f"  not yet asked:            {gap['malicious_unchecked']:,}")
+    if gap["malicious_fetched_no_moderation_data"]:
+        print(
+            f"  asked, no data returned:  "
+            f"{gap['malicious_fetched_no_moderation_data']:,}  "
+            f"<-- registry returned no moderation block; not a gap"
+        )
     if gap["malicious_checked"]:
         print(f"  platform blocked:         {gap['platform_blocked']:,}")
         print(f"  platform marked suspect:  {gap['platform_suspicious']:,}")

@@ -1,0 +1,39 @@
+# Print the shape of the registry's skill-detail response.
+#
+# The dev sandbox cannot reach clawhub.ai, so questions about what the API
+# actually returns can only be answered from CI. Structure only -- key names,
+# types, and the owner/moderation values -- so the log is safe to share.
+
+name: Inspect Detail Shape
+
+on:
+  workflow_dispatch:
+    inputs:
+      slugs:
+        description: "Space-separated slugs to inspect"
+        type: string
+        default: "accountant agents aegis4all"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Dump detail response structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install httpx
+        run: pip install httpx
+
+      - name: Inspect
+        env:
+          SLUGS: ${{ github.event.inputs.slugs }}
+        run: python scripts/inspect-detail-shape.py $SLUGS

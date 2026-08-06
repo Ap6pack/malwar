@@ -1096,3 +1096,73 @@ class TestAttributionCounters:
         )
         assert snap.attributed_count == 2
         assert snap.unblocked_malicious_count == 0
+
+
+class TestEnrichmentWithoutModerationData:
+    """A 200 that carries no moderation block must not read as a clean bill of health.
+
+    This is the failure the first live run hit: 992 detail fetches succeeded,
+    none produced an owner or a moderation flag, and because the code marked
+    every one "checked", the gap report claimed 100% of malicious skills were
+    screened and cleared by the platform. Every moderation flag defaults False,
+    so absence of data is indistinguishable from absence of a flag unless the
+    presence of the data is tracked separately.
+    """
+
+    @staticmethod
+    def _client_without_moderation() -> FakeClawHubClient:
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        inner = client.get_skill
+
+        async def _bare(slug: str) -> SkillDetail:
+            detail = await inner(slug)
+            detail.owner = None
+            detail.moderation = None
+            return detail
+
+        client.get_skill = _bare  # type: ignore[assignment]
+        return client
+
+    async def test_missing_moderation_does_not_count_as_checked(self):
+        client = self._client_without_moderation()
+        snap = await build_snapshot(client)
+        rec = snap.skills["money-radar"]
+        assert client.detail_fetches == ["money-radar"]  # we did ask
+        assert rec.detail_fetched is True
+        assert rec.moderation_checked is False           # but learned nothing
+        assert snap.unblocked_malicious_count == 0       # so claim no gap
+
+    async def test_backfill_does_not_retry_a_skill_that_returned_nothing(self):
+        # Without a separate "we asked" marker, a registry that never returns
+        # moderation data would re-request the same skills on every single run,
+        # forever, and never make progress.
+        client = self._client_without_moderation()
+        first = await build_snapshot(client)
+        assert first.skills["money-radar"].detail_fetched is True
+
+        client.detail_fetches.clear()
+        await build_snapshot(client, previous=first)
+        assert client.detail_fetches == []
+
+    async def test_moderation_present_still_lands(self):
+        # The guard must not suppress the real case it exists to measure: when
+        # the response does carry moderation, every flag has to come through.
+        client = FakeClawHubClient({"money-radar": MALICIOUS_BODY})
+        inner = client.get_skill
+
+        async def _blocked(slug: str) -> SkillDetail:
+            detail = await inner(slug)
+            detail.moderation = ModerationInfo(
+                isMalwareBlocked=True, isSuspicious=True, isPendingScan=False
+            )
+            return detail
+
+        client.get_skill = _blocked  # type: ignore[assignment]
+        snap = await build_snapshot(client)
+        rec = snap.skills["money-radar"]
+        assert rec.detail_fetched is True
+        assert rec.moderation_checked is True
+        assert rec.moderation_blocked is True
+        assert rec.moderation_suspicious is True
+        assert rec.moderation_pending is False
+        assert rec.publisher == "publisher"
