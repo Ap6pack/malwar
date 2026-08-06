@@ -85,8 +85,58 @@ async def inspect(slug: str) -> None:
         print(f"  data['skill']['moderation'] -> {json.dumps(skill.get('moderation'))}")
 
 
+async def survey(slugs: list[str]) -> None:
+    """Report how often owner and moderation are actually populated.
+
+    The first inspection found ``moderation`` present as a key but ``null`` on
+    every skill looked at. Three skills cannot tell you whether the field is
+    never populated or merely rare, and the difference decides whether the
+    platform comparison is measurable at all. This counts it over a sample and
+    prints any skill where moderation is non-null, since one example is enough
+    to prove the field can carry data.
+    """
+    owners = mods = ok = 0
+    populated: list[str] = []
+    for slug in slugs:
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                resp = await client.get(f"{BASE_URL}/skills/{slug}")
+            if resp.status_code != 200:
+                continue
+            data = resp.json()
+            ok += 1
+            if data.get("owner"):
+                owners += 1
+            if data.get("moderation") is not None:
+                mods += 1
+                populated.append(f"{slug}: {json.dumps(data['moderation'])}")
+        except Exception as exc:
+            print(f"  {slug}: {type(exc).__name__}: {exc}")
+        await asyncio.sleep(0.55)
+
+    print(f"\n{'=' * 70}\nSURVEY over {len(slugs)} slugs ({ok} returned 200)\n{'=' * 70}")
+    print(f"  owner populated:      {owners}/{ok}")
+    print(f"  moderation non-null:  {mods}/{ok}")
+    if populated:
+        print("\n  skills carrying moderation data:")
+        for line in populated[:20]:
+            print(f"    {line}")
+    else:
+        print(
+            "\n  moderation was null on every skill sampled. On this evidence the\n"
+            "  platform's screening state is not exposed here, so the comparison\n"
+            "  cannot be made from this endpoint -- null must NOT be read as\n"
+            "  'the platform cleared it'."
+        )
+
+
 async def main() -> int:
-    slugs = sys.argv[1:]
+    args = sys.argv[1:]
+    if args and args[0] == "--survey":
+        await survey(args[1:])
+        return 0
+
+    slugs = args
     if not slugs:
         print(__doc__)
         return 2

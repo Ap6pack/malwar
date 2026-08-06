@@ -618,6 +618,7 @@ async def build_snapshot(
                 rec.detail_fetched = True
                 if detail.owner is not None:
                     rec.publisher = detail.owner.username
+                    rec.publisher_id = detail.owner.user_id
                 # moderation_checked is only set when the response actually
                 # carried moderation data. A 200 that omits the block is *not*
                 # the platform saying a skill is fine: every flag defaults
