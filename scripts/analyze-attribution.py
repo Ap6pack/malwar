@@ -54,14 +54,25 @@ def detection_gap(skills: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """
     malicious = [s for s in skills.values() if s.get("verdict") == "MALICIOUS"]
     checked = [s for s in malicious if s.get("moderation_checked")]
-    # Fetched but the response carried no moderation block. Reported separately
-    # because "we asked and the registry told us nothing" is a broken pipeline,
-    # not a platform that has cleared the skill, and the two look identical if
-    # you only count what is missing.
+    # Fetched, but the registry has no moderation record for this skill at all.
+    # That is not the platform clearing it, and not a broken pipeline either:
+    # roughly 40% of a sampled cohort came back this way. Counted separately
+    # because "screened and called clean" and "never screened" are different
+    # claims, and lumping them together overstates whichever one you name.
     no_data = [
         s for s in malicious if s.get("detail_fetched") and not s.get("moderation_checked")
     ]
 
+    # The registry's verdict is authoritative; the booleans are derived from it
+    # and all default False, so a cleared skill must actually say so.
+    cleared = [
+        s
+        for s in checked
+        if str(s.get("moderation_verdict", "")).lower() == "clean"
+        and not s.get("moderation_blocked")
+        and not s.get("moderation_pending")
+        and not s.get("moderation_suspicious")
+    ]
     blocked = [s for s in checked if s.get("moderation_blocked")]
     pending = [s for s in checked if s.get("moderation_pending") and not s.get("moderation_blocked")]
     suspicious = [
@@ -71,14 +82,7 @@ def detection_gap(skills: dict[str, dict[str, Any]]) -> dict[str, Any]:
         and not s.get("moderation_blocked")
         and not s.get("moderation_pending")
     ]
-    # Screened, not pending, and the platform is not flagging it: the gap.
-    unflagged = [
-        s
-        for s in checked
-        if not s.get("moderation_blocked")
-        and not s.get("moderation_pending")
-        and not s.get("moderation_suspicious")
-    ]
+    unflagged = cleared
 
     return {
         "malicious_total": len(malicious),
@@ -90,6 +94,9 @@ def detection_gap(skills: dict[str, dict[str, Any]]) -> dict[str, Any]:
         "platform_pending_scan": len(pending),
         "platform_no_flag": len(unflagged),
         "gap_rate": (len(unflagged) / len(checked)) if checked else None,
+        "cleared_by_engine": dict(
+            Counter(s.get("moderation_engine") or "?" for s in cleared).most_common()
+        ),
         "examples": sorted(s["slug"] for s in unflagged)[:25],
     }
 
@@ -171,9 +178,9 @@ def main() -> int:
     print(f"  not yet asked:            {gap['malicious_unchecked']:,}")
     if gap["malicious_fetched_no_moderation_data"]:
         print(
-            f"  asked, no data returned:  "
+            f"  no screening record:      "
             f"{gap['malicious_fetched_no_moderation_data']:,}  "
-            f"<-- registry returned no moderation block; not a gap"
+            f"<-- no screening record exists; not the same as cleared"
         )
     if gap["malicious_checked"]:
         print(f"  platform blocked:         {gap['platform_blocked']:,}")
@@ -181,6 +188,9 @@ def main() -> int:
         print(f"  platform scan pending:    {gap['platform_pending_scan']:,}")
         print(f"  platform no flag at all:  {gap['platform_no_flag']:,}")
         print(f"  gap rate:                 {gap['gap_rate']:.1%} of checked")
+        if gap["cleared_by_engine"]:
+            spread = ", ".join(f"{v} ({n})" for v, n in gap["cleared_by_engine"].items())
+            print(f"  cleared by engine:        {spread}")
         if gap["examples"]:
             print("  examples: " + ", ".join(gap["examples"][:10]))
     else:

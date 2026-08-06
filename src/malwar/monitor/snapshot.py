@@ -637,11 +637,17 @@ async def build_snapshot(
                     rec.moderation_blocked = detail.moderation.is_malware_blocked
                     rec.moderation_suspicious = detail.moderation.is_suspicious
                     rec.moderation_pending = detail.moderation.is_pending_scan
+                    rec.moderation_verdict = detail.moderation.verdict
+                    rec.moderation_engine = detail.moderation.engine_version
+                    rec.moderation_scanned_at = detail.moderation.updated_at
                 else:
                     # Do not leave stale flags behind a False "checked" either.
                     rec.moderation_blocked = False
                     rec.moderation_suspicious = False
                     rec.moderation_pending = False
+                    rec.moderation_verdict = ""
+                    rec.moderation_engine = ""
+                    rec.moderation_scanned_at = None
 
             await asyncio.gather(*(_enrich(slug) for slug in flagged))
             enriched = sum(1 for s in flagged if snapshot.skills[s].moderation_checked)

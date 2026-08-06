@@ -1055,8 +1055,16 @@ class TestAttributionCounters:
         assert snap.unblocked_malicious_count == 0
 
     def test_checked_and_cleared_is_the_gap(self):
+        # "Checked" alone is no longer enough. The live moderation block carries
+        # an authoritative verdict, so the platform has to have actually said
+        # clean; the booleans are derived from it and all default False.
         snap = self._snap(
-            a=SkillRecord(slug="a", verdict="MALICIOUS", moderation_checked=True)
+            a=SkillRecord(
+                slug="a",
+                verdict="MALICIOUS",
+                moderation_checked=True,
+                moderation_verdict="clean",
+            )
         )
         assert snap.attributed_count == 1
         assert snap.unblocked_malicious_count == 1
@@ -1188,3 +1196,44 @@ class TestEnrichmentWithoutModerationData:
         assert rec.detail_fetched is True
         assert rec.moderation_checked is False
         assert snap.unblocked_malicious_count == 0
+
+
+class TestPlatformVerdictCounters:
+    """The gap requires the registry to have actually said "clean"."""
+
+    @staticmethod
+    def _rec(**kw) -> SkillRecord:
+        base = {"slug": kw.pop("slug", "s"), "verdict": "MALICIOUS"}
+        return SkillRecord(**{**base, **kw})
+
+    def test_cleared_by_the_platform_is_the_gap(self):
+        snap = RegistrySnapshot(skills={"a": self._rec(
+            slug="a", detail_fetched=True, moderation_checked=True,
+            moderation_verdict="clean",
+        )})
+        assert snap.unblocked_malicious_count == 1
+        assert snap.unscreened_malicious_count == 0
+
+    def test_no_screening_record_is_not_the_gap(self):
+        # Fetched, but the registry holds no moderation for it. Roughly 40% of a
+        # sampled cohort looked like this. Counting it as cleared would inflate
+        # the gap by everything the platform never screened.
+        snap = RegistrySnapshot(skills={"a": self._rec(
+            slug="a", detail_fetched=True, moderation_checked=False,
+        )})
+        assert snap.unblocked_malicious_count == 0
+        assert snap.unscreened_malicious_count == 1
+
+    def test_checked_without_a_clean_verdict_is_not_the_gap(self):
+        # Guards against a future response that carries moderation but a verdict
+        # we do not recognise: unknown must not default to "they cleared it".
+        snap = RegistrySnapshot(skills={"a": self._rec(
+            slug="a", detail_fetched=True, moderation_checked=True,
+            moderation_verdict="under_review",
+        )})
+        assert snap.unblocked_malicious_count == 0
+
+    def test_never_fetched_counts_as_neither(self):
+        snap = RegistrySnapshot(skills={"a": self._rec(slug="a")})
+        assert snap.unblocked_malicious_count == 0
+        assert snap.unscreened_malicious_count == 0
