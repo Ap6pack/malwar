@@ -97,22 +97,30 @@ async def survey(slugs: list[str]) -> None:
     """
     owners = mods = ok = 0
     populated: list[str] = []
-    for slug in slugs:
-        try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
+    # One client for the whole survey: a fresh connection per slug turned 155
+    # requests into more wall-clock than the job's timeout allowed, and the
+    # totals only print at the end, so the first attempt was killed having
+    # reported nothing. Progress is flushed every 25 slugs for the same reason.
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        for i, slug in enumerate(slugs, 1):
+            try:
                 resp = await client.get(f"{BASE_URL}/skills/{slug}")
-            if resp.status_code != 200:
-                continue
-            data = resp.json()
-            ok += 1
-            if data.get("owner"):
-                owners += 1
-            if data.get("moderation") is not None:
-                mods += 1
-                populated.append(f"{slug}: {json.dumps(data['moderation'])}")
-        except Exception as exc:
-            print(f"  {slug}: {type(exc).__name__}: {exc}")
-        await asyncio.sleep(0.55)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    ok += 1
+                    if data.get("owner"):
+                        owners += 1
+                    if data.get("moderation") is not None:
+                        mods += 1
+                        populated.append(f"{slug}: {json.dumps(data['moderation'])}")
+            except Exception as exc:
+                print(f"  {slug}: {type(exc).__name__}: {exc}", flush=True)
+            if i % 25 == 0:
+                print(
+                    f"  ...{i}/{len(slugs)}  ok={ok} owner={owners} moderation={mods}",
+                    flush=True,
+                )
+            await asyncio.sleep(0.55)
 
     print(f"\n{'=' * 70}\nSURVEY over {len(slugs)} slugs ({ok} returned 200)\n{'=' * 70}")
     print(f"  owner populated:      {owners}/{ok}")

@@ -626,11 +626,22 @@ async def build_snapshot(
                 # one of them as a skill the platform screened and cleared.
                 # That is exactly what happened on the first live run — 992
                 # fetches, zero moderation blocks parsed, and a 100% "gap".
+                #
+                # Assigned, never conditionally set: a record carried forward
+                # from a snapshot written before this guard existed already has
+                # moderation_checked True, and only overwriting it clears that.
+                # Otherwise a re-fetch that returns null would leave the stale
+                # flag standing and keep reporting the phantom gap it produced.
+                rec.moderation_checked = detail.moderation is not None
                 if detail.moderation is not None:
                     rec.moderation_blocked = detail.moderation.is_malware_blocked
                     rec.moderation_suspicious = detail.moderation.is_suspicious
                     rec.moderation_pending = detail.moderation.is_pending_scan
-                    rec.moderation_checked = True
+                else:
+                    # Do not leave stale flags behind a False "checked" either.
+                    rec.moderation_blocked = False
+                    rec.moderation_suspicious = False
+                    rec.moderation_pending = False
 
             await asyncio.gather(*(_enrich(slug) for slug in flagged))
             enriched = sum(1 for s in flagged if snapshot.skills[s].moderation_checked)

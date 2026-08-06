@@ -25,7 +25,7 @@ jobs:
   inspect:
     name: Dump detail response structure
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
