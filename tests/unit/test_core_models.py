@@ -959,11 +959,22 @@ class TestFragileDetectionCalibration:
         assert compute_verdict(score) == "MALICIOUS"
 
     def test_single_low_fp_rule_still_convicts(self):
-        # PERSIST-001 (cron/systemd) showed no false positives, so a lone hit
-        # stays a confident verdict.
-        score = compute_risk_score([self._f("MALWAR-PERSIST-001")])
+        # EXFIL-002 (crypto wallet paths) has no benign use in a skill file, so
+        # a lone hit stays a confident verdict.
+        score = compute_risk_score([self._f("MALWAR-EXFIL-002")])
         assert score > FRAGILE_MAX_RISK
-        assert compute_verdict(score) == "MALICIOUS"
+
+    def test_lone_persistence_hit_no_longer_convicts(self):
+        # PERSIST-001 was excluded from HIGH_FP_RULES on the reasoning that
+        # cron/systemd are tight signals. They are not: `(crontab -l; echo
+        # ...) | crontab -` and `systemctl enable` are how you install any
+        # scheduled task, and a benign daily-report skill scored 87 on this
+        # rule alone -- MALICIOUS, uncorroborated. It was the largest single
+        # source of uncorroborated convictions in the registry.
+        score = compute_risk_score([self._f("MALWAR-PERSIST-001")])
+        assert score <= FRAGILE_MAX_RISK
+        # Still surfaced as a concern, just not convicted on one regex.
+        assert compute_verdict(score) == "SUSPICIOUS"
 
     def test_cap_never_raises_a_low_score(self):
         # A fragile rule that only scored 30 must stay 30, not be lifted to 74.
