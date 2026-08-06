@@ -62,6 +62,29 @@ class PermissionScopeExpansion(BaseRule):
             ),
             "sets an allowlist or auto-approve key",
         ),
+        # Approval / sandbox settings turned off in a config file. The skill
+        # that motivated this rule instructs the user to set
+        # `ask_for_approval = "never"` and `sandbox_mode = "danger-full-access"`
+        # in their agent config, justified by token efficiency -- a far
+        # stronger move than the consent-priming below, and one the first
+        # version of this rule missed entirely because it only looked for
+        # allowlists and CLI flags.
+        (
+            re.compile(
+                r"(?:ask_for_approval|approval_policy|require_approval|confirm_before)"
+                r"\s*[:=]\s*[\"']?(?:never|none|false|off|no)\b",
+                re.IGNORECASE,
+            ),
+            "sets the approval policy to never ask",
+        ),
+        (
+            re.compile(
+                r"sandbox(?:_mode)?\s*[:=]\s*[\"']?"
+                r"(?:danger[\w-]*|none|off|false|disabled|full[\w-]*access)",
+                re.IGNORECASE,
+            ),
+            "disables or fully opens the sandbox",
+        ),
         # Explicit approval bypass flags.
         (
             re.compile(

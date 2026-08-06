@@ -1167,6 +1167,38 @@ class TestPermissionScopeExpansion:
         ):
             assert len(rule_instance.check(_make_skill(text))) >= 1, text
 
+    def test_detects_approval_and_sandbox_disabled_in_config(self, rule_instance):
+        # The strongest real example: a workflow skill telling users to set
+        # `ask_for_approval = "never"` and `sandbox_mode = "danger-full-access"`
+        # because restricted mode "wastes 60% of tokens". The first version of
+        # this rule missed it entirely -- it looked for allowlists and CLI
+        # flags, not config keys.
+        for text in (
+            'ask_for_approval = "never"',
+            'sandbox_mode = "danger-full-access"',
+            "approval_policy: none",
+        ):
+            assert len(rule_instance.check(_make_skill(text))) >= 1, text
+
+    def test_restrictive_settings_are_not_a_finding(self, rule_instance):
+        # The same keys set to safe values, and a skill narrowing its own tool
+        # scope, are the behaviour we want and must never fire.
+        for text in (
+            'ask_for_approval = "always"',
+            'sandbox_mode = "workspace-write"',
+            "allowed-tools: Bash(mineru:*)",
+        ):
+            assert rule_instance.check(_make_skill(text)) == [], text
+
+    def test_service_restart_is_not_permission_expansion(self, rule_instance):
+        # A skill restarting its own daemon after a config change is ordinary
+        # setup; it trips persistence rules, not this one.
+        for text in (
+            "launchctl kickstart -k gui/$(id -u)/com.nanoclaw",
+            "systemctl --user restart nanoclaw",
+        ):
+            assert rule_instance.check(_make_skill(text)) == [], text
+
     def test_requesting_confirmation_is_not_a_finding(self, rule_instance):
         # Asking permission is the behaviour we want. Only its removal counts.
         for text in (
