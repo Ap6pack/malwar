@@ -601,7 +601,7 @@ async def build_snapshot(
             backfill = [
                 slug
                 for slug, rec in snapshot.skills.items()
-                if rec.is_flagged and slug not in rescanned and not rec.moderation_checked
+                if rec.is_flagged and slug not in rescanned and not rec.detail_fetched
             ]
             flagged.extend(backfill[:enrich_backfill_limit])
         if flagged:
@@ -615,28 +615,49 @@ async def build_snapshot(
                         logger.debug("detail fetch failed for %s: %s", slug, exc)
                         return
                 rec = snapshot.skills[slug]
+                rec.detail_fetched = True
                 if detail.owner is not None:
                     rec.publisher = detail.owner.username
+                # moderation_checked is only set when the response actually
+                # carried moderation data. A 200 that omits the block is *not*
+                # the platform saying a skill is fine: every flag defaults
+                # False, so marking such a fetch "checked" would report every
+                # one of them as a skill the platform screened and cleared.
+                # That is exactly what happened on the first live run — 992
+                # fetches, zero moderation blocks parsed, and a 100% "gap".
                 if detail.moderation is not None:
                     rec.moderation_blocked = detail.moderation.is_malware_blocked
                     rec.moderation_suspicious = detail.moderation.is_suspicious
                     rec.moderation_pending = detail.moderation.is_pending_scan
-                rec.moderation_checked = True
+                    rec.moderation_checked = True
 
             await asyncio.gather(*(_enrich(slug) for slug in flagged))
             enriched = sum(1 for s in flagged if snapshot.skills[s].moderation_checked)
+            attributed = sum(1 for s in flagged if snapshot.skills[s].publisher)
             unblocked = sum(
                 1
                 for s in flagged
                 if (r := snapshot.skills[s]).moderation_checked
                 and r.verdict == "MALICIOUS"
                 and not r.moderation_blocked
+                and not r.moderation_pending
+                and not r.moderation_suspicious
             )
+            # Warn rather than stay silent when fetches succeed but carry no
+            # usable data: silence here reads as "nothing to attribute" when it
+            # actually means the response shape changed under us.
+            if not enriched and not attributed:
+                logger.warning(
+                    "enrichment: %d detail fetches returned neither owner nor "
+                    "moderation data — the response shape may have changed",
+                    len(flagged),
+                )
             logger.info(
-                "enrichment: %d/%d flagged skills attributed; %d MALICIOUS not "
-                "blocked by the platform",
+                "enrichment: %d/%d flagged skills have moderation state, %d have a "
+                "publisher; %d MALICIOUS screened and not flagged upstream",
                 enriched,
                 len(flagged),
+                attributed,
                 unblocked,
             )
 

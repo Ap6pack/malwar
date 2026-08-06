@@ -193,6 +193,10 @@ jobs:
           # false and an unenriched record would otherwise be reported as a
           # screening failure we never actually looked for.
           ATTRIB=$(jq '[.skills[]|select(.moderation_checked==true)]|length' "$SNAP")
+          # Fetched but the response carried no moderation block. Surfaced on
+          # its own line: it is a broken pipeline, not a permissive platform,
+          # and the two are indistinguishable if you only count absences.
+          NODATA=$(jq '[.skills[]|select(.verdict=="MALICIOUS" and .detail_fetched==true and .moderation_checked!=true)]|length' "$SNAP")
           MALCHK=$(jq '[.skills[]|select(.verdict=="MALICIOUS" and .moderation_checked==true)]|length' "$SNAP")
           GAP=$(jq '[.skills[]|select(.verdict=="MALICIOUS" and .moderation_checked==true
                      and .moderation_blocked!=true and .moderation_pending!=true
@@ -242,6 +246,8 @@ jobs:
           # upstream" means nothing without how many we actually asked about.
           if [ "$MALCHK" -gt 0 ]; then
             ATTRIB_LINE="Attribution: ${ATTRIB} flagged skills checked against ClawHub moderation; of ${MALCHK} MALICIOUS we asked about, **${GAP} are not flagged upstream**."
+          elif [ "$NODATA" -gt 0 ]; then
+            ATTRIB_LINE="⚠️ Attribution: ${NODATA} MALICIOUS skills fetched but the registry returned no moderation block - upstream comparison unavailable, NOT a detection gap."
           elif [ "$ATTRIB" -gt 0 ]; then
             ATTRIB_LINE="Attribution: ${ATTRIB} flagged skills checked; no MALICIOUS verdicts checked yet."
           else
