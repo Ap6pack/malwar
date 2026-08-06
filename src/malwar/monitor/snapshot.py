@@ -35,7 +35,7 @@ from malwar.monitor.escalation import (
     is_fragile_detection,
     select_candidates,
 )
-from malwar.monitor.models import RegistrySnapshot, SkillRecord
+from malwar.monitor.models import RegistrySnapshot, SkillRecord, verdict_rank
 from malwar.sdk import scan
 
 logger = logging.getLogger("malwar.monitor")
@@ -599,11 +599,16 @@ async def build_snapshot(
         ]
         if enrich_backfill_limit > 0:
             backfill = [
-                slug
+                (slug, rec)
                 for slug, rec in snapshot.skills.items()
                 if rec.is_flagged and slug not in rescanned and not rec.detail_fetched
             ]
-            flagged.extend(backfill[:enrich_backfill_limit])
+            # Worst verdict first. The flagged tail is several times larger than
+            # the malicious set, so walking it in dictionary order spends the
+            # per-run budget mostly on CAUTION and leaves the skills any
+            # comparison actually turns on waiting days for coverage.
+            backfill.sort(key=lambda item: -verdict_rank(item[1].verdict))
+            flagged.extend(slug for slug, _ in backfill[:enrich_backfill_limit])
         if flagged:
             enrich_sem = asyncio.Semaphore(max(1, concurrency))
 
