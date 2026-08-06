@@ -147,8 +147,17 @@ class RegistrySnapshot(BaseModel):
 
     @property
     def attributed_count(self) -> int:
-        """Skills whose publisher and platform moderation state we have fetched."""
-        return sum(1 for r in self.skills.values() if r.moderation_checked)
+        """Skills whose publisher and platform moderation state we have fetched.
+
+        Requires ``detail_fetched`` as well, because ``moderation_checked``
+        meant something weaker in snapshots written before it was tightened:
+        every successful fetch set it, even one carrying no moderation at all.
+        Those records are carried forward until backfill reaches them, so
+        without this a stale flag still inflates the count.
+        """
+        return sum(
+            1 for r in self.skills.values() if r.moderation_checked and r.detail_fetched
+        )
 
     @property
     def unblocked_malicious_count(self) -> int:
@@ -165,6 +174,7 @@ class RegistrySnapshot(BaseModel):
             1
             for r in self.skills.values()
             if r.verdict == "MALICIOUS"
+            and r.detail_fetched
             and r.moderation_checked
             and r.moderation_verdict.lower() == "clean"
             and not r.moderation_blocked

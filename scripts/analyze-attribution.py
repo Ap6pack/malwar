@@ -53,7 +53,14 @@ def detection_gap(skills: dict[str, dict[str, Any]]) -> dict[str, Any]:
     one still pending its scan is not, and one we never enriched is neither.
     """
     malicious = [s for s in skills.values() if s.get("verdict") == "MALICIOUS"]
-    checked = [s for s in malicious if s.get("moderation_checked")]
+    # detail_fetched is required as well: snapshots written before the flag was
+    # tightened set moderation_checked on any successful fetch, including ones
+    # carrying no moderation at all, and those records survive until backfill
+    # reaches them. Without this the denominator counts skills we never
+    # actually got a screening result for.
+    checked = [
+        s for s in malicious if s.get("moderation_checked") and s.get("detail_fetched")
+    ]
     # Fetched, but the registry has no moderation record for this skill at all.
     # That is not the platform clearing it, and not a broken pipeline either:
     # roughly 40% of a sampled cohort came back this way. Counted separately
