@@ -403,3 +403,60 @@ class TestGetSkillRealResponseShape:
         # Not a ModerationInfo with everything False, which would read as a
         # clean bill of health from a platform that told us nothing.
         assert detail.moderation is None
+
+
+class TestModerationLiveShape:
+    """The moderation block carries a verdict, not just booleans.
+
+    A live record::
+
+        {"isSuspicious": false, "isMalwareBlocked": false, "verdict": "clean",
+         "reasonCodes": ["review.llm_review"], "summary": "Review: ...",
+         "engineVersion": "v2.4.24", "updatedAt": 1779950837609}
+
+    None of the last five fields were being read. ``verdict`` is the one that
+    matters: it is authoritative, while every boolean defaults False and so
+    cannot distinguish "cleared" from "no data".
+    """
+
+    LIVE = {
+        "skill": {"slug": "0xwork", "displayName": "0xwork"},
+        "owner": {"handle": "someone", "userId": "u1"},
+        "moderation": {
+            "isSuspicious": False,
+            "isMalwareBlocked": False,
+            "verdict": "clean",
+            "reasonCodes": ["review.llm_review"],
+            "summary": "Review: review.llm_review",
+            "engineVersion": "v2.4.24",
+            "updatedAt": 1779950837609,
+        },
+    }
+
+    @pytest.mark.asyncio
+    async def test_verdict_and_engine_are_read(self):
+        client = ClawHubClient()
+        with patch.object(
+            client, "_client", return_value=_mock_client(_json_response(self.LIVE))
+        ):
+            detail = await client.get_skill("0xwork")
+
+        assert detail.moderation is not None
+        assert detail.moderation.verdict == "clean"
+        assert detail.moderation.reason_codes == ["review.llm_review"]
+        assert detail.moderation.engine_version == "v2.4.24"
+        assert detail.moderation.updated_at == 1779950837609
+
+    @pytest.mark.asyncio
+    async def test_absent_pending_flag_does_not_become_a_claim(self):
+        # isPendingScan was on no observed record. It defaults False, which must
+        # not be read as "the platform finished scanning this".
+        client = ClawHubClient()
+        with patch.object(
+            client, "_client", return_value=_mock_client(_json_response(self.LIVE))
+        ):
+            detail = await client.get_skill("0xwork")
+
+        assert detail.moderation is not None
+        assert detail.moderation.is_pending_scan is False
+        assert detail.moderation.verdict == "clean"  # this is what carries meaning

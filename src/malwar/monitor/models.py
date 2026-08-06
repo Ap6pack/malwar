@@ -65,6 +65,15 @@ class SkillRecord(BaseModel):
     moderation_blocked: bool = False
     moderation_suspicious: bool = False
     moderation_pending: bool = False
+    # The registry's own verdict string (e.g. "clean"). Authoritative: the
+    # booleans above are derived from it, and reading them instead means
+    # inferring a verdict from flags that default False.
+    moderation_verdict: str = ""
+    # Which screening engine produced that verdict and when. A skill cleared by
+    # an engine several versions old is a different claim from one cleared
+    # today, and neither is visible from the verdict alone.
+    moderation_engine: str = ""
+    moderation_scanned_at: int | None = None
     # True once the detail response actually carried a moderation block, so an
     # unenriched record is never mistaken for "platform says it is fine". A
     # successful fetch that omits moderation leaves this False: every flag
@@ -143,21 +152,38 @@ class RegistrySnapshot(BaseModel):
 
     @property
     def unblocked_malicious_count(self) -> int:
-        """Skills we verified malicious that the platform has screened and cleared.
+        """Skills we verified malicious that the platform screened and called clean.
 
-        Deliberately excludes anything we never checked (``moderation_blocked``
-        defaults False, so an unenriched record would otherwise read as the
-        platform vouching for it) and anything still awaiting the platform's own
-        scan, which is not yet a miss on their part.
+        Requires the registry's own ``verdict`` to actually say "clean". That is
+        the authoritative field; the boolean flags are derived from it and all
+        default False, so a record we never checked, or one whose response
+        carried no moderation block, would otherwise be counted as the platform
+        vouching for a skill it never looked at. Anything the platform flagged
+        at all -- blocked, suspicious, or still pending -- is not a miss.
         """
         return sum(
             1
             for r in self.skills.values()
             if r.verdict == "MALICIOUS"
             and r.moderation_checked
+            and r.moderation_verdict.lower() == "clean"
             and not r.moderation_blocked
             and not r.moderation_pending
             and not r.moderation_suspicious
+        )
+
+    @property
+    def unscreened_malicious_count(self) -> int:
+        """Skills we verified malicious that carry no moderation record at all.
+
+        Distinct from the gap above: the platform did not clear these, it has
+        no screening result for them. Only counts skills we actually fetched,
+        so "we never asked" never masquerades as "they never screened".
+        """
+        return sum(
+            1
+            for r in self.skills.values()
+            if r.verdict == "MALICIOUS" and r.detail_fetched and not r.moderation_checked
         )
 
 

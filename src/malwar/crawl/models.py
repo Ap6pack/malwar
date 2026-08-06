@@ -54,7 +54,25 @@ class SkillSummary(BaseModel):
 
 
 class ModerationInfo(BaseModel):
-    """Moderation flags from ClawHub's security scanning."""
+    """The registry's own security screening result for a skill.
+
+    A live record looks like this::
+
+        {"isSuspicious": false, "isMalwareBlocked": false, "verdict": "clean",
+         "reasonCodes": ["review.llm_review"], "summary": "Review: ...",
+         "engineVersion": "v2.4.24", "updatedAt": 1779950837609}
+
+    ``verdict`` is the authoritative field and the boolean flags are derived
+    from it, so read the verdict rather than inferring one from flags that
+    default False. ``isPendingScan``, ``isHiddenByMod`` and ``isRemoved`` were
+    not present on any record observed; they are kept because absence is not
+    proof they never appear, but nothing should conclude "not pending" from
+    their defaults.
+
+    ``engine_version`` and ``updated_at`` say which screening engine last
+    looked and when, which is the difference between a skill the platform
+    cleared recently and one cleared by an engine several versions old.
+    """
 
     is_pending_scan: bool = Field(default=False, alias="isPendingScan")
     is_malware_blocked: bool = Field(default=False, alias="isMalwareBlocked")
@@ -62,6 +80,11 @@ class ModerationInfo(BaseModel):
     is_hidden_by_mod: bool = Field(default=False, alias="isHiddenByMod")
     is_removed: bool = Field(default=False, alias="isRemoved")
     reason: str | None = None
+    verdict: str = ""
+    reason_codes: list[str] = Field(default_factory=list, alias="reasonCodes")
+    summary: str = ""
+    engine_version: str = Field(default="", alias="engineVersion")
+    updated_at: int | None = Field(default=None, alias="updatedAt")
 
     model_config = {"populate_by_name": True}
 
