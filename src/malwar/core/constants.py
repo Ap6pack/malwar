@@ -67,6 +67,7 @@ RISK_THRESHOLD_LOW = 15
 #   * EXFIL-003  `curl -X POST -d "$(cat file)"`, a normal API upload
 #   * PI-001     security/detection skills that quote injection phrases
 #   * HIJACK-001 roleplay/persona skills ("you are now...", "your new role is")
+#   * PERM-001   a disclosed integration legitimately allowing its own tools
 #   * PERSIST-001 a plain `(crontab -l; echo ...) | crontab -` daily job, and
 #                 `systemctl enable`, which are how you install *any* scheduled
 #                 task or service. Previously excluded here on the reasoning
@@ -82,6 +83,7 @@ RISK_THRESHOLD_LOW = 15
 # wallets), FRAUD-002 (front-running), CRED-001 (real credential formats),
 # SUPPLY-001 (known-malicious package names).
 HIGH_FP_RULES: frozenset[str] = frozenset({
+    "MALWAR-PERM-001",
     "MALWAR-PERSIST-001",
     "MALWAR-CMD-001",
     "MALWAR-CMD-002",
