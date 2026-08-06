@@ -153,7 +153,11 @@ async def dump_content(slugs: list[str], max_chars: int = 4000) -> None:
         for slug in slugs:
             print(f"\n{'=' * 70}\n{slug}\n{'=' * 70}", flush=True)
             try:
-                resp = await client.get(f"{BASE_URL}/skills/{slug}/file")
+                # The endpoint requires an explicit path; without it the
+                # registry answers 400 "Missing path" rather than defaulting.
+                resp = await client.get(
+                    f"{BASE_URL}/skills/{slug}/file", params={"path": "SKILL.md"}
+                )
                 if resp.status_code != 200:
                     print(f"  HTTP {resp.status_code}: {resp.text[:200]}", flush=True)
                 else:
