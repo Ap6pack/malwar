@@ -1062,6 +1062,7 @@ class TestAttributionCounters:
             a=SkillRecord(
                 slug="a",
                 verdict="MALICIOUS",
+                detail_fetched=True,
                 moderation_checked=True,
                 moderation_verdict="clean",
             )
@@ -1076,18 +1077,21 @@ class TestAttributionCounters:
             blocked=SkillRecord(
                 slug="blocked",
                 verdict="MALICIOUS",
+                detail_fetched=True,
                 moderation_checked=True,
                 moderation_blocked=True,
             ),
             pending=SkillRecord(
                 slug="pending",
                 verdict="MALICIOUS",
+                detail_fetched=True,
                 moderation_checked=True,
                 moderation_pending=True,
             ),
             suspect=SkillRecord(
                 slug="suspect",
                 verdict="MALICIOUS",
+                detail_fetched=True,
                 moderation_checked=True,
                 moderation_suspicious=True,
             ),
@@ -1095,12 +1099,35 @@ class TestAttributionCounters:
         assert snap.attributed_count == 3
         assert snap.unblocked_malicious_count == 0
 
+    def test_stale_checked_flag_without_a_fetch_is_not_counted(self):
+        # Snapshots written before moderation_checked was tightened set it on
+        # any successful fetch, including ones carrying no moderation at all.
+        # 792 such records were still in the live snapshot, and counting them
+        # inflated the denominator the gap rate is reported against.
+        snap = self._snap(
+            a=SkillRecord(
+                slug="a",
+                verdict="MALICIOUS",
+                moderation_checked=True,   # written by the old logic
+                detail_fetched=False,      # never re-fetched since
+            )
+        )
+        assert snap.attributed_count == 0
+        assert snap.unblocked_malicious_count == 0
+
     def test_only_malicious_verdicts_count_toward_the_gap(self):
         # We escalate ambiguous skills rather than convict them; a CAUTION we
         # never confirmed is not evidence the platform missed anything.
         snap = self._snap(
-            a=SkillRecord(slug="a", verdict="CAUTION", moderation_checked=True),
-            b=SkillRecord(slug="b", verdict="SUSPICIOUS", moderation_checked=True),
+            a=SkillRecord(
+                slug="a", verdict="CAUTION", detail_fetched=True, moderation_checked=True
+            ),
+            b=SkillRecord(
+                slug="b",
+                verdict="SUSPICIOUS",
+                detail_fetched=True,
+                moderation_checked=True,
+            ),
         )
         assert snap.attributed_count == 2
         assert snap.unblocked_malicious_count == 0

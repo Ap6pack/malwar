@@ -48,7 +48,9 @@ class TestFragileMalicious:
     def test_tight_rules_stay_confident(self):
         # These did not over-flag in testing; a single hit remains a confident
         # verdict, not fragile.
-        for rid in ("MALWAR-PERSIST-001", "MALWAR-EXFIL-002", "MALWAR-FRAUD-002"):
+        # PERSIST-001 is deliberately absent: cron/systemd turned out to be
+        # ordinary setup, not a tight signal (see test_core_models).
+        for rid in ("MALWAR-EXFIL-002", "MALWAR-FRAUD-002", "MALWAR-CRED-001"):
             assert not is_fragile_malicious(mrec([rid])), rid
 
     def test_corroborated_two_rules_not_fragile(self):

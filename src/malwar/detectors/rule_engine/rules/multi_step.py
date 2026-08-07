@@ -22,10 +22,35 @@ class MultiStepManipulation(BaseRule):
         "execution to avoid observation"
     )
 
+    # Words that mean the user is no longer present to observe what happens
+    # next. Deferring until then is the manipulation this rule is about.
+    #
+    # Consent verbs (confirms/approves/accepts/agrees) are deliberately NOT
+    # here. They mean the opposite: the action is gated on the user agreeing to
+    # it, which is the behaviour we want skills to have. "After the user
+    # confirms, complete the setup" is a safety property, and matching it made
+    # this rule fire on an entire vendor's integration catalogue -- 57 skills
+    # convicted on that phrase alone, each of which an LLM second opinion then
+    # confirmed, because both were reading consent as evasion.
+    _ABSENT = r"leaves?|closes?|logs?\s*out|is\s+away|walks?\s+away|stops?\s+watching"
+    # Concealment language that turns a consent trigger into a real signal:
+    # "once the user approves, silently do X" is deferred *and* hidden.
+    _CONCEAL = (
+        r"silently|quietly|secretly|without\s+(?:telling|showing|informing|notifying)"
+        r"|hide|conceal|suppress|do\s+not\s+tell|don'?t\s+tell"
+    )
+
     PATTERNS = [
-        # Deferred execution triggers
+        # Deferred until the user is not there to see it.
         re.compile(
-            r"(?:after|once|when)\s+(?:the\s+)?user\s+(?:confirms?|approves?|accepts?|agrees?|leaves?|closes?|logs?\s*out)",
+            rf"(?:after|once|when)\s+(?:the\s+)?user\s+(?:{_ABSENT})",
+            re.IGNORECASE,
+        ),
+        # Deferred until consent, then concealed. Consent alone is not evidence;
+        # consent plus concealment is.
+        re.compile(
+            rf"(?:after|once|when)\s+(?:the\s+)?user\s+"
+            rf"(?:confirms?|approves?|accepts?|agrees?)\b.{{0,80}}?(?:{_CONCEAL})",
             re.IGNORECASE,
         ),
         re.compile(

@@ -15,6 +15,7 @@ import malwar.detectors.rule_engine.rules.multi_step
 
 # Import all rule modules to trigger registration
 import malwar.detectors.rule_engine.rules.obfuscation
+import malwar.detectors.rule_engine.rules.permission_scope
 import malwar.detectors.rule_engine.rules.persistence
 import malwar.detectors.rule_engine.rules.prompt_injection
 import malwar.detectors.rule_engine.rules.social_engineering
