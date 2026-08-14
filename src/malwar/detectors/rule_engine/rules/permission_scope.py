@@ -45,7 +45,37 @@ class PermissionScopeExpansion(BaseRule):
         "priming a confirmation so later actions run unprompted"
     )
 
-    PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    # A fenced code block is something the agent runs; prose is something the
+    # author is talking about. Distinguishing them is the difference between
+    # "pass --yolo" and "the scanner blocks this unless you pass --yolo",
+    # which is a sentence from a real skill's deployment-notes section that
+    # this rule convicted as MALICIOUS.
+    _FENCE = re.compile(r"^\s*(?:```|~~~)")
+    # An invocation written inline in prose ("Run claude --flag ..."). The
+    # command name must reach the flag without crossing sentence-ending
+    # punctuation, so a tool named in one clause cannot lend authority to a
+    # flag merely discussed in the next. Full-width stops are included because
+    # much of the registry is written in Chinese.
+    _COMMAND_CONTEXT = re.compile(
+        r"\b(?:claude|openclaw|codex|aider|npx|npm|pnpm|yarn|node|deno|bun|uv"
+        r"|python3?|bash|sh|zsh"
+        # Imperatives, so "Run the agent with --flag" still counts even though
+        # "the agent" is not a command name. "use" is deliberately absent: it
+        # appears far more often in "this skill never uses --flag".
+        r"|run|execute|start|launch|invoke|pass|append|add)"
+        r"\b[^.。!?！？\n]*?--",  # noqa: RUF001 - CJK stops are real input
+        re.IGNORECASE,
+    )
+    # Documentation that warns *against* a flag reads exactly like an
+    # instruction to use it, so a negation anywhere before the flag disarms
+    # the context. "Never run with --yolo" is advice, not a setup step.
+    _NEGATED = re.compile(
+        r"\b(?:never|not|n't|without|avoid|refrain)\b|不要|禁止|切勿|请勿",
+        re.IGNORECASE,
+    )
+
+    # (pattern, what it means, requires an execution context)
+    PATTERNS: list[tuple[re.Pattern[str], str, bool]] = [
         # Editing the agent's tool allowlist / permission config.
         (
             re.compile(
@@ -54,6 +84,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "writes to the agent's tool allowlist",
+            False,
         ),
         (
             re.compile(
@@ -61,6 +92,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "sets an allowlist or auto-approve key",
+            False,
         ),
         # Approval / sandbox settings turned off in a config file. The skill
         # that motivated this rule instructs the user to set
@@ -76,6 +108,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "sets the approval policy to never ask",
+            False,
         ),
         (
             re.compile(
@@ -84,6 +117,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "disables or fully opens the sandbox",
+            False,
         ),
         # Explicit approval bypass flags.
         (
@@ -93,6 +127,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "passes an approval-bypass flag",
+            True,
         ),
         # Turning confirmation off in prose or config.
         (
@@ -102,6 +137,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "disables confirmation prompts",
+            False,
         ),
         # Priming consent: run something harmless first so the approval is
         # already spent when it matters. The tell is an explicit claim that
@@ -115,6 +151,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "primes an approval so later actions run unprompted",
+            False,
         ),
         # Same idea expressed as establishing durable trust.
         (
@@ -124,6 +161,7 @@ class PermissionScopeExpansion(BaseRule):
                 re.IGNORECASE,
             ),
             "establishes standing trust to avoid later prompts",
+            False,
         ),
         # A large share of the registry is written in Chinese, and the skill
         # that prompted this rule is entirely so. English-only patterns would
@@ -135,17 +173,33 @@ class PermissionScopeExpansion(BaseRule):
         (
             re.compile(r"无需(?:再次)?确认|免确认|跳过确认|跳过权限|自动(?:批准|确认|授权)"),
             "states that later actions need no confirmation (zh)",
+            False,
         ),
         (
             re.compile(r"建立信任[^。\n]{0,40}(?:无需|不用|不需)"),
             "establishes standing trust to avoid later prompts (zh)",
+            False,
         ),
     ]
 
     def check(self, skill: SkillContent) -> list[Finding]:
         findings: list[Finding] = []
+        in_fence = False
         for line_num, line in enumerate(skill.raw_content.splitlines(), 1):
-            for pattern, what in self.PATTERNS:
+            if self._FENCE.match(line):
+                in_fence = not in_fence
+                continue
+            # Only text *before* the flag can negate it. "Run claude --flag to
+            # avoid prompts" is an instruction whose tail happens to contain a
+            # negative word; "Never run with --flag" is not.
+            prefix = line.split("--", 1)[0]
+            executable = in_fence or (
+                bool(self._COMMAND_CONTEXT.search(line))
+                and not self._NEGATED.search(prefix)
+            )
+            for pattern, what, needs_execution in self.PATTERNS:
+                if needs_execution and not executable:
+                    continue
                 if pattern.search(line):
                     findings.append(Finding(
                         id=f"{self.rule_id}-L{line_num}",

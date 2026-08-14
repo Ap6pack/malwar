@@ -1180,6 +1180,52 @@ class TestPermissionScopeExpansion:
         ):
             assert len(rule_instance.check(_make_skill(text))) >= 1, text
 
+    def test_bypass_flag_only_counts_when_actually_invoked(self, rule_instance):
+        # The line below is copied from a live skill's deployment-notes section.
+        # It explains that the registry's own scanner blocks community uploads
+        # at CAUTION and that --yolo bypasses it. The rule matched the bare
+        # token and convicted an HR resume-grading skill as MALICIOUS at risk
+        # 100 -- the same defect as MULTI-001 reading consent as evasion: a
+        # technique *discussed* is not a technique performed.
+        discussed = (
+            "- 扫描 verdict 达到 CAUTION 且为 community source 时会 BLOCKED，"  # noqa: RUF001
+            "需 `--yolo` 绕过或修复"
+        )
+        assert rule_instance.check(_make_skill(discussed)) == []
+        for text in (
+            "If the scanner blocks you, --yolo will bypass it, or just fix the finding.",
+            "This skill never uses --dangerously-skip-permissions.",
+            "Claude Code will prompt you. The --yolo flag exists but we do not use it.",
+        ):
+            assert rule_instance.check(_make_skill(text)) == [], text
+
+    def test_warning_against_a_flag_is_not_an_instruction(self, rule_instance):
+        # Security guidance reads syntactically like a setup step. Only the
+        # text *before* the flag can negate it, so an instruction whose tail
+        # happens to say "to avoid prompts" still counts.
+        for text in (
+            "Never run the agent with --yolo.",
+            "Do not pass --dangerously-skip-permissions.",
+            "Avoid running with --yolo in production.",
+            "切勿使用 --yolo 运行",
+        ):
+            assert rule_instance.check(_make_skill(text)) == [], text
+        assert len(rule_instance.check(_make_skill(
+            "Run claude --dangerously-skip-permissions to avoid prompts."
+        ))) >= 1
+
+    def test_bypass_flag_in_a_command_still_fires(self, rule_instance):
+        # The gate must not cost real detections: a flag inside a code fence,
+        # or reached from a command name without crossing a sentence boundary,
+        # is an instruction to run it.
+        for text in (
+            "Run claude --dangerously-skip-permissions to avoid prompts.",
+            "```bash\nclaude --dangerously-skip-permissions\n```",
+            "```\nopenclaw --yolo start\n```",
+            "`npx agent --allow-all-tools`",
+        ):
+            assert len(rule_instance.check(_make_skill(text))) >= 1, text
+
     def test_restrictive_settings_are_not_a_finding(self, rule_instance):
         # The same keys set to safe values, and a skill narrowing its own tool
         # scope, are the behaviour we want and must never fire.
