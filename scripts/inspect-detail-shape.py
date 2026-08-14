@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 
 import httpx
@@ -138,7 +139,7 @@ async def survey(slugs: list[str]) -> None:
         )
 
 
-async def dump_content(slugs: list[str], max_chars: int = 4000) -> None:
+async def dump_content(slugs: list[str], max_chars: int | None = None) -> None:
     """Print each skill's SKILL.md so a verdict can be checked against the file.
 
     An LLM second opinion agreeing with a rule is not ground truth; both can be
@@ -149,6 +150,12 @@ async def dump_content(slugs: list[str], max_chars: int = 4000) -> None:
     The registry is public, so this prints content that is already published.
     Truncated per skill to keep a cohort readable in one job log.
     """
+    # Truncation hid the evidence once already: a skill was flagged on a line
+    # that fell outside the excerpt, so the visible portion produced no match
+    # and the finding looked unexplainable. Default to the whole file and let
+    # the caller trim deliberately.
+    if max_chars is None:
+        max_chars = int(os.environ.get("MAX_CHARS", "0")) or 10**9
     async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
         for slug in slugs:
             print(f"\n{'=' * 70}\n{slug}\n{'=' * 70}", flush=True)
