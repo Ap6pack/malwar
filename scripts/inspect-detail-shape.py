@@ -177,6 +177,55 @@ async def dump_content(slugs: list[str], max_chars: int | None = None) -> None:
             await asyncio.sleep(0.55)
 
 
+
+async def list_files(slug: str) -> None:
+    """Try to enumerate the files a skill actually ships.
+
+    SKILL.md is the skill's *description of itself*. The behaviour lives in the
+    scripts it invokes, and a skill whose stated purpose differs from what its
+    code does is exactly the supply-chain case worth finding -- so a verdict
+    based on SKILL.md alone is a reading of the marketing copy, not the
+    product. There is no documented listing endpoint, so probe the plausible
+    ones and report what answers.
+    """
+    candidates = [
+        f"{BASE_URL}/skills/{slug}/files",
+        f"{BASE_URL}/skills/{slug}/tree",
+        f"{BASE_URL}/skills/{slug}/contents",
+        f"{BASE_URL}/skills/{slug}?include=files",
+    ]
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+        print(f"\n{'=' * 70}\n{slug}: probing for a file listing\n{'=' * 70}", flush=True)
+        for url in candidates:
+            try:
+                resp = await client.get(url)
+                body = resp.text[:600]
+                print(f"  {resp.status_code}  {url}\n       {body}\n", flush=True)
+            except Exception as exc:
+                print(f"  ERR {url}: {type(exc).__name__}: {exc}", flush=True)
+            await asyncio.sleep(0.55)
+
+
+async def fetch_paths(specs: list[str]) -> None:
+    """Fetch explicit ``slug=path`` files, e.g. ``buddy-card=scripts/algo.js``."""
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+        for spec in specs:
+            slug, _, path = spec.partition("=")
+            path = path or "SKILL.md"
+            print(f"\n{'=' * 70}\n{slug} :: {path}\n{'=' * 70}", flush=True)
+            try:
+                resp = await client.get(
+                    f"{BASE_URL}/skills/{slug}/file", params={"path": path}
+                )
+                if resp.status_code != 200:
+                    print(f"  HTTP {resp.status_code}: {resp.text[:200]}", flush=True)
+                else:
+                    print(resp.text, flush=True)
+            except Exception as exc:
+                print(f"  {type(exc).__name__}: {exc}", flush=True)
+            await asyncio.sleep(0.55)
+
+
 async def main() -> int:
     args = sys.argv[1:]
     if args and args[0] == "--survey":
@@ -184,6 +233,13 @@ async def main() -> int:
         return 0
     if args and args[0] == "--content":
         await dump_content(args[1:])
+        return 0
+    if args and args[0] == "--ls":
+        for slug in args[1:]:
+            await list_files(slug)
+        return 0
+    if args and args[0] == "--fetch":
+        await fetch_paths(args[1:])
         return 0
 
     slugs = args

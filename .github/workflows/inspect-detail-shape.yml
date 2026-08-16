@@ -21,6 +21,11 @@ on:
         description: "Print each skill's SKILL.md instead, to check a verdict against the file"
         type: boolean
         default: false
+      mode:
+        description: "ls = probe for a file listing; fetch = slugs are slug=path pairs"
+        type: choice
+        options: ["", "ls", "fetch"]
+        default: ""
 
 permissions:
   contents: read
@@ -46,8 +51,11 @@ jobs:
           SLUGS: ${{ github.event.inputs.slugs }}
           SURVEY: ${{ github.event.inputs.survey }}
           CONTENT: ${{ github.event.inputs.content }}
+          MODE: ${{ github.event.inputs.mode }}
         run: |
-          if [ "$CONTENT" = "true" ]; then
+          if [ -n "$MODE" ]; then
+            python scripts/inspect-detail-shape.py --$MODE $SLUGS
+          elif [ "$CONTENT" = "true" ]; then
             python scripts/inspect-detail-shape.py --content $SLUGS
           elif [ "$SURVEY" = "true" ]; then
             python scripts/inspect-detail-shape.py --survey $SLUGS
