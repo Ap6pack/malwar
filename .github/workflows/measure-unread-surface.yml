@@ -1,0 +1,65 @@
+# Measure the file surface no scan has ever read.
+#
+# The sweep fetches one file per skill (SKILL.md), so every verdict describes
+# the documentation. This samples SKILL.md from the registry, extracts the
+# paths each one names, and reports how much executable code ships alongside
+# that no scan has looked at.
+
+name: Measure Unread Surface
+
+on:
+  workflow_dispatch:
+    inputs:
+      sample:
+        description: "How many random skills to fetch (0.55s each, so 300 ~= 3 min)"
+        type: string
+        default: "300"
+      seed:
+        description: "Sampling seed, fixed so the number is reproducible"
+        type: string
+        default: "20260816"
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    name: Sample SKILL.md and extract referenced paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install httpx
+        run: pip install httpx
+
+      - name: Fetch the current snapshot
+        run: |
+          mkdir -p data/registry-snapshots
+          git fetch origin registry-snapshots
+          git show origin/registry-snapshots:data/registry-snapshots/latest.json \
+            > data/registry-snapshots/latest.json
+          echo "Snapshot: $(jq -r .created_at data/registry-snapshots/latest.json)"
+
+      - name: Measure
+        env:
+          SAMPLE: ${{ github.event.inputs.sample }}
+          SEED: ${{ github.event.inputs.seed }}
+        run: |
+          python scripts/extract-referenced-files.py \
+            data/registry-snapshots/latest.json \
+            --sample "$SAMPLE" --seed "$SEED" \
+            --json referenced-files.json
+
+      - name: Upload the path map
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: referenced-files
+          path: referenced-files.json
+          retention-days: 14
