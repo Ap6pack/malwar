@@ -31,79 +31,14 @@ import argparse
 import asyncio
 import json
 import random
-import re
 import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from malwar.research.references import extract, is_executable
+
 BASE_URL = "https://clawhub.ai/api/v1"
-
-# Interpreters and runners whose argument is a file the skill expects to run.
-_RUNNERS = r"(?:node|python3?|bun|deno|ts-node|tsx|bash|sh|zsh|ruby|perl|php|Rscript)"
-
-# Ways a SKILL.md names a file it ships. Each must capture the path in group 1.
-_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    # Executed by an interpreter: `node scripts/foo.js`, `python3 ./bin/x.py`.
-    # ${SKILL_DIR}/ and ./ prefixes are stripped by _clean.
-    (
-        re.compile(
-            rf"\b{_RUNNERS}\s+(?:\$\{{SKILL_DIR\}}/|\./)?"
-            r"([\w./-]+\.(?:js|mjs|cjs|ts|tsx|py|sh|bash|rb|pl|php|R))\b"
-        ),
-        "executed",
-    ),
-    # Explicit "Read `path`" instructions, which the agent will follow.
-    (
-        re.compile(r"\b(?:Read|read|Load|load|See|see)\s+`([\w./-]+\.[\w]+)`"),
-        "read-instruction",
-    ),
-    # Markdown link or bare mention of a repo-relative source/doc file.
-    (
-        re.compile(
-            r"[\(\[`\s](?:\./)?"
-            r"((?:scripts|bin|lib|src|tools|references|assets|specs)/[\w./-]+"
-            r"\.(?:js|mjs|cjs|ts|tsx|py|sh|bash|rb|pl|php|R|md|json|ya?ml|toml))"
-        ),
-        "referenced",
-    ),
-]
-
-# Paths that are not part of the skill: the file we already scan, and things
-# that belong to the user's project rather than the package.
-_SKIP = re.compile(
-    r"^(?:SKILL\.md|README\.md|package(?:-lock)?\.json|tsconfig\.json"
-    r"|\.env(?:\.example)?|node_modules/.*|\.\./.*)$",
-    re.IGNORECASE,
-)
-
-
-def _clean(path: str) -> str | None:
-    """Normalise a captured path, or return None if it is not skill-local."""
-    path = path.strip().strip("`'\"")
-    path = re.sub(r"^\$\{SKILL_DIR\}/", "", path)
-    path = re.sub(r"^\./", "", path)
-    if not path or path.startswith(("/", "~", "http")) or ".." in path:
-        return None
-    if _SKIP.match(path):
-        return None
-    # A bare filename with no directory and no extension we recognise is more
-    # likely prose than a shipped file.
-    if "." not in path:
-        return None
-    return path
-
-
-def extract(text: str) -> dict[str, str]:
-    """Return {path: how it was referenced} for one SKILL.md."""
-    found: dict[str, str] = {}
-    for pattern, kind in _PATTERNS:
-        for match in pattern.finditer(text):
-            cleaned = _clean(match.group(1))
-            if cleaned and cleaned not in found:
-                found[cleaned] = kind
-    return found
-
 
 async def sample_registry(slugs: list[str]) -> dict[str, str]:
     """Fetch SKILL.md for each slug. Requires network reach to the registry."""
@@ -196,11 +131,7 @@ def main() -> int:
     for ext, n in exts.most_common(12):
         print(f"  {ext or '(none)':<10} {n:,}")
 
-    executable = sum(
-        1 for v in refs.values()
-        for p in v if Path(p).suffix.lower() in
-        {".js", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".sh", ".bash", ".rb", ".pl", ".php"}
-    )
+    executable = sum(1 for v in refs.values() for p in v if is_executable(p))
     print()
     print(f"of those, executable code:              {executable:,}")
 
