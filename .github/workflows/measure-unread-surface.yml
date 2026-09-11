@@ -31,7 +31,9 @@ jobs:
   measure:
     name: Sample SKILL.md and extract referenced paths
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # A scan of 300 skills is ~900 registry fetches at 0.55s plus rule-engine
+    # time on every file, so it needs materially longer than a measure run.
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v4
