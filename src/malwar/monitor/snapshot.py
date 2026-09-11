@@ -27,6 +27,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
 
+from malwar.core.concurrency import run_bounded
 from malwar.crawl.client import ClawHubClient
 from malwar.monitor.escalation import (
     EscalationBackend,
@@ -479,18 +480,16 @@ async def build_snapshot(
     contents: dict[str, str] = {}
 
     # --- Phase 1: rule-scan every skill (fast, free, one request each) ---
-    semaphore = asyncio.Semaphore(max(1, concurrency))
     done = len(snapshot.skills)
     lock = asyncio.Lock()
 
     async def _worker(meta: SkillMeta) -> None:
         nonlocal done
-        async with semaphore:
-            try:
-                record, content = await _scan_slug(client, meta)
-            except Exception as exc:  # last-resort guard; never abort the sweep
-                record = SkillRecord(slug=meta.slug, verdict="UNKNOWN", error=f"worker: {exc}")
-                content = None
+        try:
+            record, content = await _scan_slug(client, meta)
+        except Exception as exc:  # last-resort guard; never abort the sweep
+            record = SkillRecord(slug=meta.slug, verdict="UNKNOWN", error=f"worker: {exc}")
+            content = None
         async with lock:
             snapshot.skills[meta.slug] = record
             if record.error:
@@ -501,7 +500,7 @@ async def build_snapshot(
             if on_progress is not None:
                 on_progress(done, total, meta.slug)
 
-    await asyncio.gather(*(_worker(meta) for meta in to_scan))
+    await run_bounded(to_scan, _worker, concurrency=concurrency)
 
     # --- Phase 2: targeted second opinion on the ambiguous band ---
     if keep_content and contents:
@@ -516,15 +515,12 @@ async def build_snapshot(
             backend.name,
         )
 
-        esc_sem = asyncio.Semaphore(max(1, concurrency))
-
         async def _escalate(slug: str) -> None:
-            async with esc_sem:
-                try:
-                    res = await backend.assess(contents[slug], file_name=f"{slug}/SKILL.md")
-                except Exception as exc:  # a bad escalation must not abort the sweep
-                    logger.warning("escalation failed for %s: %s", slug, exc)
-                    return
+            try:
+                res = await backend.assess(contents[slug], file_name=f"{slug}/SKILL.md")
+            except Exception as exc:  # a bad escalation must not abort the sweep
+                logger.warning("escalation failed for %s: %s", slug, exc)
+                return
             rec = snapshot.skills[slug]
             rec.escalation_backend = res.backend
             rec.escalation_verdict = res.verdict
@@ -537,7 +533,7 @@ async def build_snapshot(
                 if res.score is not None:
                     rec.risk_score = round(res.score * 100)
 
-        await asyncio.gather(*(_escalate(slug) for slug in candidates))
+        await run_bounded(candidates, _escalate, concurrency=concurrency)
 
     # --- Fail-safe: downgrade unverified fragile-MALICIOUS verdicts ---
     # A MALICIOUS verdict resting on a single high-false-positive rule (see
@@ -610,15 +606,12 @@ async def build_snapshot(
             backfill.sort(key=lambda item: -verdict_rank(item[1].verdict))
             flagged.extend(slug for slug, _ in backfill[:enrich_backfill_limit])
         if flagged:
-            enrich_sem = asyncio.Semaphore(max(1, concurrency))
-
             async def _enrich(slug: str) -> None:
-                async with enrich_sem:
-                    try:
-                        detail = await client.get_skill(slug)
-                    except Exception as exc:  # never fatal; attribution is a bonus
-                        logger.debug("detail fetch failed for %s: %s", slug, exc)
-                        return
+                try:
+                    detail = await client.get_skill(slug)
+                except Exception as exc:  # never fatal; attribution is a bonus
+                    logger.debug("detail fetch failed for %s: %s", slug, exc)
+                    return
                 rec = snapshot.skills[slug]
                 rec.detail_fetched = True
                 if detail.owner is not None:
@@ -654,7 +647,7 @@ async def build_snapshot(
                     rec.moderation_engine = ""
                     rec.moderation_scanned_at = None
 
-            await asyncio.gather(*(_enrich(slug) for slug in flagged))
+            await run_bounded(flagged, _enrich, concurrency=concurrency)
             enriched = sum(1 for s in flagged if snapshot.skills[s].moderation_checked)
             attributed = sum(1 for s in flagged if snapshot.skills[s].publisher)
             unblocked = sum(
