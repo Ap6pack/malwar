@@ -40,6 +40,24 @@ class MultiStepManipulation(BaseRule):
         r"|hide|conceal|suppress|do\s+not\s+tell|don'?t\s+tell"
     )
 
+    # What is being hidden decides whether hiding it is a problem.
+    #
+    # Withholding the output, the command, or the activity keeps the skill's
+    # behaviour from the person running it, which is the manipulation this rule
+    # exists to catch. Withholding a secret, a credential, or a key is the
+    # opposite instruction -- it is the one we want skills to carry -- and
+    # reading it as evasion convicted a group of skills whose only offence was
+    # telling the agent not to print an API key.
+    #
+    # So the object below is required rather than optional, and secrets,
+    # credentials, keys, tokens and PII are deliberately absent from it. A bare
+    # "without revealing" is ambiguous, and this rule is already on the
+    # high-false-positive list; guessing on ambiguity is how it got there.
+    _HIDDEN_FROM_USER = (
+        r"output|results?|commands?|activity|actions?|execution|errors?|progress"
+        r"|steps?|anything|what\s+(?:you|it)(?:'re|\s+are|\s+is)?\s+doing"
+    )
+
     PATTERNS = [
         # Deferred until the user is not there to see it.
         re.compile(
@@ -63,8 +81,9 @@ class MultiStepManipulation(BaseRule):
             re.IGNORECASE,
         ),
         re.compile(
-            r"(?:without|don'?t)\s+(?:displaying?|showing?|printing?|logging?|outputting?|revealing?)"
-            r"(?:\s+(?:the\s+)?(?:output|result|command|anything))?",
+            r"(?:without|don'?t)\s+"
+            r"(?:displaying?|showing?|printing?|logging?|outputting?|revealing?)"
+            rf"\s+(?:the\s+|any\s+|its\s+)?(?:{_HIDDEN_FROM_USER})\b",
             re.IGNORECASE,
         ),
         re.compile(
