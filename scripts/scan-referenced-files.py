@@ -151,6 +151,37 @@ def report(results: list[dict[str, Any]]) -> None:
         print(f"  {r['slug'][:34]:<34} {f['path'][:30]:<30} "
               f"{f['verdict']:<11} risk={f['risk']:<4} [{rules}]")
 
+    # Every flagged file, divergent or not. A file whose docs already flagged
+    # is not concealment -- documentation and code agreeing is the honest case
+    # -- but a report that prints only the divergence set makes those invisible,
+    # and a flag you cannot see is a flag you cannot check.
+    flagged = [
+        (r, f)
+        for r in with_refs
+        for f in r["referenced"]
+        if f.get("status") == 200 and f.get("verdict") not in ("CLEAN", "UNKNOWN")
+    ]
+    if flagged:
+        print(f"\nall flagged referenced files ({len(flagged)}), with their doc verdict:")
+        for r, f in flagged[:60]:
+            rules = ", ".join(x.replace("MALWAR-", "") for x in f["rules"])
+            print(f"  {r['slug'][:30]:<30} {f['path'][:28]:<28} "
+                  f"doc={r['doc_verdict']:<11} file={f['verdict']:<11} "
+                  f"risk={f['risk']:<4} [{rules}]")
+
+    # Named but not retrievable. Not evidence of anything on its own; recorded
+    # because "we could not read it" and "there was nothing to read" are
+    # different facts and only one of them supports a clean claim.
+    if unreachable:
+        print(f"\nnamed but unreachable ({len(unreachable)}) -- unknown, not clean:")
+        by_slug: Counter[str] = Counter()
+        for r in with_refs:
+            for f in r["referenced"]:
+                if f.get("status") != 200:
+                    by_slug[r["slug"]] += 1
+        for slug, n in by_slug.most_common(20):
+            print(f"  {slug[:44]:<44} {n}")
+
     print("\nThese are leads, not verdicts: the rule engine is calibrated for")
     print("SKILL.md prose and its false-positive profile on code is unmeasured.")
     print("Every one needs reading by hand before it is called anything.")
