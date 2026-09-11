@@ -18,6 +18,11 @@ on:
         description: "Sampling seed, fixed so the number is reproducible"
         type: string
         default: "20260816"
+      mode:
+        description: "measure = count the surface; scan = fetch and scan those files"
+        type: choice
+        options: ["measure", "scan"]
+        default: "measure"
 
 permissions:
   contents: read
@@ -35,8 +40,8 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install httpx
-        run: pip install httpx
+      - name: Install malwar
+        run: pip install -e "." && pip install httpx
 
       - name: Fetch the current snapshot
         run: |
@@ -46,12 +51,24 @@ jobs:
             > data/registry-snapshots/latest.json
           echo "Snapshot: $(jq -r .created_at data/registry-snapshots/latest.json)"
 
-      - name: Measure
+      - name: Measure the surface
+        if: ${{ github.event.inputs.mode != 'scan' }}
         env:
           SAMPLE: ${{ github.event.inputs.sample }}
           SEED: ${{ github.event.inputs.seed }}
         run: |
           python scripts/extract-referenced-files.py \
+            data/registry-snapshots/latest.json \
+            --sample "$SAMPLE" --seed "$SEED" \
+            --json referenced-files.json
+
+      - name: Scan the referenced files
+        if: ${{ github.event.inputs.mode == 'scan' }}
+        env:
+          SAMPLE: ${{ github.event.inputs.sample }}
+          SEED: ${{ github.event.inputs.seed }}
+        run: |
+          python scripts/scan-referenced-files.py \
             data/registry-snapshots/latest.json \
             --sample "$SAMPLE" --seed "$SEED" \
             --json referenced-files.json
