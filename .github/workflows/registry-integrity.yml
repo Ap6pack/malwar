@@ -1,0 +1,85 @@
+# Check registry properties a per-skill scan cannot see.
+#
+# ambiguity: 1,614 slugs are claimed by more than one publisher, and the API
+#   returns HTTP 409 rather than resolving them. Those are the skills this
+#   project has no verdict for at all. This counts the owners per contested
+#   name.
+# clones: 4,619 skills share a SKILL.md hash with another skill. That hash
+#   covers the documentation only. This checks whether the shipped code
+#   matches too, which decides whether "byte-identical duplicate" is an
+#   honest description.
+#
+# The dev sandbox cannot reach clawhub.ai, so this only runs here.
+
+name: Registry Integrity
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "ambiguity = who owns contested slugs; clones = do duplicates ship the same code"
+        type: choice
+        options: ["ambiguity", "clones"]
+        default: "ambiguity"
+      sample:
+        description: "ambiguity: how many contested slugs to check (0.55s each)"
+        type: string
+        default: "150"
+      clusters:
+        description: "clones: how many of the largest clusters to check"
+        type: string
+        default: "8"
+      members:
+        description: "clones: members per cluster"
+        type: string
+        default: "5"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Probe registry integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install malwar
+        run: pip install -e "." && pip install httpx
+
+      - name: Fetch the current snapshot
+        run: |
+          mkdir -p data/registry-snapshots
+          git fetch origin registry-snapshots
+          git show origin/registry-snapshots:data/registry-snapshots/latest.json \
+            > data/registry-snapshots/latest.json
+          echo "Snapshot: $(jq -r .created_at data/registry-snapshots/latest.json)"
+
+      - name: Check
+        env:
+          MODE: ${{ github.event.inputs.mode }}
+          SAMPLE: ${{ github.event.inputs.sample }}
+          CLUSTERS: ${{ github.event.inputs.clusters }}
+          MEMBERS: ${{ github.event.inputs.members }}
+        run: |
+          python scripts/registry-integrity.py \
+            data/registry-snapshots/latest.json \
+            --mode "$MODE" \
+            --sample "$SAMPLE" \
+            --clusters "$CLUSTERS" \
+            --members "$MEMBERS" \
+            --json integrity-$MODE.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-integrity-${{ github.event.inputs.mode }}
+          path: integrity-*.json
+          retention-days: 14
