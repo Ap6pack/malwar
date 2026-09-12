@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from malwar.core.config import get_settings
 from malwar.core.constants import DetectorLayer, Severity, ThreatCategory
 from malwar.detectors.url_crawler.analyzer import analyze_fetch_result
 from malwar.detectors.url_crawler.extractor import extract_urls
@@ -23,7 +24,21 @@ class UrlCrawlerDetector(BaseDetector):
     """Layer 2: Fetch and analyze URLs found in skill files."""
 
     def __init__(self, fetcher: SafeFetcher | None = None) -> None:
-        self._fetcher = fetcher or SafeFetcher()
+        # The crawler_* settings existed but nothing read them, so tuning
+        # crawler_timeout or crawler_max_redirects silently did nothing while
+        # SafeFetcher used its own constructor defaults. The values happen to
+        # match, so wiring them changes no behaviour today -- it makes the
+        # documented knobs real.
+        if fetcher is None:
+            settings = get_settings()
+            fetcher = SafeFetcher(
+                max_urls=settings.crawler_max_urls,
+                timeout=settings.crawler_timeout,
+                max_redirects=settings.crawler_max_redirects,
+                max_bytes=settings.crawler_max_response_bytes,
+                concurrency=settings.crawler_concurrency,
+            )
+        self._fetcher = fetcher
 
     @property
     def layer_name(self) -> str:
