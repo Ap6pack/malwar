@@ -5,10 +5,17 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
+from urllib.parse import urljoin
 
 import httpx
 
+from malwar.detectors.url_crawler.safety import Resolver, check_url, resolve_host
+
 logger = logging.getLogger("malwar.detectors.url_crawler.fetcher")
+
+
+class UnsafeURLError(Exception):
+    """Raised when a URL (or a redirect target) must not be fetched."""
 
 # Content types we consider textual (worth fetching the body for)
 _TEXT_CONTENT_TYPES = frozenset(
@@ -83,12 +90,16 @@ class SafeFetcher:
         max_redirects: int = 3,
         max_bytes: int = 1_048_576,
         concurrency: int = 5,
+        resolver: Resolver = resolve_host,
     ) -> None:
         self.max_urls = max_urls
         self.timeout = timeout
         self.max_redirects = max_redirects
         self.max_bytes = max_bytes
         self.concurrency = concurrency
+        # Injectable so tests pin DNS answers instead of depending on the
+        # network; see safety.check_url.
+        self.resolver = resolver
 
     async def fetch_urls(self, urls: list[str]) -> list[FetchResult]:
         """Fetch multiple URLs concurrently with safety bounds."""
@@ -97,9 +108,12 @@ class SafeFetcher:
 
         semaphore = asyncio.Semaphore(self.concurrency)
 
+        # Redirects are followed by hand in _request, not by httpx, so every
+        # hop can be validated before it is fetched. Letting the transport
+        # chase them means the first unsafe destination is already requested
+        # by the time we could look at it.
         async with httpx.AsyncClient(
-            follow_redirects=True,
-            max_redirects=self.max_redirects,
+            follow_redirects=False,
             timeout=httpx.Timeout(self.timeout),
         ) as client:
             tasks = [
@@ -137,6 +151,19 @@ class SafeFetcher:
                     content="",
                     error=f"Request timed out ({self.timeout}s)",
                 )
+            except UnsafeURLError as exc:
+                # Refused before any request was sent. Surfaced as a result
+                # rather than dropped, so a blocked fetch is visible in the
+                # report instead of looking like a URL that simply had nothing
+                # interesting at the other end.
+                return FetchResult(
+                    url=url,
+                    final_url=url,
+                    status_code=0,
+                    content_type="",
+                    content="",
+                    error=f"Refused to fetch: {exc}",
+                )
             except Exception as exc:
                 logger.debug("Fetch failed for %s: %s", url, exc)
                 return FetchResult(
@@ -148,24 +175,45 @@ class SafeFetcher:
                     error=str(exc),
                 )
 
+    async def _request(
+        self,
+        client: httpx.AsyncClient,
+        method: str,
+        url: str,
+    ) -> tuple[httpx.Response, list[str], str]:
+        """Issue ``method`` against ``url``, following redirects by hand.
+
+        Every hop is checked before it is requested, which is the whole point:
+        a URL that passes on the first request can redirect to internal
+        infrastructure on the second, so validating only the entry point is
+        equivalent to validating nothing.
+
+        Returns ``(response, redirect_chain, final_url)``.
+        """
+        chain: list[str] = []
+        current = url
+        for _ in range(self.max_redirects + 1):
+            safe, reason = check_url(current, resolver=self.resolver)
+            if not safe:
+                raise UnsafeURLError(reason)
+            resp = await client.request(method, current)
+            location = resp.headers.get("location")
+            if not (resp.is_redirect and location):
+                return resp, chain, current
+            chain.append(current)
+            # Relative Location headers are legal and common.
+            current = urljoin(current, location)
+        raise httpx.TooManyRedirects(f"exceeded {self.max_redirects} redirects")
+
     async def _do_fetch(
         self,
         client: httpx.AsyncClient,
         url: str,
     ) -> FetchResult:
         """Perform the actual fetch with HEAD pre-check."""
-        redirect_chain: list[str] = []
-
-        # Attempt HEAD first to inspect content-type / size
-        head_resp = await client.head(url)
+        head_resp, redirect_chain, final_url = await self._request(client, "HEAD", url)
         content_type_raw = head_resp.headers.get("content-type", "")
         content_type = content_type_raw.split(";")[0].strip().lower()
-
-        # Build redirect chain from the response history
-        for resp in head_resp.history:
-            redirect_chain.append(str(resp.url))
-
-        final_url = str(head_resp.url)
 
         # Check content-length to avoid huge downloads
         content_length = head_resp.headers.get("content-length")
@@ -204,10 +252,8 @@ class SafeFetcher:
                 redirect_chain=redirect_chain,
             )
 
-        # GET request with body-size limit
-        get_resp = await client.get(url)
-        redirect_chain = [str(r.url) for r in get_resp.history]
-        final_url = str(get_resp.url)
+        # GET request with body-size limit, redirects validated the same way.
+        get_resp, redirect_chain, final_url = await self._request(client, "GET", url)
 
         body = get_resp.text[: self.max_bytes]
 

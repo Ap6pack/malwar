@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ipaddress
+
 import httpx
 import pytest
 import respx
@@ -16,6 +18,7 @@ from malwar.detectors.url_crawler.reputation import (
     SAFE_DOMAINS,
     check_domain_reputation,
 )
+from malwar.detectors.url_crawler.safety import check_url
 from malwar.models.skill import CodeBlock, SkillContent, SkillMetadata
 
 # ---------------------------------------------------------------------------
@@ -202,12 +205,31 @@ class TestReputation:
 # ===================================================================
 
 
+def _public(_host: str) -> list[ipaddress.IPv4Address]:
+    """Pin DNS to one ordinary public address.
+
+    respx intercepts at the transport layer, so mocked hosts never resolve for
+    real and the SSRF guard would reject every one of them. Injecting the
+    answer keeps the guard fully active -- scheme checks and address
+    classification still run -- while making these tests about fetching rather
+    than about whether ``short.url`` happens to exist.
+    """
+    return [ipaddress.ip_address("93.184.216.34")]
+
+
+def _resolves_to(addr: str):
+    """Pin DNS to a specific address, for the SSRF tests."""
+    def _resolver(_host: str) -> list[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+        return [ipaddress.ip_address(addr)]
+    return _resolver
+
+
 class TestSafeFetcher:
     """Tests for malwar.detectors.url_crawler.fetcher using respx."""
 
     @pytest.mark.asyncio
     async def test_fetch_simple_text(self) -> None:
-        fetcher = SafeFetcher(max_urls=5, timeout=5.0)
+        fetcher = SafeFetcher(max_urls=5, timeout=5.0, resolver=_public)
         with respx.mock:
             respx.head("https://example.com/page").mock(
                 return_value=httpx.Response(
@@ -235,7 +257,7 @@ class TestSafeFetcher:
 
     @pytest.mark.asyncio
     async def test_fetch_binary_skips_body(self) -> None:
-        fetcher = SafeFetcher()
+        fetcher = SafeFetcher(resolver=_public)
         with respx.mock:
             respx.head("https://example.com/file.zip").mock(
                 return_value=httpx.Response(
@@ -254,7 +276,7 @@ class TestSafeFetcher:
 
     @pytest.mark.asyncio
     async def test_fetch_respects_max_urls(self) -> None:
-        fetcher = SafeFetcher(max_urls=2)
+        fetcher = SafeFetcher(max_urls=2, resolver=_public)
         urls = [f"https://example.com/{i}" for i in range(5)]
 
         with respx.mock:
@@ -279,7 +301,7 @@ class TestSafeFetcher:
 
     @pytest.mark.asyncio
     async def test_fetch_handles_timeout(self) -> None:
-        fetcher = SafeFetcher(timeout=0.5)
+        fetcher = SafeFetcher(timeout=0.5, resolver=_public)
         with respx.mock:
             respx.head("https://slow.example.com/").mock(
                 side_effect=httpx.ReadTimeout("timed out")
@@ -294,7 +316,7 @@ class TestSafeFetcher:
 
     @pytest.mark.asyncio
     async def test_fetch_handles_connection_error(self) -> None:
-        fetcher = SafeFetcher()
+        fetcher = SafeFetcher(resolver=_public)
         with respx.mock:
             respx.head("https://dead.example.com/").mock(
                 side_effect=httpx.ConnectError("Connection refused")
@@ -307,7 +329,7 @@ class TestSafeFetcher:
 
     @pytest.mark.asyncio
     async def test_fetch_too_large_content(self) -> None:
-        fetcher = SafeFetcher(max_bytes=1000)
+        fetcher = SafeFetcher(max_bytes=1000, resolver=_public)
         with respx.mock:
             respx.head("https://example.com/huge").mock(
                 return_value=httpx.Response(
@@ -327,7 +349,7 @@ class TestSafeFetcher:
 
     @pytest.mark.asyncio
     async def test_fetch_redirect_chain(self) -> None:
-        fetcher = SafeFetcher()
+        fetcher = SafeFetcher(resolver=_public)
         with respx.mock:
             # HEAD follows redirect
             respx.head("https://short.url/x").mock(
@@ -515,7 +537,7 @@ class TestUrlCrawlerDetector:
             body_markdown="Install from https://download.setup-service.com/tool.sh"
         )
         context = ScanContext(skill=skill, scan_id="test-001")
-        detector = UrlCrawlerDetector(fetcher=SafeFetcher(max_urls=10, timeout=2.0))
+        detector = UrlCrawlerDetector(fetcher=SafeFetcher(max_urls=10, timeout=2.0, resolver=_public))
 
         # Mock the fetcher to avoid real HTTP
         with respx.mock:
@@ -581,3 +603,120 @@ class TestUrlCrawlerDetector:
         detector = UrlCrawlerDetector()
         assert detector.layer_name == DetectorLayer.URL_CRAWLER
         assert detector.order == 20
+
+
+# ===================================================================
+# SSRF guard
+# ===================================================================
+
+
+class TestUrlSafety:
+    """Tests for malwar.detectors.url_crawler.safety.
+
+    The crawler follows links out of skill content, and skill content is the
+    hostile input under analysis: URLs come from the body, from source_url and
+    author_url, and from arbitrary frontmatter keys. Before this guard existed,
+    scanning a skill containing the EC2 metadata address made the scanner fetch
+    instance credentials, on the default code path (use_urls=True).
+    """
+
+    @pytest.mark.parametrize(
+        "addr",
+        [
+            "169.254.169.254",  # cloud instance metadata
+            "127.0.0.1",        # loopback
+            "10.0.0.5",         # RFC1918
+            "172.16.4.4",
+            "192.168.1.1",
+            "0.0.0.0",          # unspecified  # noqa: S104
+            "::1",              # v6 loopback
+            "fd00::1",          # v6 unique-local
+            "fe80::1",          # v6 link-local
+        ],
+    )
+    def test_rejects_non_public_addresses(self, addr: str) -> None:
+        safe, reason = check_url("http://anything.example/", _resolves_to(addr))
+        assert not safe, f"{addr} should be refused"
+        assert addr in reason or "non-public" in reason
+
+    def test_rejects_ipv4_mapped_v6_smuggling(self) -> None:
+        # ::ffff:169.254.169.254 is the metadata address wearing a v6 costume.
+        safe, _ = check_url("http://anything.example/", _resolves_to("::ffff:169.254.169.254"))
+        assert not safe
+
+    def test_rejects_non_http_schemes(self) -> None:
+        for url in ("file:///etc/passwd", "gopher://x/", "ftp://x/"):
+            safe, reason = check_url(url, _public)
+            assert not safe, url
+            assert "scheme" in reason
+
+    def test_allows_ordinary_public_address(self) -> None:
+        safe, reason = check_url("https://example.com/x", _public)
+        assert safe, reason
+
+    def test_dns_name_pointing_inward_is_refused(self) -> None:
+        # The attacker owns DNS for their own domain, so a textual check on the
+        # hostname is no check at all. This is why resolution happens first.
+        safe, _ = check_url("https://totally-normal.example/", _resolves_to("169.254.169.254"))
+        assert not safe
+
+    @pytest.mark.asyncio
+    async def test_fetcher_refuses_metadata_address(self) -> None:
+        fetcher = SafeFetcher(resolver=_resolves_to("169.254.169.254"))
+        with respx.mock:
+            route = respx.head("http://169.254.169.254/latest/meta-data/").mock(
+                return_value=httpx.Response(200, headers={"content-type": "text/plain"})
+            )
+            results = await fetcher.fetch_urls(["http://169.254.169.254/latest/meta-data/"])
+
+        assert not route.called, "the request must never be sent"
+        assert results[0].error is not None
+        assert "Refused to fetch" in results[0].error
+
+    @pytest.mark.asyncio
+    async def test_redirect_to_internal_address_is_refused(self) -> None:
+        # The bypass that matters: the entry point is public and passes, then
+        # hop two goes inward. Validating only the first URL catches nothing.
+        def resolver(host: str) -> list[ipaddress.IPv4Address]:
+            inward = host == "internal.example"
+            return [ipaddress.ip_address("169.254.169.254" if inward else "93.184.216.34")]
+
+        fetcher = SafeFetcher(resolver=resolver)
+        with respx.mock:
+            respx.head("https://public.example/go").mock(
+                return_value=httpx.Response(
+                    302, headers={"location": "http://internal.example/creds"}
+                )
+            )
+            inner = respx.head("http://internal.example/creds").mock(
+                return_value=httpx.Response(200, headers={"content-type": "text/plain"})
+            )
+            results = await fetcher.fetch_urls(["https://public.example/go"])
+
+        assert not inner.called, "the redirect target must never be requested"
+        assert results[0].error is not None
+        assert "Refused to fetch" in results[0].error
+
+    @pytest.mark.asyncio
+    async def test_public_redirect_is_still_followed(self) -> None:
+        # The guard must not break ordinary redirects.
+        fetcher = SafeFetcher(resolver=_public)
+        with respx.mock:
+            respx.head("https://a.example/1").mock(
+                return_value=httpx.Response(302, headers={"location": "https://b.example/2"})
+            )
+            respx.head("https://b.example/2").mock(
+                return_value=httpx.Response(200, headers={"content-type": "text/plain"})
+            )
+            respx.get("https://a.example/1").mock(
+                return_value=httpx.Response(302, headers={"location": "https://b.example/2"})
+            )
+            respx.get("https://b.example/2").mock(
+                return_value=httpx.Response(200, headers={"content-type": "text/plain"}, text="ok")
+            )
+            results = await fetcher.fetch_urls(["https://a.example/1"])
+
+        assert results[0].error is None, results[0].error
+        assert results[0].final_url == "https://b.example/2"
+        assert results[0].redirect_chain == ["https://a.example/1"]
+        assert results[0].content == "ok"
